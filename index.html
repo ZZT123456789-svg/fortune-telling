@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- 开场动画 -->
+  <div class="splash-screen" id="splashScreen">
+    <canvas id="splashCanvas"></canvas>
+    <div class="splash-text" id="splashText">道 问</div>
+    <div class="splash-sub" id="splashSub">探索命运 · 洞悉未来</div>
+    <div class="splash-hint" id="splashHint">点击进入</div>
+  </div>
+
   <canvas id="starCanvas"></canvas>
 
   <header class="header">
@@ -46,7 +54,7 @@
     <section class="module" id="module-ai">
       <div class="module-card">
         <h2 class="module-title">🤖 AI 智能解命</h2>
-        <p class="module-desc">输入你的信息，AI 将为你深度解读命运密码</p>
+        <p class="module-desc">请输入您的信息，将为你深度解读命运密码</p>
         <form class="fortune-form" id="aiForm">
           <div class="form-row">
             <div class="form-group">

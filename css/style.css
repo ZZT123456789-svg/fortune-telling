@@ -42,7 +42,69 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ========== STAR BACKGROUND (CSS-only, lightweight) ========== */
+/* ========== SPLASH SCREEN ========== */
+.splash-screen {
+  position: fixed; inset: 0; z-index: 10000;
+  background: #06060f;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; overflow: hidden;
+}
+.splash-screen.fade-out {
+  animation: splashFadeOut 0.8s ease forwards;
+}
+@keyframes splashFadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); pointer-events: none; }
+}
+#splashCanvas {
+  position: absolute; inset: 0;
+}
+.splash-text {
+  position: relative; z-index: 1;
+  font-family: "KaiTi","STKaiti","Georgia",serif;
+  font-size: clamp(3rem, 8vw, 5rem);
+  background: linear-gradient(180deg, #f0d080 0%, #c9a96e 40%, #8b7340 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.3em;
+  animation: splashTextIn 1.2s ease forwards;
+  opacity: 0;
+}
+@keyframes splashTextIn {
+  0% { opacity: 0; transform: translateY(30px); letter-spacing: 0.8em; }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0); letter-spacing: 0.3em; }
+}
+.splash-sub {
+  position: relative; z-index: 1;
+  margin-top: 0.6rem;
+  color: var(--text-secondary);
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  letter-spacing: 0.25em;
+  animation: splashSubIn 1.2s ease 0.4s forwards;
+  opacity: 0;
+}
+@keyframes splashSubIn {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.splash-hint {
+  position: relative; z-index: 1;
+  margin-top: 2.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  animation: splashHintPulse 1.5s ease-in-out 1.5s infinite;
+  opacity: 0;
+}
+@keyframes splashHintPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ========== STAR BACKGROUND ========== */
 #starCanvas {
   position: fixed;
   inset: 0;
