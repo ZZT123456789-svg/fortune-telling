@@ -231,7 +231,7 @@ class StarBackground {
 // ============ 导航控制器 ============
 class AppController {
   constructor() {
-    this.currentTab = 'ai';
+    this.currentTab = 'bazi';
     this.init();
   }
 
@@ -452,6 +452,5 @@ function initAddressCascade(prefix) {
 document.addEventListener('DOMContentLoaded', () => {
   // 主应用
   window.app = new AppController();
-  initAddressCascade('ai');
   initAddressCascade('bazi');
 });

@@ -36,8 +36,9 @@
   </header>
 
   <nav class="nav-tabs" id="navTabs">
-    <button class="nav-tab active" data-tab="ai">
-      <span class="nav-icon">🔮</span>
+    <button class="nav-tab active" data-tab="bazi">
+      <span class="nav-icon">☯️</span>
+      <span class="nav-label">五行八字</span>
     </button>
     <button class="nav-tab" data-tab="tarot">
       <span class="nav-icon">🎴</span>
@@ -62,86 +63,6 @@
   </nav>
 
   <main class="main-content">
-
-    <section class="module" id="module-ai">
-      <div class="module-card">
-        <p class="module-desc">请输入您的信息，将为你深度解读命运密码</p>
-        <form class="fortune-form" id="aiForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>姓名</label>
-              <input type="text" id="aiName" placeholder="输入你的姓名" required>
-            </div>
-            <div class="form-group">
-              <label>性别</label>
-              <select id="aiGender">
-                <option value="男">男</option>
-                <option value="女">女</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>出生年份</label>
-              <input type="number" id="aiYear" placeholder="如 1990" min="1900" max="2100" required>
-            </div>
-            <div class="form-group">
-              <label>出生月份</label>
-              <input type="number" id="aiMonth" placeholder="1-12" min="1" max="12" required>
-            </div>
-            <div class="form-group">
-              <label>出生日期</label>
-              <input type="number" id="aiDay" placeholder="1-31" min="1" max="31" required>
-            </div>
-            <div class="form-group">
-              <label>出生时辰</label>
-              <select id="aiHour">
-                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
-                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
-                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
-                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
-                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
-                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>精确分钟</label>
-              <input type="number" id="aiMinute" placeholder="0-59" min="0" max="59" value="0">
-            </div>
-          </div>
-          <div class="form-row address-row">
-            <div class="form-group">
-              <label>出生地址</label>
-              <select id="aiProvince" class="address-select">
-                <option value="">省/直辖市</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>&nbsp;</label>
-              <select id="aiCity" class="address-select">
-                <option value="">市/区</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>&nbsp;</label>
-              <select id="aiDistrict" class="address-select">
-                <option value="">县/区</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>你想问什么？（选填）</label>
-            <textarea id="aiQuestion" rows="3" placeholder="例如：我的事业运势如何？什么时候能遇到正缘？……"></textarea>
-          </div>
-          <button type="submit" class="btn-primary btn-glow">🪷 开始解命</button>
-        </form>
-        <div class="result-container" id="aiResult" style="display:none;">
-          <div class="result-header">📜 命理分析报告</div>
-          <div class="result-content" id="aiResultContent"></div>
-          <button class="btn-secondary" onclick="document.getElementById('aiResult').style.display='none';document.getElementById('aiForm').style.display='block';">重新测算</button>
-        </div>
-      </div>
-    </section>
 
     <section class="module" id="module-tarot" style="display:none;">
       <div class="module-card">
@@ -203,12 +124,16 @@
       </div>
     </section>
 
-    <section class="module" id="module-bazi" style="display:none;">
+    <section class="module" id="module-bazi">
       <div class="module-card">
         <h2 class="module-title">☯️ 五行八字测算</h2>
         <p class="module-desc">输入出生时间，排出四柱八字，洞悉五行命理</p>
         <form class="fortune-form" id="baziForm">
           <div class="form-row">
+            <div class="form-group">
+              <label>姓名</label>
+              <input type="text" id="baziName" placeholder="输入你的姓名" required>
+            </div>
             <div class="form-group">
               <label>性别</label>
               <select id="baziGender"><option value="男">男</option><option value="女">女</option></select>
@@ -379,7 +304,6 @@
   <script src="js/lunar.js"></script>
   <script src="js/china-address.js"></script>
   <script src="js/app.js"></script>
-  <script src="js/ai-fortune.js"></script>
   <script src="js/tarot.js"></script>
   <script src="js/daily-fortune.js"></script>
   <script src="js/bazi.js"></script>
