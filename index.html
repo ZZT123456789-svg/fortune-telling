@@ -40,10 +40,6 @@
       <span class="nav-icon">☯️</span>
       <span class="nav-label">五行八字</span>
     </button>
-    <button class="nav-tab" data-tab="tarot">
-      <span class="nav-icon">🎴</span>
-      <span class="nav-label">塔罗牌占卜</span>
-    </button>
     <button class="nav-tab" data-tab="daily">
       <span class="nav-icon">🪔</span>
       <span class="nav-label">每日运势签</span>
@@ -52,46 +48,13 @@
       <span class="nav-icon">🌙</span>
       <span class="nav-label">MBTI × 星座</span>
     </button>
+    <button class="nav-tab" data-tab="tarot">
+      <span class="nav-icon">🎴</span>
+      <span class="nav-label">塔罗牌占卜</span>
+    </button>
   </nav>
 
   <main class="main-content">
-
-    <section class="module" id="module-tarot" style="display:none;">
-      <div class="module-card">
-        <h2 class="module-title">🎴 塔罗牌占卜</h2>
-        <p class="module-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
-        <div class="tarot-steps" id="tarotSteps">
-          <div class="tarot-step" id="tarotStep1">
-            <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
-            <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
-            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
-          </div>
-          <div class="tarot-step" id="tarotStep2" style="display:none;">
-            <p class="step-hint">请凭直觉选择 3 张牌</p>
-            <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
-            <div class="card-deck" id="cardDeck"></div>
-            <div class="card-slots">
-              <div class="card-slot" data-slot="0">
-                <div class="slot-label">过去</div>
-                <div class="slot-card empty" id="slot0">?</div>
-              </div>
-              <div class="card-slot" data-slot="1">
-                <div class="slot-label">现在</div>
-                <div class="slot-card empty" id="slot1">?</div>
-              </div>
-              <div class="card-slot" data-slot="2">
-                <div class="slot-label">未来</div>
-                <div class="slot-card empty" id="slot2">?</div>
-              </div>
-            </div>
-          </div>
-          <div class="tarot-step" id="tarotStep3" style="display:none;">
-            <div class="tarot-reading" id="tarotReading"></div>
-            <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="module" id="module-daily" style="display:none;">
       <div class="module-card">
@@ -225,6 +188,34 @@
             <div class="result-header" id="mbtiResultHeader"></div>
             <div class="result-content" id="mbtiResultContent"></div>
             <button class="btn-secondary" onclick="MbtiModule.reset()">🔄 重新测试</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="module" id="module-tarot" style="display:none;">
+      <div class="module-card">
+        <h2 class="module-title">🎴 塔罗牌占卜</h2>
+        <p class="module-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
+        <div class="tarot-steps" id="tarotSteps">
+          <div class="tarot-step" id="tarotStep1">
+            <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
+            <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
+            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
+          </div>
+          <div class="tarot-step" id="tarotStep2" style="display:none;">
+            <p class="step-hint">请凭直觉选择 3 张牌</p>
+            <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
+            <div class="card-deck" id="cardDeck"></div>
+            <div class="card-slots">
+              <div class="card-slot" data-slot="0"><div class="slot-label">过去</div><div class="slot-card empty" id="slot0">?</div></div>
+              <div class="card-slot" data-slot="1"><div class="slot-label">现在</div><div class="slot-card empty" id="slot1">?</div></div>
+              <div class="card-slot" data-slot="2"><div class="slot-label">未来</div><div class="slot-card empty" id="slot2">?</div></div>
+            </div>
+          </div>
+          <div class="tarot-step" id="tarotStep3" style="display:none;">
+            <div class="tarot-reading" id="tarotReading"></div>
+            <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
           </div>
         </div>
       </div>

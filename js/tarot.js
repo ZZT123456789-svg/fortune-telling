@@ -157,19 +157,66 @@ const TarotModule = {
     hideEl('tarotStep1');
     showEl('tarotStep2');
 
-    // 渲染牌堆
     const deck = document.getElementById('cardDeck');
     deck.innerHTML = '';
     const shuffled = shuffle(this.cards);
-    for (let i = 0; i < Math.min(22, shuffled.length); i++) {
-      const cardEl = document.createElement('div');
-      cardEl.className = 'mini-card';
-      cardEl.style.transform = `rotate(${(i - 11) * 3}deg) translateY(${Math.abs(i - 11) * 2}px)`;
-      cardEl.textContent = '🃏';
-      cardEl.title = '点击选牌';
-      cardEl.addEventListener('click', () => this.drawCard(shuffled[i]));
-      deck.appendChild(cardEl);
+
+    // === 洗牌动画 ===
+    const animCards = [];
+    const animCount = 15;
+
+    for (let i = 0; i < animCount; i++) {
+      const card = document.createElement('div');
+      card.className = 'mini-card shuffling';
+      card.textContent = '🃏';
+      card.style.position = 'absolute';
+      card.style.left = '50%';
+      card.style.top = '50%';
+      card.style.marginLeft = '-32px';
+      card.style.marginTop = '-49px';
+      card.style.opacity = '0';
+      card.style.transition = `all ${0.3 + Math.random() * 0.4}s ease-out`;
+      card.style.pointerEvents = 'none';
+      deck.appendChild(card);
+      animCards.push(card);
     }
+
+    // 洗牌飞动
+    let frame = 0;
+    const shuffleInterval = setInterval(() => {
+      animCards.forEach((card, i) => {
+        const x = (Math.random() - 0.5) * 220;
+        const y = (Math.random() - 0.5) * 160;
+        const rot = (Math.random() - 0.5) * 180;
+        card.style.opacity = '0.9';
+        card.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+      });
+      frame++;
+      if (frame >= 8) {
+        clearInterval(shuffleInterval);
+        // 收拢
+        animCards.forEach((card, i) => {
+          card.style.transition = 'all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
+          card.style.transform = `rotate(${(i - 7) * 3}deg) translateY(${Math.abs(i - 7) * 3}px)`;
+          card.style.opacity = '0.85';
+        });
+
+        // 渲染可选牌
+        setTimeout(() => {
+          animCards.forEach(c => c.remove());
+          for (let i = 0; i < Math.min(22, shuffled.length); i++) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'mini-card';
+            cardEl.style.transform = `rotate(${(i - 11) * 3}deg) translateY(${Math.abs(i - 11) * 2}px)`;
+            cardEl.style.animation = 'fadeIn 0.3s ease forwards';
+            cardEl.textContent = '🃏';
+            cardEl.title = '点击选牌';
+            cardEl.addEventListener('click', () => this.drawCard(shuffled[i]));
+            deck.appendChild(cardEl);
+          }
+        }, 400);
+      }
+    }, 150);
   },
 
   /** 抽一张牌 */
