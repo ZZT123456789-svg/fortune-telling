@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>命理大全 — 探索你的命运</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 星空背景 -->
+  <canvas id="starCanvas"></canvas>
+
+  <!-- 顶部导航 -->
+  <header class="header">
+    <h1 class="site-title">🔮 命理大全</h1>
+    <p class="site-subtitle">探索命运 · 洞悉未来</p>
+  </header>
+
+  <nav class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="ai">
+      <span class="nav-icon">🤖</span>
+      <span class="nav-label">AI 智能解命</span>
+    </button>
+    <button class="nav-tab" data-tab="tarot">
+      <span class="nav-icon">🃏</span>
+      <span class="nav-label">塔罗牌占卜</span>
+    </button>
+    <button class="nav-tab" data-tab="daily">
+      <span class="nav-icon">🏮</span>
+      <span class="nav-label">每日运势签</span>
+    </button>
+    <button class="nav-tab" data-tab="bazi">
+      <span class="nav-icon">☯️</span>
+      <span class="nav-label">五行八字</span>
+    </button>
+    <button class="nav-tab" data-tab="mbti">
+      <span class="nav-icon">🎭</span>
+      <span class="nav-label">MBTI × 星座</span>
+    </button>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+
+    <!-- ========== 模块一：AI 智能解命 ========== -->
+    <section class="module" id="module-ai">
+      <div class="module-card">
+        <h2 class="module-title">🤖 AI 智能解命</h2>
+        <p class="module-desc">输入你的信息，AI 将为你深度解读命运密码</p>
+        <form class="fortune-form" id="aiForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>姓名</label>
+              <input type="text" id="aiName" placeholder="输入你的姓名" required>
+            </div>
+            <div class="form-group">
+              <label>性别</label>
+              <select id="aiGender">
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>出生年份</label>
+              <input type="number" id="aiYear" placeholder="如 1990" min="1900" max="2100" required>
+            </div>
+            <div class="form-group">
+              <label>出生月份</label>
+              <input type="number" id="aiMonth" placeholder="1-12" min="1" max="12" required>
+            </div>
+            <div class="form-group">
+              <label>出生日期</label>
+              <input type="number" id="aiDay" placeholder="1-31" min="1" max="31" required>
+            </div>
+            <div class="form-group">
+              <label>出生时辰</label>
+              <select id="aiHour">
+                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
+                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
+                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
+                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
+                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
+                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>你想问什么？（选填）</label>
+            <textarea id="aiQuestion" rows="3" placeholder="例如：我的事业运势如何？什么时候能遇到正缘？……"></textarea>
+          </div>
+          <div class="form-group api-key-group">
+            <label>AI API Key（选填，不填则使用本地模拟）</label>
+            <input type="password" id="aiApiKey" placeholder="sk-... 输入你的 API Key 获得更准结果">
+            <small>支持 OpenAI / Claude API 格式</small>
+          </div>
+          <button type="submit" class="btn-primary btn-glow">🔮 开始解命</button>
+        </form>
+        <div class="result-container" id="aiResult" style="display:none;">
+          <div class="result-header">📜 命理分析报告</div>
+          <div class="result-content" id="aiResultContent"></div>
+          <button class="btn-secondary" onclick="document.getElementById('aiResult').style.display='none';document.getElementById('aiForm').style.display='block';">重新测算</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 模块二：塔罗牌占卜 ========== -->
+    <section class="module" id="module-tarot" style="display:none;">
+      <div class="module-card">
+        <h2 class="module-title">🃏 塔罗牌占卜</h2>
+        <p class="module-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
+        <div class="tarot-steps" id="tarotSteps">
+          <div class="tarot-step" id="tarotStep1">
+            <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
+            <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
+            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
+          </div>
+          <div class="tarot-step" id="tarotStep2" style="display:none;">
+            <p class="step-hint">请凭直觉选择 3 张牌</p>
+            <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
+            <div class="card-deck" id="cardDeck"></div>
+            <div class="card-slots">
+              <div class="card-slot" data-slot="0">
+                <div class="slot-label">过去</div>
+                <div class="slot-card empty" id="slot0">?</div>
+              </div>
+              <div class="card-slot" data-slot="1">
+                <div class="slot-label">现在</div>
+                <div class="slot-card empty" id="slot1">?</div>
+              </div>
+              <div class="card-slot" data-slot="2">
+                <div class="slot-label">未来</div>
+                <div class="slot-card empty" id="slot2">?</div>
+              </div>
+            </div>
+          </div>
+          <div class="tarot-step" id="tarotStep3" style="display:none;">
+            <div class="tarot-reading" id="tarotReading"></div>
+            <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 模块三：每日运势签 ========== -->
+    <section class="module" id="module-daily" style="display:none;">
+      <div class="module-card">
+        <h2 class="module-title">🏮 每日运势签</h2>
+        <p class="module-desc">诚心祈福，摇出一支灵签，窥见今日运势</p>
+        <div class="daily-container" id="dailyContainer">
+          <div class="stick-holder" id="stickHolder">
+            <div class="stick-tube">
+              <div class="tube-body">🏮</div>
+              <div class="tube-label">灵签筒</div>
+            </div>
+          </div>
+          <button class="btn-primary btn-glow" id="shakeBtn" onclick="DailyModule.shake()">🎋 摇签</button>
+          <div class="stick-result" id="stickResult" style="display:none;">
+            <div class="stick-level" id="stickLevel"></div>
+            <div class="stick-poem" id="stickPoem"></div>
+            <div class="stick-interpretation" id="stickInterpretation"></div>
+            <div class="stick-extras" id="stickExtras"></div>
+            <button class="btn-secondary" onclick="DailyModule.reshake()">🎋 明日再来</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 模块四：五行八字 ========== -->
+    <section class="module" id="module-bazi" style="display:none;">
+      <div class="module-card">
+        <h2 class="module-title">☯️ 五行八字测算</h2>
+        <p class="module-desc">输入出生时间，排出四柱八字，洞悉五行命理</p>
+        <form class="fortune-form" id="baziForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>性别</label>
+              <select id="baziGender"><option value="男">男</option><option value="女">女</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>出生年份</label>
+              <input type="number" id="baziYear" placeholder="如 1990" min="1900" max="2100" required>
+            </div>
+            <div class="form-group">
+              <label>出生月份</label>
+              <input type="number" id="baziMonth" placeholder="1-12" min="1" max="12" required>
+            </div>
+            <div class="form-group">
+              <label>出生日期</label>
+              <input type="number" id="baziDay" placeholder="1-31" min="1" max="31" required>
+            </div>
+            <div class="form-group">
+              <label>出生时辰</label>
+              <select id="baziHour">
+                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
+                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
+                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
+                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
+                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
+                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary btn-glow">☯️ 排盘测算</button>
+        </form>
+        <div class="result-container" id="baziResult" style="display:none;">
+          <div class="result-header">📊 八字排盘</div>
+          <div class="bazi-table" id="baziTable"></div>
+          <div class="wuxing-chart-container">
+            <canvas id="wuxingChart" width="260" height="260"></canvas>
+          </div>
+          <div class="bazi-analysis" id="baziAnalysis"></div>
+          <button class="btn-secondary" onclick="document.getElementById('baziResult').style.display='none';document.getElementById('baziForm').style.display='block';">重新测算</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 模块五：MBTI × 星座 ========== -->
+    <section class="module" id="module-mbti" style="display:none;">
+      <div class="module-card">
+        <h2 class="module-title">🎭 MBTI × 星座 趣味算命</h2>
+        <p class="module-desc">回答几道趣味题目，发现你的命理人格</p>
+        <div class="mbti-flow" id="mbtiFlow">
+          <div id="mbtiStart">
+            <div class="form-group">
+              <label>你的星座</label>
+              <select id="mbtiZodiac">
+                <option value="白羊座">♈ 白羊座 (3.21-4.19)</option><option value="金牛座">♉ 金牛座 (4.20-5.20)</option>
+                <option value="双子座">♊ 双子座 (5.21-6.21)</option><option value="巨蟹座">♋ 巨蟹座 (6.22-7.22)</option>
+                <option value="狮子座">♌ 狮子座 (7.23-8.22)</option><option value="处女座">♍ 处女座 (8.23-9.22)</option>
+                <option value="天秤座">♎ 天秤座 (9.23-10.23)</option><option value="天蝎座">♏ 天蝎座 (10.24-11.22)</option>
+                <option value="射手座">♐ 射手座 (11.23-12.21)</option><option value="摩羯座">♑ 摩羯座 (12.22-1.19)</option>
+                <option value="水瓶座">♒ 水瓶座 (1.20-2.18)</option><option value="双鱼座">♓ 双鱼座 (2.19-3.20)</option>
+              </select>
+            </div>
+            <button class="btn-primary btn-glow" onclick="MbtiModule.start()">🎯 开始测试</button>
+          </div>
+          <div id="mbtiQuiz" style="display:none;">
+            <div class="quiz-progress">
+              <div class="progress-bar"><div class="progress-fill" id="quizProgress"></div></div>
+              <span class="progress-text" id="quizProgressText">1/10</span>
+            </div>
+            <h3 class="quiz-question" id="quizQuestion"></h3>
+            <div class="quiz-options" id="quizOptions"></div>
+          </div>
+          <div class="result-container" id="mbtiResult" style="display:none;">
+            <div class="result-header" id="mbtiResultHeader"></div>
+            <div class="result-content" id="mbtiResultContent"></div>
+            <button class="btn-secondary" onclick="MbtiModule.reset()">🔄 重新测试</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <p>🔮 命理大全 — 仅供娱乐参考，愿好运常伴 🌟</p>
+  </footer>
+
+  <script src="js/lunar.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/ai-fortune.js"></script>
+  <script src="js/tarot.js"></script>
+  <script src="js/daily-fortune.js"></script>
+  <script src="js/bazi.js"></script>
+  <script src="js/mbti-zodiac.js"></script>
+</body>
+</html>
