@@ -48,17 +48,9 @@
       <span class="nav-icon">🪔</span>
       <span class="nav-label">每日运势签</span>
     </button>
-    <button class="nav-tab" data-tab="bazi">
-      <span class="nav-icon">☯️</span>
-      <span class="nav-label">五行八字</span>
-    </button>
     <button class="nav-tab" data-tab="mbti">
       <span class="nav-icon">🌙</span>
       <span class="nav-label">MBTI × 星座</span>
-    </button>
-    <button class="nav-tab" data-tab="classics">
-      <span class="nav-icon">📜</span>
-      <span class="nav-label">经典古籍</span>
     </button>
   </nav>
 
@@ -238,63 +230,6 @@
       </div>
     </section>
 
-    <!-- ========== 模块六：经典古籍 ========== -->
-    <section class="module" id="module-classics" style="display:none;">
-      <div class="module-card">
-        <h2 class="module-title">📜 经典古籍</h2>
-        <p class="module-desc">探索中华智慧源头，以古圣先贤之智解读命运</p>
-        <div class="classics-subnav" id="classicsSubnav">
-          <button class="classics-tab active" data-book="yijing">☰ 周易</button>
-          <button class="classics-tab" data-book="daodejing">☯ 道德经</button>
-          <button class="classics-tab" data-book="zhuangzi">🦋 庄子</button>
-          <button class="classics-tab" data-book="meihua">🌸 梅花易数</button>
-          <button class="classics-tab" data-book="huangji">🌌 皇极经世</button>
-        </div>
-        <div class="classics-content" id="content-yijing">
-          <div class="classics-header">
-            <h3>周易 · 六十四卦</h3>
-            <p class="classics-intro">《周易》是中国最古老的占筮典籍，被誉为"群经之首，大道之源"。六十四卦涵盖天地万物变化之理，每一卦都是宇宙密码的映射。</p>
-            <div class="classics-actions">
-              <button class="btn-primary btn-glow" onclick="ClassicsModule.randomHexagram()">🎲 随机取一卦</button>
-              <input type="text" id="hexagramSearch" class="hexagram-search" placeholder="搜索卦名或序号 (1-64)...">
-            </div>
-          </div>
-          <div class="hexagram-list" id="hexagramList"></div>
-          <div class="hexagram-detail" id="hexagramDetail" style="display:none;"></div>
-        </div>
-        <div class="classics-content" id="content-daodejing" style="display:none;">
-          <div class="classics-header">
-            <h3>道德经 · 老子</h3>
-            <p class="classics-intro">《道德经》为道家创始人老子所著，五千言道尽天地万物运行之玄机。"道法自然"、"无为而无不为"，是理解命运的最高智慧。</p>
-            <button class="btn-primary btn-glow" onclick="ClassicsModule.randomChapter('daodejing')">🎲 随机一章</button>
-          </div>
-          <div id="daodejingList"></div>
-        </div>
-        <div class="classics-content" id="content-zhuangzi" style="display:none;">
-          <div class="classics-header">
-            <h3>庄子 · 南华真经</h3>
-            <p class="classics-intro">庄子以汪洋恣肆的寓言，阐述了"逍遥游"、"齐物"、"坐忘"等至高境界。读懂庄子，便读懂了何为真正的自由。</p>
-            <button class="btn-primary btn-glow" onclick="ClassicsModule.randomChapter('zhuangzi')">🎲 随机一篇</button>
-          </div>
-          <div id="zhuangziList"></div>
-        </div>
-        <div class="classics-content" id="content-meihua" style="display:none;">
-          <div class="classics-header">
-            <h3>梅花易数 · 邵雍</h3>
-            <p class="classics-intro">《梅花易数》为北宋邵雍所创，以年月日时数字起卦，随时随地可占。其法简便而玄妙，是"天人合一"在占卜中的完美体现。</p>
-          </div>
-          <div id="meihuaContent"></div>
-        </div>
-        <div class="classics-content" id="content-huangji" style="display:none;">
-          <div class="classics-header">
-            <h3>皇极经世 · 邵雍</h3>
-            <p class="classics-intro">《皇极经世》以元会运世推演宇宙大化流行之规律，建立了一套宏大的宇宙周期理论，是理解天命时序的钥匙。</p>
-          </div>
-          <div id="huangjiContent"></div>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <footer class="footer">
@@ -308,6 +243,5 @@
   <script src="js/daily-fortune.js"></script>
   <script src="js/bazi.js"></script>
   <script src="js/mbti-zodiac.js"></script>
-  <script src="js/classics.js"></script>
 </body>
 </html>
