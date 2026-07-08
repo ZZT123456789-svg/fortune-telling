@@ -82,6 +82,26 @@
               </select>
             </div>
           </div>
+          <div class="form-row address-row">
+            <div class="form-group">
+              <label>出生地址</label>
+              <select id="aiProvince" class="address-select">
+                <option value="">省/直辖市</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <select id="aiCity" class="address-select">
+                <option value="">市/区</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <select id="aiDistrict" class="address-select">
+                <option value="">县/区</option>
+              </select>
+            </div>
+          </div>
           <div class="form-group">
             <label>你想问什么？（选填）</label>
             <textarea id="aiQuestion" rows="3" placeholder="例如：我的事业运势如何？什么时候能遇到正缘？……"></textarea>
@@ -192,6 +212,26 @@
               </select>
             </div>
           </div>
+          <div class="form-row address-row">
+            <div class="form-group">
+              <label>出生地址</label>
+              <select id="baziProvince" class="address-select">
+                <option value="">省/直辖市</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <select id="baziCity" class="address-select">
+                <option value="">市/区</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <select id="baziDistrict" class="address-select">
+                <option value="">县/区</option>
+              </select>
+            </div>
+          </div>
           <button type="submit" class="btn-primary btn-glow">☯️ 排盘测算</button>
         </form>
         <div class="result-container" id="baziResult" style="display:none;">
@@ -249,6 +289,7 @@
   </footer>
 
   <script src="js/lunar.js"></script>
+  <script src="js/china-address.js"></script>
   <script src="js/app.js"></script>
   <script src="js/ai-fortune.js"></script>
   <script src="js/tarot.js"></script>

@@ -410,7 +410,60 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ============ 地址三级联动 ============
+function initAddressCascade(prefix) {
+  const provinceSel = document.getElementById(prefix + 'Province');
+  const citySel = document.getElementById(prefix + 'City');
+  const districtSel = document.getElementById(prefix + 'District');
+  if (!provinceSel || !citySel || !districtSel) return;
+
+  // 填充省份
+  const provinces = Object.keys(CHINA_ADDRESS);
+  provinces.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    provinceSel.appendChild(opt);
+  });
+
+  // 省份变化 -> 更新城市
+  provinceSel.addEventListener('change', () => {
+    const province = provinceSel.value;
+    citySel.innerHTML = '<option value="">市/区</option>';
+    districtSel.innerHTML = '<option value="">县/区</option>';
+
+    if (province && CHINA_ADDRESS[province]) {
+      const cities = Object.keys(CHINA_ADDRESS[province]);
+      cities.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        citySel.appendChild(opt);
+      });
+    }
+  });
+
+  // 城市变化 -> 更新区县
+  citySel.addEventListener('change', () => {
+    const province = provinceSel.value;
+    const city = citySel.value;
+    districtSel.innerHTML = '<option value="">县/区</option>';
+
+    if (province && city && CHINA_ADDRESS[province] && CHINA_ADDRESS[province][city]) {
+      const districts = CHINA_ADDRESS[province][city];
+      districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        districtSel.appendChild(opt);
+      });
+    }
+  });
+}
+
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
+  initAddressCascade('ai');
+  initAddressCascade('bazi');
 });
