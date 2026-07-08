@@ -3,24 +3,25 @@
  * 负责导航切换、星空背景、全局状态管理
  */
 
-// ============ 开场动画 ============
+// ============ 开场动画：太极生两仪 → 两仪生四象 → 四象生八卦 ============
 class SplashAnimation {
   constructor() {
     this.canvas = document.getElementById('splashCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.time = 0;
+    this.stage = 0;       // 0=太极, 1=两仪, 2=四象, 3=八卦
+    this.stageTime = 0;   // 当前阶段内的时间
     this.particles = [];
     this.resize();
     this.initParticles();
     this.animate();
-    window.addEventListener('resize', () => this.resize());
 
-    // 点击进入
     const splash = document.getElementById('splashScreen');
     splash.addEventListener('click', () => {
       splash.classList.add('fade-out');
       setTimeout(() => splash.remove(), 800);
     });
+    window.addEventListener('resize', () => this.resize());
   }
 
   resize() {
@@ -31,110 +32,37 @@ class SplashAnimation {
   }
 
   initParticles() {
-    const count = 200;
+    const count = 150;
     this.particles = [];
     for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * Math.min(this.canvas.width, this.canvas.height) * 0.5;
+      const a = Math.random() * Math.PI * 2;
+      const d = Math.random() * Math.min(this.canvas.width, this.canvas.height) * 0.5;
       this.particles.push({
-        x: this.cx + Math.cos(angle) * dist,
-        y: this.cy + Math.sin(angle) * dist,
-        baseX: this.cx + Math.cos(angle) * dist,
-        baseY: this.cy + Math.sin(angle) * dist,
-        size: Math.random() * 2 + 0.5,
-        speed: Math.random() * 0.02 + 0.005,
+        x: this.cx + Math.cos(a) * d, y: this.cy + Math.sin(a) * d,
+        baseX: this.cx + Math.cos(a) * d, baseY: this.cy + Math.sin(a) * d,
+        size: Math.random() * 1.8 + 0.3,
+        speed: Math.random() * 0.018 + 0.004,
         phase: Math.random() * Math.PI * 2,
         color: Math.random() < 0.5 ? '200,180,140' : '220,220,230'
       });
     }
   }
 
-  /** 绘制太极图 - 快速旋转 */
-  _drawTaiChi(ctx, cx, cy, r, angle) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(angle);
-
-    // 外圈光晕
-    const glowGrad = ctx.createRadialGradient(0, 0, r * 0.9, 0, 0, r * 1.25);
-    glowGrad.addColorStop(0, 'rgba(201,169,110,0)');
-    glowGrad.addColorStop(0.5, 'rgba(201,169,110,0.25)');
-    glowGrad.addColorStop(1, 'rgba(201,169,110,0)');
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
-    ctx.fill();
-
-    // 外圈环
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(201,169,110,0.7)';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // 白色半圆（右）
-    ctx.beginPath();
-    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2);
-    ctx.fillStyle = '#f0ede0';
-    ctx.fill();
-
-    // 黑色半圆（左）
-    ctx.beginPath();
-    ctx.arc(0, 0, r, Math.PI / 2, -Math.PI / 2);
-    ctx.fillStyle = '#0a0a14';
-    ctx.fill();
-
-    // 上半太极眼
-    ctx.beginPath();
-    ctx.arc(0, -r / 2, r / 2, 0, Math.PI * 2);
-    ctx.fillStyle = '#f0ede0';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, -r / 2, r / 7, 0, Math.PI * 2);
-    ctx.fillStyle = '#0a0a14';
-    ctx.fill();
-
-    // 下半太极眼
-    ctx.beginPath();
-    ctx.arc(0, r / 2, r / 2, 0, Math.PI * 2);
-    ctx.fillStyle = '#0a0a14';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, r / 2, r / 7, 0, Math.PI * 2);
-    ctx.fillStyle = '#f0ede0';
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  /** 绘制卦爻 */
-  _drawTrigram(ctx, cx, cy, trigram, angle, baguaR) {
-    const barW = baguaR * 0.08;
-    const barH = baguaR * 0.018;
-    const gap = baguaR * 0.03;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(angle);
-    const dist = baguaR * 0.72;
-    ctx.translate(0, -dist);
-
-    for (let i = 0; i < 3; i++) {
-      const y = (i - 1) * (barH + gap + barH);
-      ctx.fillStyle = 'rgba(220,210,180,0.8)';
-      if (trigram[i] === 1) {
-        ctx.fillRect(-barW / 2, y, barW, barH);
-      } else {
-        const seg = barW * 0.36;
-        ctx.fillRect(-barW / 2, y, seg, barH);
-        ctx.fillRect(barW / 2 - seg, y, seg, barH);
-      }
+  /** 绘制阴阳爻 */
+  _drawYao(ctx, x, y, w, h, isYang) {
+    if (isYang) {
+      ctx.fillRect(x - w/2, y, w, h);
+    } else {
+      const seg = w * 0.38;
+      ctx.fillRect(x - w/2, y, seg, h);
+      ctx.fillRect(x + w/2 - seg, y, seg, h);
     }
-    ctx.restore();
   }
 
   animate() {
-    // 快速旋转
-    this.time += 0.04;
+    this.time += 0.025;
+    this.stageTime += 0.025;
+
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -142,101 +70,235 @@ class SplashAnimation {
     const cy = this.cy;
     const minDim = Math.min(w, h);
 
-    // 半透明覆盖产生拖尾
-    ctx.fillStyle = 'rgba(6, 6, 15, 0.3)';
+    // 阶段切换
+    if (this.stageTime > 4.5) {
+      this.stageTime = 0;
+      this.stage++;
+      if (this.stage > 3) this.stage = 3;
+    }
+
+    // 半透明覆盖
+    ctx.fillStyle = 'rgba(6, 6, 15, 0.35)';
     ctx.fillRect(0, 0, w, h);
 
-    const baguaR = minDim * 0.2;
-    const rotationSpeed = this.time * 1.5; // 快速旋转
+    const r = minDim * 0.22;
+    const t = this.stageTime; // 阶段内时间 0~4.5
+    const progress = Math.min(1, t / 3); // 0→1 过渡进度
 
-    // === 外层扩散光环 ===
-    const ringCount = 3;
-    for (let i = 0; i < ringCount; i++) {
-      const ringPhase = (this.time * 0.6 + i * 2.1) % 2.1;
-      const ringR = baguaR * 1.4 + ringPhase * baguaR * 1.3;
-      const alpha = (1 - ringPhase / 2.1) * 0.35;
-      ctx.beginPath();
-      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(201,169,110,${alpha})`;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // === 旋转太极 ===
-    this._drawTaiChi(ctx, cx, cy, baguaR, rotationSpeed);
-
-    // === 八卦 ===
-    const trigrams = [
-      [1,1,1],[0,1,1],[1,0,1],[0,0,1],
-      [1,1,0],[0,1,0],[1,0,0],[0,0,0]
-    ];
-    const names = ['乾','兑','离','震','巽','坎','艮','坤'];
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2 + rotationSpeed * 0.5;
-      this._drawTrigram(ctx, cx, cy, trigrams[i], angle, baguaR);
-
-      // 卦名
-      const labelR = baguaR * 0.88;
-      const lx = cx + Math.cos(angle) * labelR;
-      const ly = cy + Math.sin(angle) * labelR;
-      ctx.fillStyle = 'rgba(200,180,140,0.6)';
-      ctx.font = `${baguaR * 0.1}px "KaiTi","STKaiti",serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(names[i], lx, ly);
-    }
-
-    // === 旋转粒子环 ===
-    const particleRingCount = 60;
-    for (let i = 0; i < particleRingCount; i++) {
-      const pAngle = (Math.PI * 2 / particleRingCount) * i + this.time * 1.2;
-      const pDist = baguaR * 1.1 + Math.sin(this.time * 1.8 + i) * baguaR * 0.15;
-      const px = cx + Math.cos(pAngle) * pDist;
-      const py = cy + Math.sin(pAngle) * pDist;
-      const alpha = 0.4 + Math.sin(this.time * 2 + i) * 0.3;
-      ctx.beginPath();
-      ctx.arc(px, py, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(220,200,150,${alpha})`;
-      ctx.fill();
-    }
-
-    // === 漂浮粒子 ===
-    for (const p of this.particles) {
-      p.phase += p.speed;
-      const floatAngle = this.time * 0.4 + p.phase;
-      const floatR = 3 + Math.sin(floatAngle) * 2;
-      p.x = p.baseX + Math.cos(floatAngle) * floatR;
-      p.y = p.baseY + Math.sin(floatAngle) * floatR * 0.7;
-
-      const alpha = 0.2 + Math.sin(p.phase) * 0.15;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${p.color},${Math.max(0, alpha)})`;
-      ctx.fill();
-    }
-
-    // === 中心光点 ===
-    const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, baguaR * 0.15);
+    // ===== 中心光点 =====
+    const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.18);
     coreGlow.addColorStop(0, 'rgba(240,210,160,0.8)');
     coreGlow.addColorStop(0.5, 'rgba(200,160,100,0.2)');
     coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = coreGlow;
-    ctx.beginPath();
-    ctx.arc(cx, cy, baguaR * 0.15, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.18, 0, Math.PI*2); ctx.fill();
 
-    // === 光线射线 ===
-    const rayCount = 8;
-    for (let i = 0; i < rayCount; i++) {
-      const rayAngle = (Math.PI * 2 / rayCount) * i + this.time * 0.5;
-      const rayLen = baguaR * 1.6 + Math.sin(this.time * 0.7 + i) * baguaR * 0.3;
-      const rayAlpha = 0.06 + Math.sin(this.time + i) * 0.03;
+    // ===== 阶段0：太极 =====
+    if (this.stage >= 0) {
+      const alpha = this.stage === 0 ? Math.min(1, t / 1.5) : Math.max(0, 1 - (this.stage > 0 ? t / 1.5 : 0));
+      if (alpha > 0) {
+        // 太极圆
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 0.7, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(201,169,110,${0.7 * alpha})`;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // 光晕
+        const g = ctx.createRadialGradient(cx, cy, r*0.5, cx, cy, r*0.9);
+        g.addColorStop(0, `rgba(201,169,110,${0.2*alpha})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, r*0.9, 0, Math.PI*2); ctx.fill();
+
+        // 文字
+        ctx.fillStyle = `rgba(200,170,130,${alpha})`;
+        ctx.font = `${r*0.2}px "KaiTi","STKaiti",serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('太 极', cx, cy);
+      }
+    }
+
+    // ===== 阶段1：两仪 =====
+    if (this.stage >= 1) {
+      const sAlpha = this.stage === 1 ? Math.min(1, t / 2) : 1;
+      const rot = this.stage >= 1 ? t * 0.6 : 0;
+
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+
+      // 阴阳鱼
+      ctx.beginPath(); ctx.arc(0, 0, r*0.65, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(201,169,110,${0.65*sAlpha})`; ctx.lineWidth = 2; ctx.stroke();
+
+      ctx.beginPath(); ctx.arc(0, 0, r*0.65, -Math.PI/2, Math.PI/2);
+      ctx.fillStyle = `rgba(235,230,220,${0.85*sAlpha})`; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(0, 0, r*0.65, Math.PI/2, -Math.PI/2);
+      ctx.fillStyle = `rgba(8,8,18,${0.85*sAlpha})`; ctx.fill();
+
+      // 阴阳眼
+      ctx.beginPath(); ctx.arc(0, -r*0.325, r*0.325, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(235,230,220,${0.85*sAlpha})`; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -r*0.325, r*0.06, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(8,8,18,${0.85*sAlpha})`; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(0, r*0.325, r*0.325, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(8,8,18,${0.85*sAlpha})`; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, r*0.325, r*0.06, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(235,230,220,${0.85*sAlpha})`; ctx.fill();
+
+      ctx.restore();
+
+      // 文字标签
+      if (sAlpha > 0.3) {
+        ctx.fillStyle = `rgba(200,170,130,${sAlpha})`;
+        ctx.font = `${r*0.14}px "KaiTi","STKaiti",serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('阴', cx - r*0.42, cy);
+        ctx.fillText('阳', cx + r*0.42, cy);
+      }
+    }
+
+    // ===== 阶段2：四象 =====
+    if (this.stage >= 2) {
+      const sAlpha = this.stage === 2 ? Math.min(1, t / 2.5) : 1;
+      const siXiang = [
+        { name:'老阳', yao:[1,1], angle:-Math.PI/2 + t*0.3 },
+        { name:'少阴', yao:[0,1], angle:0 + t*0.3 },
+        { name:'少阳', yao:[1,0], angle:Math.PI + t*0.3 },
+        { name:'老阴', yao:[0,0], angle:Math.PI/2 + t*0.3 }
+      ];
+
+      siXiang.forEach(sx => {
+        const sxR = r * 0.9;
+        const sxX = cx + Math.cos(sx.angle) * sxR;
+        const sxY = cy + Math.sin(sx.angle) * sxR;
+        const barW = r * 0.35;
+        const barH = r * 0.04;
+        const gap = r * 0.03;
+
+        // 外圈
+        ctx.beginPath();
+        ctx.arc(sxX, sxY, r*0.2, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(201,169,110,${0.5*sAlpha})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // 两爻
+        ctx.fillStyle = `rgba(220,210,180,${0.8*sAlpha})`;
+        for (let i = 0; i < 2; i++) {
+          const yy = sxY + (i-0.5) * (barH + gap);
+          this._drawYao(ctx, sxX, yy, barW, barH, sx.yao[i]);
+        }
+
+        // 名字
+        ctx.fillStyle = `rgba(200,170,130,${sAlpha})`;
+        ctx.font = `${r*0.1}px "KaiTi","STKaiti",serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(sx.name, sxX, sxY + r*0.28);
+      });
+
+      // 连接线
+      ctx.strokeStyle = `rgba(201,169,110,${0.15*sAlpha})`;
+      ctx.lineWidth = 0.6; ctx.setLineDash([3,6]);
+      siXiang.forEach(sx => {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(sx.angle) * r*0.7, cy + Math.sin(sx.angle) * r*0.7);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+
+    // ===== 阶段3：八卦 =====
+    if (this.stage >= 3) {
+      const sAlpha = Math.min(1, t / 3);
+      const trigrams = [[1,1,1],[0,1,1],[1,0,1],[0,0,1],[1,1,0],[0,1,0],[1,0,0],[0,0,0]];
+      const names = ['乾','兑','离','震','巽','坎','艮','坤'];
+      const rot = t * 0.5;
+
+      // 外圈大环
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(rayAngle) * baguaR * 0.95, cy + Math.sin(rayAngle) * baguaR * 0.95);
-      ctx.lineTo(cx + Math.cos(rayAngle) * rayLen, cy + Math.sin(rayAngle) * rayLen);
-      ctx.strokeStyle = `rgba(201,169,110,${rayAlpha})`;
-      ctx.lineWidth = 1;
+      ctx.arc(cx, cy, r*1.15, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(201,169,110,${0.55*sAlpha})`;
+      ctx.lineWidth = 2;
       ctx.stroke();
+
+      // 光晕
+      const g = ctx.createRadialGradient(cx, cy, r*0.9, cx, cy, r*1.3);
+      g.addColorStop(0, `rgba(201,169,110,${0.15*sAlpha})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx, cy, r*1.3, 0, Math.PI*2); ctx.fill();
+
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI*2/8)*i - Math.PI/2 + rot;
+        const dist = r * 0.9;
+        const tx = cx + Math.cos(angle) * dist;
+        const ty = cy + Math.sin(angle) * dist;
+        const barW = r * 0.24;
+        const barH = r * 0.028;
+        const gap = r * 0.022;
+
+        // 连线
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(angle)*r*0.67, cy + Math.sin(angle)*r*0.67);
+        ctx.lineTo(tx, ty);
+        ctx.strokeStyle = `rgba(201,169,110,${0.15*sAlpha})`;
+        ctx.lineWidth = 0.5; ctx.stroke();
+
+        // 三爻
+        ctx.fillStyle = `rgba(220,210,180,${0.8*sAlpha})`;
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(angle + Math.PI/2);
+        for (let j = 0; j < 3; j++) {
+          const yy = (j-1) * (barH + gap);
+          this._drawYao(ctx, 0, yy, barW, barH, trigrams[i][j]);
+        }
+        ctx.restore();
+
+        // 卦名
+        ctx.fillStyle = `rgba(200,170,130,${sAlpha})`;
+        ctx.font = `${r*0.08}px "KaiTi","STKaiti",serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const lblR = dist + r*0.15;
+        ctx.fillText(names[i], cx+Math.cos(angle)*lblR, cy+Math.sin(angle)*lblR);
+      }
+
+      // 粒子环
+      const pc = 50;
+      for (let i = 0; i < pc; i++) {
+        const pa = (Math.PI*2/pc)*i + t * 0.8;
+        const pd = r*1.05 + Math.sin(t + i)*r*0.06;
+        ctx.beginPath();
+        ctx.arc(cx+Math.cos(pa)*pd, cy+Math.sin(pa)*pd, 1.2, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(220,200,150,${0.4 + Math.sin(t*2+i)*0.3})`;
+        ctx.fill();
+      }
+    }
+
+    // ===== 阶段提示文字 =====
+    const stageLabels = ['太极', '两仪', '四象', '八卦'];
+    const label = stageLabels[this.stage];
+    if (label) {
+      const labelAlpha = Math.min(1, t / 1.2) * Math.max(0, 1 - (t-3.5)/1);
+      ctx.fillStyle = `rgba(180,160,120,${0.6*labelAlpha})`;
+      ctx.font = `${r*0.16}px "KaiTi","STKaiti",serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(label, cx, cy + r*1.55);
+    }
+
+    // ===== 漂浮粒子 =====
+    for (const p of this.particles) {
+      p.phase += p.speed;
+      const fa = this.time * 0.3 + p.phase;
+      p.x = p.baseX + Math.cos(fa)*3;
+      p.y = p.baseY + Math.sin(fa)*2;
+      const alpha = 0.15 + Math.sin(p.phase)*0.1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${p.color},${Math.max(0,alpha)})`;
+      ctx.fill();
     }
 
     requestAnimationFrame(() => this.animate());
