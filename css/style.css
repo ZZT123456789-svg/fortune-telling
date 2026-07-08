@@ -866,6 +866,91 @@ body {
   font-style: italic;
 }
 
+/* ========== CLASSICS MODULE ========== */
+.classics-subnav {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 0.3rem; margin-bottom: 1.2rem;
+}
+.classics-tab {
+  padding: 0.45rem 0.9rem;
+  background: transparent; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); color: var(--text-secondary);
+  font-size: 0.84rem; cursor: pointer; transition: all var(--transition);
+  font-family: var(--font-body);
+}
+.classics-tab:hover { border-color: var(--gold); color: var(--gold); }
+.classics-tab.active {
+  background: rgba(201,169,110,0.1); border-color: var(--gold);
+  color: var(--gold); font-weight: bold;
+}
+.classics-header { text-align: center; margin-bottom: 1rem; }
+.classics-header h3 { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.4rem; }
+.classics-intro {
+  color: var(--text-secondary); font-size: 0.88rem; line-height: 1.7;
+  max-width: 600px; margin: 0 auto 0.8rem;
+}
+.classics-actions {
+  display: flex; gap: 0.6rem; align-items: center; justify-content: center;
+  margin-bottom: 0.6rem; flex-wrap: wrap;
+}
+.classics-actions .btn-primary { width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; }
+.hexagram-search {
+  padding: 0.5rem 0.8rem; background: var(--bg-input); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 0.85rem;
+  width: 200px; outline: none; font-family: var(--font-body);
+}
+.hexagram-search:focus { border-color: var(--gold); }
+
+.hexagram-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.4rem; margin-bottom: 1rem;
+}
+.hexagram-card {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.7rem; background: var(--bg-card);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition);
+}
+.hexagram-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+.hexagram-num { font-size: 0.72rem; color: var(--text-muted); min-width: 22px; }
+.hexagram-symbols { font-size: 1.1rem; }
+.hexagram-name { font-size: 0.84rem; color: var(--text); font-weight: bold; }
+.hexagram-brief { font-size: 0.7rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.hexagram-full { padding: 0.5rem 0; }
+.hexagram-title-row {
+  display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;
+  justify-content: center; text-align: center;
+}
+.hg-symbols { font-size: 2.4rem; }
+.hg-section {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); padding: 0.7rem 0.9rem; margin-bottom: 0.5rem;
+}
+.hg-section h5 { color: var(--gold); font-size: 0.85rem; margin-bottom: 0.25rem; }
+.hg-section p { color: var(--text); font-size: 0.88rem; line-height: 1.7; }
+
+.classics-chapter-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
+  margin-bottom: 0.6rem; transition: all 0.4s ease;
+}
+.classics-chapter-card h4 { color: var(--gold); font-size: 0.95rem; margin-bottom: 0.4rem; }
+.chapter-text {
+  color: var(--text); font-size: 0.88rem; line-height: 1.8;
+  white-space: pre-line; margin-bottom: 0.4rem;
+}
+.chapter-explain {
+  color: var(--text-secondary); font-size: 0.82rem; line-height: 1.6;
+  padding-top: 0.4rem; border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 480px) {
+  .hexagram-list { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .classics-subnav { gap: 0.15rem; }
+  .classics-tab { font-size: 0.74rem; padding: 0.35rem 0.55rem; }
+}
+
 /* ========== FOOTER ========== */
 .footer {
   position: relative;
