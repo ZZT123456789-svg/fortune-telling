@@ -318,6 +318,40 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// ============ 滴水涟漪点击反馈 ============
+function createRipple(x, y) {
+  // 创建3层涟漪，模拟水滴效果
+  const colors = ['rgba(201,169,110,0.7)', 'rgba(212,165,116,0.5)', 'rgba(180,150,110,0.35)'];
+  const delays = [0, 80, 160]; // 每层间隔出现
+
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple-effect';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.style.border = `2px solid ${colors[i]}`;
+      ripple.style.boxShadow = `0 0 ${6 + i * 3}px ${colors[i]}`;
+      document.body.appendChild(ripple);
+
+      // 动画结束后移除
+      ripple.addEventListener('animationend', () => {
+        ripple.remove();
+      });
+    }, delays[i]);
+  }
+}
+
+// 监听所有可交互元素的点击
+document.addEventListener('click', (e) => {
+  const target = e.target;
+  // 检查是否为可交互元素
+  const isInteractive = target.closest('button, .nav-tab, .mini-card, .slot-card, .quiz-option-btn, .stick-tube, select, input[type="submit"]');
+  if (isInteractive) {
+    createRipple(e.clientX, e.clientY);
+  }
+});
+
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
