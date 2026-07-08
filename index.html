@@ -7,9 +7,17 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- 开场动画 -->
-  <div class="splash-screen" id="splashScreen">
-    <canvas id="splashCanvas"></canvas>
+  <!-- 开场动画 - 纯CSS -->
+  <div class="splash-screen" id="splashScreen" onclick="this.classList.add('fade-out');setTimeout(()=>this.remove(),600)">
+    <div class="splash-bagua">
+      <div class="splash-ring ring1"></div>
+      <div class="splash-ring ring2"></div>
+      <div class="splash-ring ring3"></div>
+      <div class="splash-yinyang">
+        <div class="splash-yang"></div>
+        <div class="splash-yin"></div>
+      </div>
+    </div>
     <div class="splash-text">道 问</div>
     <div class="splash-sub">探索命运 · 洞悉未来</div>
     <div class="splash-hint">轻触进入</div>
