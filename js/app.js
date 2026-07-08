@@ -4,6 +4,108 @@
  */
 
 
+// ============ 开场动画（优化版） ============
+class SplashAnimation {
+  constructor() {
+    this.canvas = document.getElementById('splashCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.time = 0;
+    this.resize();
+    this.animate();
+
+    document.getElementById('splashScreen').addEventListener('click', () => {
+      const el = document.getElementById('splashScreen');
+      el.classList.add('fade-out');
+      setTimeout(() => el.remove(), 600);
+    });
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.cx = this.canvas.width / 2;
+    this.cy = this.canvas.height / 2;
+  }
+
+  _drawTaiChi(ctx, cx, cy, r, angle) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(190,155,100,0.75)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI/2, Math.PI/2);
+    ctx.fillStyle = '#e8e2d4'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, r, Math.PI/2, -Math.PI/2);
+    ctx.fillStyle = '#0a0a14'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -r/2, r/2, 0, Math.PI*2);
+    ctx.fillStyle = '#e8e2d4'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -r/2, r/7, 0, Math.PI*2);
+    ctx.fillStyle = '#0a0a14'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, r/2, r/2, 0, Math.PI*2);
+    ctx.fillStyle = '#0a0a14'; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, r/2, r/7, 0, Math.PI*2);
+    ctx.fillStyle = '#e8e2d4'; ctx.fill();
+    ctx.restore();
+  }
+
+  _drawTrigram(ctx, cx, cy, tri, angle, dist, bw, bh, gap) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle); ctx.translate(0, -dist);
+    ctx.fillStyle = 'rgba(210,195,155,0.8)';
+    for (let i = 0; i < 3; i++) {
+      const y = (i-1) * (bh + gap);
+      if (tri[i]) { ctx.fillRect(-bw/2, y, bw, bh); }
+      else { const s = bw*0.36; ctx.fillRect(-bw/2, y, s, bh); ctx.fillRect(bw/2-s, y, s, bh); }
+    }
+    ctx.restore();
+  }
+
+  animate() {
+    this.time += 0.04;
+    const ctx = this.ctx;
+    const w = this.canvas.width, h = this.canvas.height;
+    const cx = this.cx, cy = this.cy;
+    const r = Math.min(w, h) * 0.2;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 扩散光环
+    for (let i = 0; i < 3; i++) {
+      const phase = (this.time * 0.5 + i * 2) % 2;
+      const ringR = r * 1.35 + phase * r * 1.2;
+      ctx.beginPath(); ctx.arc(cx, cy, ringR, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(190,155,100,${(1-phase/2)*0.3})`;
+      ctx.lineWidth = 1.2; ctx.stroke();
+    }
+
+    // 旋转太极
+    this._drawTaiChi(ctx, cx, cy, r * 0.55, this.time * 1.6);
+
+    // 八卦
+    const tris = [[1,1,1],[0,1,1],[1,0,1],[0,0,1],[1,1,0],[0,1,0],[1,0,0],[0,0,0]];
+    const bw = r * 0.1, bh = r * 0.02, gap = r * 0.025;
+    for (let i = 0; i < 8; i++) {
+      const ang = (Math.PI*2/8)*i - Math.PI/2 + this.time * 0.8;
+      this._drawTrigram(ctx, cx, cy, tris[i], ang, r * 0.78, bw, bh, gap);
+    }
+
+    // 粒子光环
+    const pc = 40;
+    for (let i = 0; i < pc; i++) {
+      const pa = (Math.PI*2/pc)*i + this.time * 1;
+      const pd = r * 1.08 + Math.sin(this.time*1.5 + i) * r * 0.08;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(pa)*pd, cy + Math.sin(pa)*pd, 1, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(210,180,140,${0.35 + Math.sin(this.time*2+i)*0.2})`;
+      ctx.fill();
+    }
+
+    // 中心光核
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.05, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(230,200,150,0.7)'; ctx.fill();
+
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
 // ============ 旋转八卦 + 水流动态背景 ============
 class StarBackground {
   constructor(canvasId) {
@@ -465,6 +567,7 @@ function initAddressCascade(prefix) {
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
   // 主应用
+  new SplashAnimation();
   window.app = new AppController();
   initAddressCascade('ai');
   initAddressCascade('bazi');

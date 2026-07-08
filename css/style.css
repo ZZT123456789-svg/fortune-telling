@@ -42,6 +42,48 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ========== SPLASH SCREEN ========== */
+.splash-screen {
+  position:fixed;inset:0;z-index:10000;background:#06060f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;overflow:hidden;
+}
+.splash-screen.fade-out { animation:splashOut 0.6s ease forwards; }
+@keyframes splashOut {
+  0% { opacity:1; }
+  100% { opacity:0; pointer-events:none; }
+}
+#splashCanvas { position:absolute;inset:0; }
+.splash-text {
+  position:relative;z-index:1;
+  font-family:"KaiTi","STKaiti","Georgia",serif;
+  font-size:clamp(2.6rem,7vw,4.5rem);
+  background:linear-gradient(180deg,#f0d080,#c9a96e 40%,#8b7340);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:0.3em;opacity:0;
+  animation:textIn 1s ease 0.6s forwards;
+}
+@keyframes textIn {
+  0% { opacity:0;transform:translateY(20px); }
+  100% { opacity:1;transform:translateY(0); }
+}
+.splash-sub {
+  position:relative;z-index:1;margin-top:0.5rem;
+  color:#a09880;font-size:clamp(0.75rem,1.8vw,0.9rem);
+  letter-spacing:0.2em;opacity:0;
+  animation:textIn 1s ease 1s forwards;
+}
+.splash-hint {
+  position:absolute;bottom:3rem;
+  color:#706848;font-size:0.8rem;letter-spacing:0.15em;
+  animation:hintPulse 2s ease-in-out 2s infinite;
+}
+@keyframes hintPulse {
+  0%,100% { opacity:0.35; }
+  50% { opacity:1; }
+}
+
 /* ========== STAR BACKGROUND ========== */
 #starCanvas {
   position: fixed;
