@@ -205,21 +205,7 @@ class StarBackground {
       this._drawTrigram(ctx, cx, cy, trigrams[i], angle, baguaR);
     }
 
-    // === 卦名小字 ===
-    const names = ['乾', '兑', '离', '震', '巽', '坎', '艮', '坤'];
-    ctx.save();
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2 + rotationAngle * 0.3;
-      const labelR = baguaR * 0.85;
-      const lx = cx + Math.cos(angle) * labelR;
-      const ly = cy + Math.sin(angle) * labelR;
-      ctx.fillStyle = 'rgba(200,200,210,0.4)';
-      ctx.font = `${baguaR * 0.12}px "KaiTi","STKaiti",serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(names[i], lx, ly);
-    }
-    ctx.restore();
+    // 卦名已删除 — 保持画面干净
 
     // === 散落粒子（水墨感） ===
     const particleCount = 35;
