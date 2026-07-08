@@ -3,16 +3,13 @@
  * 负责导航切换、星空背景、全局状态管理
  */
 
-// ============ 银河旋涡动态背景 ============
+// ============ 旋转八卦 + 水流动态背景 ============
 class StarBackground {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext('2d');
-    this.particles = [];
-    this.stars = [];
     this.time = 0;
     this.resize();
-    this.initParticles();
     this.animate();
     window.addEventListener('resize', () => this.resize());
   }
@@ -24,160 +21,221 @@ class StarBackground {
     this.cy = this.canvas.height / 2;
   }
 
-  initParticles() {
-    // 旋涡粒子（沿螺旋轨道运动）
-    const count = Math.min(300, Math.floor((this.canvas.width * this.canvas.height) / 6000));
-    this.particles = [];
-    for (let i = 0; i < count; i++) {
-      // 每个粒子有一个轨道半径和初始角度
-      const orbitR = Math.random() * Math.min(this.canvas.width, this.canvas.height) * 0.55 + 20;
-      const angle = Math.random() * Math.PI * 2;
-      this.particles.push({
-        orbitR: orbitR,
-        angle: angle,
-        speed: (0.0003 + Math.random() * 0.0008) * (1 + orbitR / 300), // 内圈快外圈慢
-        size: Math.random() * 2.2 + 0.4,
-        brightness: Math.random() * 0.6 + 0.25,
-        twinklePhase: Math.random() * Math.PI * 2,
-        twinkleSpeed: Math.random() * 0.02 + 0.005,
-        // 颜色：大部分金色，少数银白
-        color: Math.random() < 0.7
-          ? { r: 200 + Math.random() * 55, g: 160 + Math.random() * 40, b: 100 + Math.random() * 30 }
-          : { r: 220 + Math.random() * 35, g: 220 + Math.random() * 35, b: 240 + Math.random() * 15 }
-      });
+  /** 绘制阴阳太极 */
+  _drawTaiChi(ctx, cx, cy, r, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    // 大圆
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(180,180,180,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 白色半圆（右）
+    ctx.beginPath();
+    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fill();
+
+    // 黑色半圆（左）
+    ctx.beginPath();
+    ctx.arc(0, 0, r, Math.PI / 2, -Math.PI / 2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+
+    // 上小圆（黑）+ 黑中白点
+    ctx.beginPath();
+    ctx.arc(0, -r / 2, r / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, -r / 2, r / 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+
+    // 下小圆（白）+ 白中黑点
+    ctx.beginPath();
+    ctx.arc(0, r / 2, r / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, r / 2, r / 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /** 绘制一个卦爻 */
+  _drawTrigram(ctx, cx, cy, trigram, angle, baguaR) {
+    // trigram: 3-element array, 1=yang(solid), 0=yin(broken)
+    const barWidth = baguaR * 0.12;
+    const barHeight = baguaR * 0.025;
+    const gap = baguaR * 0.04;
+    const totalH = barHeight * 3 + gap * 2 + barHeight * 4; // 3 bars + gaps
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    // 移动到八卦圈位置
+    const dist = baguaR * 0.68;
+    ctx.translate(0, -dist);
+
+    for (let i = 0; i < 3; i++) {
+      const y = (i - 1) * (barHeight + gap + barHeight);
+      if (trigram[i] === 1) {
+        // 阳爻：实线
+        ctx.fillStyle = 'rgba(220,220,220,0.6)';
+        ctx.fillRect(-barWidth / 2, y, barWidth, barHeight);
+      } else {
+        // 阴爻：两段短线
+        const segW = barWidth * 0.35;
+        ctx.fillStyle = 'rgba(220,220,220,0.6)';
+        ctx.fillRect(-barWidth / 2, y, segW, barHeight);
+        ctx.fillRect(barWidth / 2 - segW, y, segW, barHeight);
+      }
     }
 
-    // 亮星（固定位置闪烁）
-    const starCount = 40;
-    this.stars = [];
-    for (let i = 0; i < starCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * Math.min(this.canvas.width, this.canvas.height) * 0.5;
-      this.stars.push({
-        x: this.cx + Math.cos(angle) * dist,
-        y: this.cy + Math.sin(angle) * dist,
-        baseR: Math.random() * 1.3 + 0.5,
-        phase: Math.random() * Math.PI * 2,
-        speed: Math.random() * 0.025 + 0.008
-      });
-    }
+    ctx.restore();
   }
 
   animate() {
-    this.time += 0.01;
+    this.time += 0.008;
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;
     const cx = this.cx;
     const cy = this.cy;
+    const minDim = Math.min(w, h);
 
-    // 半透明覆盖产生拖尾效果
-    ctx.fillStyle = 'rgba(10, 8, 20, 0.25)';
+    // 深色半透明覆盖产生拖尾
+    ctx.fillStyle = 'rgba(8, 8, 12, 0.22)';
     ctx.fillRect(0, 0, w, h);
 
-    // === 旋涡光晕 ===
-    const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.45);
-    glowGrad.addColorStop(0, 'rgba(180, 140, 80, 0.08)');
-    glowGrad.addColorStop(0.3, 'rgba(140, 100, 50, 0.04)');
-    glowGrad.addColorStop(0.7, 'rgba(60, 30, 60, 0.02)');
-    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // === 旋涡粒子 ===
-    for (const p of this.particles) {
-      // 沿螺旋轨道运动
-      p.angle += p.speed;
-      // 轨道缓慢收缩和扩张
-      const breath = 1 + Math.sin(this.time * 0.3 + p.orbitR * 0.01) * 0.08;
-      const r = p.orbitR * breath;
-      const x = cx + Math.cos(p.angle) * r;
-      const y = cy + Math.sin(p.angle) * r * 0.7; // 稍微压扁形成椭圆
-
-      // 闪烁
-      p.twinklePhase += p.twinkleSpeed;
-      const twinkle = 0.5 + 0.5 * Math.sin(p.twinklePhase);
-      const alpha = p.brightness * (0.6 + twinkle * 0.4);
-
-      // 越靠近中心越亮
-      const distFactor = 1 - Math.min(1, r / (Math.min(w, h) * 0.45));
-      const finalAlpha = alpha * (0.7 + distFactor * 0.3);
-
-      if (x < -10 || x > w + 10 || y < -10 || y > h + 10) continue;
+    // === 水流波纹 ===
+    ctx.save();
+    for (let layer = 0; layer < 3; layer++) {
+      const amp = 18 + layer * 12;
+      const freq = 0.012 + layer * 0.004;
+      const speed = this.time * (0.6 + layer * 0.3);
+      const alpha = 0.04 + layer * 0.02;
 
       ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${finalAlpha})`;
+      ctx.moveTo(0, 0);
+      for (let x = 0; x <= w; x += 4) {
+        const y1 = cy + Math.sin(x * freq + speed) * amp + Math.sin(x * 0.02 + speed * 1.3) * amp * 0.5;
+        if (x === 0) ctx.moveTo(x, 0);
+        ctx.lineTo(x, y1);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(180,180,190,${alpha})`;
       ctx.fill();
 
-      // 大粒子加辉光
-      if (p.size > 1.4) {
-        ctx.beginPath();
-        ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${finalAlpha * 0.12})`;
-        ctx.fill();
-      }
-    }
-
-    // === 旋臂结构（几条隐约的旋臂） ===
-    const armCount = 3;
-    for (let arm = 0; arm < armCount; arm++) {
-      const baseAngle = this.time * 0.15 + (Math.PI * 2 / armCount) * arm;
+      // 反向波纹
       ctx.beginPath();
-      for (let i = 0; i < 120; i++) {
-        const t = i / 120;
-        const r = t * Math.min(w, h) * 0.45;
-        const spiralAngle = baseAngle + t * Math.PI * 1.8;
-        const x = cx + Math.cos(spiralAngle) * r;
-        const y = cy + Math.sin(spiralAngle) * r * 0.7;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 4) {
+        const y2 = cy + Math.sin(x * freq - speed * 0.7) * amp * 0.8 + Math.cos(x * 0.015 - speed) * amp * 0.4;
+        ctx.lineTo(x, y2);
       }
-      ctx.strokeStyle = `rgba(180,150,100,${0.04 + Math.sin(this.time * 0.2 + arm) * 0.02})`;
-      ctx.lineWidth = 6;
+      ctx.lineTo(w, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(160,160,170,${alpha * 0.7})`;
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // === 环形水波 ===
+    const ringCount = 5;
+    for (let i = 0; i < ringCount; i++) {
+      const baseR = minDim * 0.18 + i * minDim * 0.1;
+      const waveR = baseR + Math.sin(this.time * 0.5 + i) * 15;
+      ctx.beginPath();
+      ctx.arc(cx, cy, waveR, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(180,180,190,${0.06 - i * 0.01})`;
+      ctx.lineWidth = 0.8;
       ctx.stroke();
     }
 
-    // === 亮星 ===
-    for (const star of this.stars) {
-      star.phase += star.speed;
-      const alpha = 0.4 + 0.6 * Math.abs(Math.sin(star.phase));
-      // 十字光芒
-      const size = star.baseR * (1 + Math.sin(star.phase) * 0.5);
+    // === 旋转太极图 ===
+    const baguaR = minDim * 0.2; // 八卦半径
+    const rotationAngle = this.time * 0.3; // 缓慢旋转
+    this._drawTaiChi(ctx, cx, cy, baguaR, rotationAngle);
 
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,240,220,${alpha})`;
-      ctx.fill();
+    // === 八卦外圈 ===
+    ctx.beginPath();
+    ctx.arc(cx, cy, baguaR * 1.05, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(180,180,190,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-      // 光芒
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, size * 3, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(220,200,160,${alpha * 0.15})`;
-      ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, baguaR * 0.68, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(180,180,190,0.2)';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([4, 8]);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-      // 十字光线
-      if (alpha > 0.7) {
-        ctx.strokeStyle = `rgba(255,240,220,${alpha * 0.3})`;
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(star.x - size * 6, star.y);
-        ctx.lineTo(star.x + size * 6, star.y);
-        ctx.moveTo(star.x, star.y - size * 6);
-        ctx.lineTo(star.x, star.y + size * 6);
-        ctx.stroke();
-      }
+    // === 八个卦象 ===
+    // 先天八卦：乾兑离震 巽坎艮坤
+    const trigrams = [
+      [1, 1, 1], // ☰ 乾 (top)
+      [0, 1, 1], // ☱ 兑
+      [1, 0, 1], // ☲ 离
+      [0, 0, 1], // ☳ 震
+      [1, 1, 0], // ☴ 巽
+      [0, 1, 0], // ☵ 坎
+      [1, 0, 0], // ☶ 艮
+      [0, 0, 0]  // ☷ 坤
+    ];
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2 + rotationAngle * 0.3;
+      this._drawTrigram(ctx, cx, cy, trigrams[i], angle, baguaR);
     }
 
-    // === 中心亮点 ===
-    const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-    coreGrad.addColorStop(0, 'rgba(240,210,160,0.7)');
-    coreGrad.addColorStop(0.3, 'rgba(200,160,100,0.25)');
-    coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = coreGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 30, 0, Math.PI * 2);
-    ctx.fill();
+    // === 卦名小字 ===
+    const names = ['乾', '兑', '离', '震', '巽', '坎', '艮', '坤'];
+    ctx.save();
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2 + rotationAngle * 0.3;
+      const labelR = baguaR * 0.85;
+      const lx = cx + Math.cos(angle) * labelR;
+      const ly = cy + Math.sin(angle) * labelR;
+      ctx.fillStyle = 'rgba(200,200,210,0.4)';
+      ctx.font = `${baguaR * 0.12}px "KaiTi","STKaiti",serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(names[i], lx, ly);
+    }
+    ctx.restore();
+
+    // === 散落粒子（水墨感） ===
+    const particleCount = 35;
+    for (let i = 0; i < particleCount; i++) {
+      const seed = i * 137.5;
+      const orbitR = baguaR * 1.2 + (seed % minDim * 0.3);
+      const pAngle = this.time * 0.15 + seed;
+      const px = cx + Math.cos(pAngle) * orbitR;
+      const py = cy + Math.sin(pAngle) * orbitR * 0.7;
+      const pSize = 1 + (i % 3) * 0.8;
+      const alpha = 0.15 + Math.sin(this.time * 0.8 + i) * 0.1;
+
+      ctx.beginPath();
+      ctx.arc(px, py, pSize, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${180 + (i % 40)},${180 + (i % 40)},${190 + (i % 30)},${Math.max(0, alpha)})`;
+      ctx.fill();
+    }
 
     requestAnimationFrame(() => this.animate());
   }
