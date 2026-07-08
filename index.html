@@ -1,242 +1,242 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>命理大全 — 探索你的命运</title>
+  <title>鍛界悊澶у叏 鈥?鎺㈢储浣犵殑鍛借繍</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- 星空背景 -->
+  <!-- 鏄熺┖鑳屾櫙 -->
   <canvas id="starCanvas"></canvas>
 
-  <!-- 顶部导航 -->
+  <!-- 椤堕儴瀵艰埅 -->
   <header class="header">
-    <h1 class="site-title">🔮 命理大全</h1>
-    <p class="site-subtitle">探索命运 · 洞悉未来</p>
+    <h1 class="site-title">馃敭 鍛界悊澶у叏</h1>
+    <p class="site-subtitle">鎺㈢储鍛借繍 路 娲炴倝鏈潵</p>
   </header>
 
   <nav class="nav-tabs" id="navTabs">
     <button class="nav-tab active" data-tab="ai">
-      <span class="nav-icon">🤖</span>
-      <span class="nav-label">AI 智能解命</span>
+      <span class="nav-icon">馃</span>
+      <span class="nav-label">AI 鏅鸿兘瑙ｅ懡</span>
     </button>
     <button class="nav-tab" data-tab="tarot">
-      <span class="nav-icon">🃏</span>
-      <span class="nav-label">塔罗牌占卜</span>
+      <span class="nav-icon">馃儚</span>
+      <span class="nav-label">濉旂綏鐗屽崰鍗?/span>
     </button>
     <button class="nav-tab" data-tab="daily">
-      <span class="nav-icon">🏮</span>
-      <span class="nav-label">每日运势签</span>
+      <span class="nav-icon">馃彯</span>
+      <span class="nav-label">姣忔棩杩愬娍绛?/span>
     </button>
     <button class="nav-tab" data-tab="bazi">
-      <span class="nav-icon">☯️</span>
-      <span class="nav-label">五行八字</span>
+      <span class="nav-icon">鈽笍</span>
+      <span class="nav-label">浜旇鍏瓧</span>
     </button>
     <button class="nav-tab" data-tab="mbti">
-      <span class="nav-icon">🎭</span>
-      <span class="nav-label">MBTI × 星座</span>
+      <span class="nav-icon">馃幁</span>
+      <span class="nav-label">MBTI 脳 鏄熷骇</span>
     </button>
   </nav>
 
-  <!-- 主内容区 -->
+  <!-- 涓诲唴瀹瑰尯 -->
   <main class="main-content">
 
-    <!-- ========== 模块一：AI 智能解命 ========== -->
+    <!-- ========== 妯″潡涓€锛欰I 鏅鸿兘瑙ｅ懡 ========== -->
     <section class="module" id="module-ai">
       <div class="module-card">
-        <h2 class="module-title">🤖 AI 智能解命</h2>
-        <p class="module-desc">输入你的信息，AI 将为你深度解读命运密码</p>
+        <h2 class="module-title">馃 AI 鏅鸿兘瑙ｅ懡</h2>
+        <p class="module-desc">杈撳叆浣犵殑淇℃伅锛孉I 灏嗕负浣犳繁搴﹁В璇诲懡杩愬瘑鐮?/p>
         <form class="fortune-form" id="aiForm">
           <div class="form-row">
             <div class="form-group">
-              <label>姓名</label>
-              <input type="text" id="aiName" placeholder="输入你的姓名" required>
+              <label>濮撳悕</label>
+              <input type="text" id="aiName" placeholder="杈撳叆浣犵殑濮撳悕" required>
             </div>
             <div class="form-group">
-              <label>性别</label>
+              <label>鎬у埆</label>
               <select id="aiGender">
-                <option value="男">男</option>
-                <option value="女">女</option>
+                <option value="鐢?>鐢?/option>
+                <option value="濂?>濂?/option>
               </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>出生年份</label>
-              <input type="number" id="aiYear" placeholder="如 1990" min="1900" max="2100" required>
+              <label>鍑虹敓骞翠唤</label>
+              <input type="number" id="aiYear" placeholder="濡?1990" min="1900" max="2100" required>
             </div>
             <div class="form-group">
-              <label>出生月份</label>
+              <label>鍑虹敓鏈堜唤</label>
               <input type="number" id="aiMonth" placeholder="1-12" min="1" max="12" required>
             </div>
             <div class="form-group">
-              <label>出生日期</label>
+              <label>鍑虹敓鏃ユ湡</label>
               <input type="number" id="aiDay" placeholder="1-31" min="1" max="31" required>
             </div>
             <div class="form-group">
-              <label>出生时辰</label>
+              <label>鍑虹敓鏃惰景</label>
               <select id="aiHour">
-                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
-                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
-                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
-                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
-                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
-                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
+                <option value="0">瀛愭椂 (23-1鐐?</option><option value="1">涓戞椂 (1-3鐐?</option>
+                <option value="2">瀵呮椂 (3-5鐐?</option><option value="3">鍗椂 (5-7鐐?</option>
+                <option value="4">杈版椂 (7-9鐐?</option><option value="5">宸虫椂 (9-11鐐?</option>
+                <option value="6">鍗堟椂 (11-13鐐?</option><option value="7">鏈椂 (13-15鐐?</option>
+                <option value="8">鐢虫椂 (15-17鐐?</option><option value="9">閰夋椂 (17-19鐐?</option>
+                <option value="10">鎴屾椂 (19-21鐐?</option><option value="11">浜ユ椂 (21-23鐐?</option>
               </select>
             </div>
           </div>
           <div class="form-group">
-            <label>你想问什么？（选填）</label>
-            <textarea id="aiQuestion" rows="3" placeholder="例如：我的事业运势如何？什么时候能遇到正缘？……"></textarea>
+            <label>浣犳兂闂粈涔堬紵锛堥€夊～锛?/label>
+            <textarea id="aiQuestion" rows="3" placeholder="渚嬪锛氭垜鐨勪簨涓氳繍鍔垮浣曪紵浠€涔堟椂鍊欒兘閬囧埌姝ｇ紭锛熲€︹€?></textarea>
           </div>
           <div class="form-group api-key-group">
-            <label>AI API Key（选填，不填则使用本地模拟）</label>
-            <input type="password" id="aiApiKey" placeholder="sk-... 输入你的 API Key 获得更准结果">
-            <small>支持 OpenAI / Claude API 格式</small>
+            <label>AI API Key锛堥€夊～锛屼笉濉垯浣跨敤鏈湴妯℃嫙锛?/label>
+            <input type="password" id="aiApiKey" placeholder="sk-... 杈撳叆浣犵殑 API Key 鑾峰緱鏇村噯缁撴灉">
+            <small>鏀寔 OpenAI / Claude API 鏍煎紡</small>
           </div>
-          <button type="submit" class="btn-primary btn-glow">🔮 开始解命</button>
+          <button type="submit" class="btn-primary btn-glow">馃敭 寮€濮嬭В鍛?/button>
         </form>
         <div class="result-container" id="aiResult" style="display:none;">
-          <div class="result-header">📜 命理分析报告</div>
+          <div class="result-header">馃摐 鍛界悊鍒嗘瀽鎶ュ憡</div>
           <div class="result-content" id="aiResultContent"></div>
-          <button class="btn-secondary" onclick="document.getElementById('aiResult').style.display='none';document.getElementById('aiForm').style.display='block';">重新测算</button>
+          <button class="btn-secondary" onclick="document.getElementById('aiResult').style.display='none';document.getElementById('aiForm').style.display='block';">閲嶆柊娴嬬畻</button>
         </div>
       </div>
     </section>
 
-    <!-- ========== 模块二：塔罗牌占卜 ========== -->
+    <!-- ========== 妯″潡浜岋細濉旂綏鐗屽崰鍗?========== -->
     <section class="module" id="module-tarot" style="display:none;">
       <div class="module-card">
-        <h2 class="module-title">🃏 塔罗牌占卜</h2>
-        <p class="module-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
+        <h2 class="module-title">馃儚 濉旂綏鐗屽崰鍗?/h2>
+        <p class="module-desc">蹇冧腑榛樺康浣犵殑闂锛岄€夋嫨涓夊紶鐗岋紝鎻ず杩囧幓銆佺幇鍦ㄤ笌鏈潵</p>
         <div class="tarot-steps" id="tarotSteps">
           <div class="tarot-step" id="tarotStep1">
-            <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
-            <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
-            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
+            <p class="step-hint">璇烽棴涓婄溂鐫涳紝蹇冧腑榛樺康浣犳兂闂殑闂鈥︹€?/p>
+            <p class="step-sub">鍑嗗濂戒簡灏辩偣鍑讳笅鏂规寜閽紑濮嬫娊鐗?/p>
+            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">鉁?寮€濮嬫礂鐗?/button>
           </div>
           <div class="tarot-step" id="tarotStep2" style="display:none;">
-            <p class="step-hint">请凭直觉选择 3 张牌</p>
-            <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
+            <p class="step-hint">璇峰嚟鐩磋閫夋嫨 3 寮犵墝</p>
+            <p class="step-sub">鍒嗗埆浠ｈ〃浣犵殑 <span class="text-gold">杩囧幓</span>銆?span class="text-gold">鐜板湪</span> 鍜?<span class="text-gold">鏈潵</span></p>
             <div class="card-deck" id="cardDeck"></div>
             <div class="card-slots">
               <div class="card-slot" data-slot="0">
-                <div class="slot-label">过去</div>
+                <div class="slot-label">杩囧幓</div>
                 <div class="slot-card empty" id="slot0">?</div>
               </div>
               <div class="card-slot" data-slot="1">
-                <div class="slot-label">现在</div>
+                <div class="slot-label">鐜板湪</div>
                 <div class="slot-card empty" id="slot1">?</div>
               </div>
               <div class="card-slot" data-slot="2">
-                <div class="slot-label">未来</div>
+                <div class="slot-label">鏈潵</div>
                 <div class="slot-card empty" id="slot2">?</div>
               </div>
             </div>
           </div>
           <div class="tarot-step" id="tarotStep3" style="display:none;">
             <div class="tarot-reading" id="tarotReading"></div>
-            <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
+            <button class="btn-secondary" onclick="TarotModule.reset()">馃攧 閲嶆柊鍗犲崪</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== 模块三：每日运势签 ========== -->
+    <!-- ========== 妯″潡涓夛細姣忔棩杩愬娍绛?========== -->
     <section class="module" id="module-daily" style="display:none;">
       <div class="module-card">
-        <h2 class="module-title">🏮 每日运势签</h2>
-        <p class="module-desc">诚心祈福，摇出一支灵签，窥见今日运势</p>
+        <h2 class="module-title">馃彯 姣忔棩杩愬娍绛?/h2>
+        <p class="module-desc">璇氬績绁堢锛屾憞鍑轰竴鏀伒绛撅紝绐ヨ浠婃棩杩愬娍</p>
         <div class="daily-container" id="dailyContainer">
           <div class="stick-holder" id="stickHolder">
             <div class="stick-tube">
-              <div class="tube-body">🏮</div>
-              <div class="tube-label">灵签筒</div>
+              <div class="tube-body">馃彯</div>
+              <div class="tube-label">鐏电绛?/div>
             </div>
           </div>
-          <button class="btn-primary btn-glow" id="shakeBtn" onclick="DailyModule.shake()">🎋 摇签</button>
+          <button class="btn-primary btn-glow" id="shakeBtn" onclick="DailyModule.shake()">馃帇 鎽囩</button>
           <div class="stick-result" id="stickResult" style="display:none;">
             <div class="stick-level" id="stickLevel"></div>
             <div class="stick-poem" id="stickPoem"></div>
             <div class="stick-interpretation" id="stickInterpretation"></div>
             <div class="stick-extras" id="stickExtras"></div>
-            <button class="btn-secondary" onclick="DailyModule.reshake()">🎋 明日再来</button>
+            <button class="btn-secondary" onclick="DailyModule.reshake()">馃帇 鏄庢棩鍐嶆潵</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== 模块四：五行八字 ========== -->
+    <!-- ========== 妯″潡鍥涳細浜旇鍏瓧 ========== -->
     <section class="module" id="module-bazi" style="display:none;">
       <div class="module-card">
-        <h2 class="module-title">☯️ 五行八字测算</h2>
-        <p class="module-desc">输入出生时间，排出四柱八字，洞悉五行命理</p>
+        <h2 class="module-title">鈽笍 浜旇鍏瓧娴嬬畻</h2>
+        <p class="module-desc">杈撳叆鍑虹敓鏃堕棿锛屾帓鍑哄洓鏌卞叓瀛楋紝娲炴倝浜旇鍛界悊</p>
         <form class="fortune-form" id="baziForm">
           <div class="form-row">
             <div class="form-group">
-              <label>性别</label>
-              <select id="baziGender"><option value="男">男</option><option value="女">女</option></select>
+              <label>鎬у埆</label>
+              <select id="baziGender"><option value="鐢?>鐢?/option><option value="濂?>濂?/option></select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>出生年份</label>
-              <input type="number" id="baziYear" placeholder="如 1990" min="1900" max="2100" required>
+              <label>鍑虹敓骞翠唤</label>
+              <input type="number" id="baziYear" placeholder="濡?1990" min="1900" max="2100" required>
             </div>
             <div class="form-group">
-              <label>出生月份</label>
+              <label>鍑虹敓鏈堜唤</label>
               <input type="number" id="baziMonth" placeholder="1-12" min="1" max="12" required>
             </div>
             <div class="form-group">
-              <label>出生日期</label>
+              <label>鍑虹敓鏃ユ湡</label>
               <input type="number" id="baziDay" placeholder="1-31" min="1" max="31" required>
             </div>
             <div class="form-group">
-              <label>出生时辰</label>
+              <label>鍑虹敓鏃惰景</label>
               <select id="baziHour">
-                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
-                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
-                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
-                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
-                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
-                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
+                <option value="0">瀛愭椂 (23-1鐐?</option><option value="1">涓戞椂 (1-3鐐?</option>
+                <option value="2">瀵呮椂 (3-5鐐?</option><option value="3">鍗椂 (5-7鐐?</option>
+                <option value="4">杈版椂 (7-9鐐?</option><option value="5">宸虫椂 (9-11鐐?</option>
+                <option value="6">鍗堟椂 (11-13鐐?</option><option value="7">鏈椂 (13-15鐐?</option>
+                <option value="8">鐢虫椂 (15-17鐐?</option><option value="9">閰夋椂 (17-19鐐?</option>
+                <option value="10">鎴屾椂 (19-21鐐?</option><option value="11">浜ユ椂 (21-23鐐?</option>
               </select>
             </div>
           </div>
-          <button type="submit" class="btn-primary btn-glow">☯️ 排盘测算</button>
+          <button type="submit" class="btn-primary btn-glow">鈽笍 鎺掔洏娴嬬畻</button>
         </form>
         <div class="result-container" id="baziResult" style="display:none;">
-          <div class="result-header">📊 八字排盘</div>
+          <div class="result-header">馃搳 鍏瓧鎺掔洏</div>
           <div class="bazi-table" id="baziTable"></div>
           <div class="wuxing-chart-container">
             <canvas id="wuxingChart" width="260" height="260"></canvas>
           </div>
           <div class="bazi-analysis" id="baziAnalysis"></div>
-          <button class="btn-secondary" onclick="document.getElementById('baziResult').style.display='none';document.getElementById('baziForm').style.display='block';">重新测算</button>
+          <button class="btn-secondary" onclick="document.getElementById('baziResult').style.display='none';document.getElementById('baziForm').style.display='block';">閲嶆柊娴嬬畻</button>
         </div>
       </div>
     </section>
 
-    <!-- ========== 模块五：MBTI × 星座 ========== -->
+    <!-- ========== 妯″潡浜旓細MBTI 脳 鏄熷骇 ========== -->
     <section class="module" id="module-mbti" style="display:none;">
       <div class="module-card">
-        <h2 class="module-title">🎭 MBTI × 星座 趣味算命</h2>
-        <p class="module-desc">回答几道趣味题目，发现你的命理人格</p>
+        <h2 class="module-title">馃幁 MBTI 脳 鏄熷骇 瓒ｅ懗绠楀懡</h2>
+        <p class="module-desc">鍥炵瓟鍑犻亾瓒ｅ懗棰樼洰锛屽彂鐜颁綘鐨勫懡鐞嗕汉鏍?/p>
         <div class="mbti-flow" id="mbtiFlow">
           <div id="mbtiStart">
             <div class="form-group">
-              <label>你的星座</label>
+              <label>浣犵殑鏄熷骇</label>
               <select id="mbtiZodiac">
-                <option value="白羊座">♈ 白羊座 (3.21-4.19)</option><option value="金牛座">♉ 金牛座 (4.20-5.20)</option>
-                <option value="双子座">♊ 双子座 (5.21-6.21)</option><option value="巨蟹座">♋ 巨蟹座 (6.22-7.22)</option>
-                <option value="狮子座">♌ 狮子座 (7.23-8.22)</option><option value="处女座">♍ 处女座 (8.23-9.22)</option>
-                <option value="天秤座">♎ 天秤座 (9.23-10.23)</option><option value="天蝎座">♏ 天蝎座 (10.24-11.22)</option>
-                <option value="射手座">♐ 射手座 (11.23-12.21)</option><option value="摩羯座">♑ 摩羯座 (12.22-1.19)</option>
-                <option value="水瓶座">♒ 水瓶座 (1.20-2.18)</option><option value="双鱼座">♓ 双鱼座 (2.19-3.20)</option>
+                <option value="鐧界緤搴?>鈾?鐧界緤搴?(3.21-4.19)</option><option value="閲戠墰搴?>鈾?閲戠墰搴?(4.20-5.20)</option>
+                <option value="鍙屽瓙搴?>鈾?鍙屽瓙搴?(5.21-6.21)</option><option value="宸ㄨ煿搴?>鈾?宸ㄨ煿搴?(6.22-7.22)</option>
+                <option value="鐙瓙搴?>鈾?鐙瓙搴?(7.23-8.22)</option><option value="澶勫コ搴?>鈾?澶勫コ搴?(8.23-9.22)</option>
+                <option value="澶╃Г搴?>鈾?澶╃Г搴?(9.23-10.23)</option><option value="澶╄潕搴?>鈾?澶╄潕搴?(10.24-11.22)</option>
+                <option value="灏勬墜搴?>鈾?灏勬墜搴?(11.23-12.21)</option><option value="鎽╃警搴?>鈾?鎽╃警搴?(12.22-1.19)</option>
+                <option value="姘寸摱搴?>鈾?姘寸摱搴?(1.20-2.18)</option><option value="鍙岄奔搴?>鈾?鍙岄奔搴?(2.19-3.20)</option>
               </select>
             </div>
-            <button class="btn-primary btn-glow" onclick="MbtiModule.start()">🎯 开始测试</button>
+            <button class="btn-primary btn-glow" onclick="MbtiModule.start()">馃幆 寮€濮嬫祴璇?/button>
           </div>
           <div id="mbtiQuiz" style="display:none;">
             <div class="quiz-progress">
@@ -249,7 +249,7 @@
           <div class="result-container" id="mbtiResult" style="display:none;">
             <div class="result-header" id="mbtiResultHeader"></div>
             <div class="result-content" id="mbtiResultContent"></div>
-            <button class="btn-secondary" onclick="MbtiModule.reset()">🔄 重新测试</button>
+            <button class="btn-secondary" onclick="MbtiModule.reset()">馃攧 閲嶆柊娴嬭瘯</button>
           </div>
         </div>
       </div>
@@ -257,9 +257,9 @@
 
   </main>
 
-  <!-- 页脚 -->
+  <!-- 椤佃剼 -->
   <footer class="footer">
-    <p>🔮 命理大全 — 仅供娱乐参考，愿好运常伴 🌟</p>
+    <p>馃敭 鍛界悊澶у叏 鈥?浠呬緵濞变箰鍙傝€冿紝鎰垮ソ杩愬父浼?馃専</p>
   </footer>
 
   <script src="js/lunar.js"></script>
