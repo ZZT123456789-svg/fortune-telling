@@ -42,46 +42,100 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ========== SPLASH OVERLAY (复用背景动画) ========== */
+/* ========== SPLASH - 水墨画风格 ========== */
 .splash-overlay {
   position:fixed;inset:0;z-index:10000;
-  background:rgba(6,6,15,0.55);
-  backdrop-filter:blur(2px);
+  background:radial-gradient(ellipse at center, rgba(10,8,20,0.2) 0%, rgba(6,6,15,0.5) 60%, rgba(4,4,10,0.85) 100%);
+  cursor:pointer;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;
 }
-.splash-overlay.fade-out { animation:splashOut 0.5s ease forwards; }
-@keyframes splashOut {
-  0% { opacity:1; }
-  100% { opacity:0; pointer-events:none; }
+.splash-overlay.fade-out { animation:splashOut 0.6s ease forwards; }
+@keyframes splashOut { 0%{opacity:1;} 100%{opacity:0;pointer-events:none;} }
+
+/* ---- 水墨远山 ---- */
+.ink-mountains { position:absolute;bottom:0;left:0;right:0;height:45%; }
+.ink-mountain {
+  position:absolute;bottom:0;width:100%;
+  background:linear-gradient(180deg, transparent, rgba(30,25,40,0.7) 40%, rgba(20,18,30,0.95));
+  border-radius:50% 60% 0 0;
+  filter:blur(3px);
 }
+.ink-mountain::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg, transparent 20%, rgba(15,12,22,0.9));
+  border-radius:inherit;
+}
+.m1 { left:-30%;width:160%;height:70%;border-radius:70% 30% 0 0;filter:blur(6px);opacity:0.85; }
+.m2 { left:10%;width:80%;height:50%;border-radius:40% 60% 0 0;filter:blur(4px);opacity:0.7; }
+.m3 { left:-10%;width:120%;height:35%;border-radius:60% 40% 0 0;filter:blur(8px);opacity:0.6; }
+
+/* ---- 水墨云雾 ---- */
+.ink-mist {
+  position:absolute;height:20%;border-radius:50%;
+  background:radial-gradient(ellipse, rgba(200,195,185,0.12) 0%, transparent 70%);
+  filter:blur(20px);
+  animation:mistFloat 8s ease-in-out infinite;
+}
+.mist1 { width:80%;top:15%;left:-20%;animation-delay:0s; }
+.mist2 { width:60%;top:35%;right:-15%;animation-delay:3s; }
+.mist3 { width:70%;top:55%;left:10%;animation-delay:5s; }
+@keyframes mistFloat {
+  0%,100% { transform:translateX(0) translateY(0); }
+  25% { transform:translateX(4%) translateY(-2%); }
+  50% { transform:translateX(-2%) translateY(1%); }
+  75% { transform:translateX(3%) translateY(-1%); }
+}
+
+/* ---- 中心八卦区 ---- */
+.splash-center {
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;
+}
+/* 光晕环 - 围绕八卦 */
+.splash-ring-glow {
+  position:absolute;
+  width:min(45vw,45vh);height:min(45vw,45vh);
+  border-radius:50%;
+  border:1px solid rgba(190,155,100,0.35);
+  box-shadow:0 0 60px rgba(190,150,100,0.15),0 0 120px rgba(190,150,100,0.06);
+  animation:ringBreath 4s ease-in-out infinite;
+}
+@keyframes ringBreath {
+  0%,100% { transform:scale(0.95);opacity:0.5; }
+  50% { transform:scale(1.05);opacity:0.8; }
+}
+
+/* ---- 文字 ---- */
 .splash-text {
+  position:relative;z-index:3;
   font-family:"KaiTi","STKaiti","Georgia",serif;
   font-size:clamp(2.6rem,7vw,4.5rem);
   background:linear-gradient(180deg,#f0d080,#c9a96e 40%,#8b7340);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   background-clip:text;
   letter-spacing:0.3em;opacity:0;
-  animation:textIn 1s ease 0.3s forwards;
+  animation:textIn 1.2s ease 0.3s forwards;
+  text-shadow:none;
 }
 @keyframes textIn {
-  0% { opacity:0;transform:translateY(20px); }
-  100% { opacity:1;transform:translateY(0); }
+  0% { opacity:0;transform:translateY(18px);letter-spacing:0.5em; }
+  100% { opacity:1;transform:translateY(0);letter-spacing:0.3em; }
 }
 .splash-sub {
-  margin-top:0.5rem;
+  position:relative;z-index:3;margin-top:0.6rem;
   color:#a09880;font-size:clamp(0.75rem,1.8vw,0.9rem);
-  letter-spacing:0.2em;opacity:0;
+  letter-spacing:0.25em;opacity:0;
   animation:textIn 1s ease 0.7s forwards;
 }
 .splash-hint {
-  position:absolute;bottom:3rem;
-  color:#706848;font-size:0.8rem;letter-spacing:0.15em;
-  animation:hintPulse 2s ease-in-out 1.5s infinite;
+  position:absolute;bottom:2.5rem;z-index:3;
+  color:rgba(180,160,130,0.6);font-size:0.82rem;
+  letter-spacing:0.2em;
+  animation:hintPulse 2.5s ease-in-out 1.5s infinite;
 }
 @keyframes hintPulse {
-  0%,100% { opacity:0.3; }
-  50% { opacity:1; }
+  0%,100% { opacity:0.25; }
+  50% { opacity:0.7; }
 }
 
 /* ========== STAR BACKGROUND ========== */

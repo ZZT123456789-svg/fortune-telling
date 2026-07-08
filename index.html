@@ -7,11 +7,25 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- 开场遮罩 - 复用背景动画 -->
+  <!-- 开场 - 水墨八卦 -->
   <div class="splash-overlay" id="splashOverlay" onclick="this.classList.add('fade-out');document.getElementById('starCanvas').style.zIndex='0';setTimeout(()=>this.remove(),600)">
-    <div class="splash-text">道 问</div>
-    <div class="splash-sub">探索命运 · 洞悉未来</div>
-    <div class="splash-hint">轻触进入</div>
+    <!-- 水墨远山 -->
+    <div class="ink-mountains">
+      <div class="ink-mountain m1"></div>
+      <div class="ink-mountain m2"></div>
+      <div class="ink-mountain m3"></div>
+    </div>
+    <!-- 水墨云雾 -->
+    <div class="ink-mist mist1"></div>
+    <div class="ink-mist mist2"></div>
+    <div class="ink-mist mist3"></div>
+    <!-- 中心区域 - 背景八卦透过来 -->
+    <div class="splash-center">
+      <div class="splash-ring-glow"></div>
+      <div class="splash-text">道 问</div>
+      <div class="splash-sub">探索命运 · 洞悉未来</div>
+    </div>
+    <div class="splash-hint">— 轻触进入 —</div>
   </div>
 
   <canvas id="starCanvas" style="z-index:9998;"></canvas>
