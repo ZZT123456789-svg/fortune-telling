@@ -228,50 +228,15 @@ class StarBackground {
   }
 }
 
-// ============ 导航控制器 ============
+// ============ 导航控制器 (简化版) ============
 class AppController {
   constructor() {
-    this.currentTab = 'bazi';
     this.init();
   }
 
   init() {
     // 星空背景
     new StarBackground('starCanvas');
-
-    // 导航点击事件
-    const tabs = document.querySelectorAll('.nav-tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabName = tab.dataset.tab;
-        this.switchTab(tabName);
-      });
-    });
-
-    // 显示默认模块
-    this.switchTab('ai');
-  }
-
-  switchTab(tabName) {
-    // 更新导航高亮
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
-    if (activeTab) activeTab.classList.add('active');
-
-    // 隐藏所有模块
-    document.querySelectorAll('.module').forEach(m => m.style.display = 'none');
-
-    // 显示目标模块
-    const moduleEl = document.getElementById(`module-${tabName}`);
-    if (moduleEl) {
-      moduleEl.style.display = 'block';
-      moduleEl.style.animation = 'fadeIn 0.4s ease';
-    }
-
-    this.currentTab = tabName;
-
-    // 滚动到顶部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
@@ -395,6 +360,10 @@ document.addEventListener('click', (e) => {
   if (isInteractive) {
     createRipple(e.clientX, e.clientY);
   }
+  // 点击覆盖层背景关闭
+  if (target.classList.contains('tool-overlay')) {
+    target.classList.remove('active');
+  }
 });
 
 // ============ 地址三级联动 ============
@@ -450,7 +419,6 @@ function initAddressCascade(prefix) {
 
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
-  // 主应用
+  // 主应用 - 星空背景
   window.app = new AppController();
-  initAddressCascade('bazi');
 });

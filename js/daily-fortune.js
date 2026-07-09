@@ -9,6 +9,21 @@ var DailyModule = {
     this.checkTodayDrawn();
   },
 
+  openModule: function() {
+    var overlay = document.getElementById('dailyFortuneOverlay');
+    overlay.classList.add('active');
+    // Reset UI
+    document.getElementById('stickHolder').style.display = 'block';
+    document.getElementById('shakeBtn').style.display = 'block';
+    document.getElementById('shakeBtn').style.opacity = '1';
+    document.getElementById('shakeBtn').textContent = '🪔 摇签';
+    document.getElementById('stickResult').style.display = 'none';
+  },
+
+  closeModule: function() {
+    document.getElementById('dailyFortuneOverlay').classList.remove('active');
+  },
+
   generateSticks: function() {
     var levels = [
       { name: '上上签', color: '#ffd700', weight: 5, emoji: '🏆' },
@@ -119,11 +134,9 @@ var DailyModule = {
   },
 
   showResult: function(stick) {
-    hideEl('stickHolder');
-    hideEl('shakeBtn');
-    showEl('stickResult');
-    var descEl = document.querySelector('#module-daily .module-desc');
-    if (descEl) descEl.style.display = 'none';
+    document.getElementById('stickHolder').style.display = 'none';
+    document.getElementById('shakeBtn').style.display = 'none';
+    document.getElementById('stickResult').style.display = 'block';
 
     document.getElementById('stickLevel').innerHTML =
       '<span class="level-badge" style="background:' + stick.levelColor + '20;color:' + stick.levelColor + ';border:2px solid ' + stick.levelColor + '">' +

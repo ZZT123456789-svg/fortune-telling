@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>道问 — 探索你的命运</title>
+  <title>道问 — 东方命理推演云台</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- ====== 开场动画 ====== -->
   <script>
     function dismissSplash() {
       var el = document.getElementById('splashOverlay');
@@ -15,22 +16,17 @@
       document.getElementById('starCanvas').style.zIndex = '0';
       setTimeout(function() { el.remove(); }, 600);
     }
-    // 5秒后自动进入
     setTimeout(dismissSplash, 5000);
   </script>
-  <!-- 开场 - 水墨八卦 -->
   <div class="splash-overlay" id="splashOverlay" onclick="dismissSplash()">
-    <!-- 水墨远山 -->
     <div class="ink-mountains">
       <div class="ink-mountain m1"></div>
       <div class="ink-mountain m2"></div>
       <div class="ink-mountain m3"></div>
     </div>
-    <!-- 水墨云雾 -->
     <div class="ink-mist mist1"></div>
     <div class="ink-mist mist2"></div>
     <div class="ink-mist mist3"></div>
-    <!-- 中心区域 - 背景八卦透过来 -->
     <div class="splash-center">
       <div class="splash-ring-glow"></div>
       <div class="splash-text">道 问</div>
@@ -39,211 +35,511 @@
     <div class="splash-hint">— 轻触进入 —</div>
   </div>
 
-  <canvas id="starCanvas" style="z-index:9998;"></canvas>
+  <!-- ====== Canvas 背景 ====== -->
+  <canvas id="starCanvas"></canvas>
 
+  <!-- ====== Header ====== -->
   <header class="header">
     <h1 class="site-title">道问</h1>
-    <p class="site-subtitle">探索命运 · 洞悉未来</p>
+    <p class="site-subtitle">天地之间，万事皆有迹可循</p>
   </header>
 
-  <nav class="nav-tabs" id="navTabs">
-    <button class="nav-tab active" data-tab="bazi">
-      <span class="nav-icon">☯️</span>
-      <span class="nav-label">五行八字</span>
-    </button>
-    <button class="nav-tab" data-tab="daily">
-      <span class="nav-icon">🪔</span>
-      <span class="nav-label">每日运势签</span>
-    </button>
-    <button class="nav-tab" data-tab="mbti">
-      <span class="nav-icon">🌙</span>
-      <span class="nav-label">MBTI × 星座</span>
-    </button>
-    <button class="nav-tab" data-tab="tarot">
-      <span class="nav-icon">🎴</span>
-      <span class="nav-label">塔罗牌占卜</span>
-    </button>
-  </nav>
-
-  <main class="main-content">
-
-    <section class="module" id="module-daily" style="display:none;">
-      <div class="module-card">
-        <h2 class="module-title">🪔 每日运势签</h2>
-        <p class="module-desc">诚心祈福，摇出一支灵签，窥见今日运势</p>
-        <div class="daily-container" id="dailyContainer">
-          <div class="stick-holder" id="stickHolder">
-            <div class="stick-tube">
-              <div class="tube-body">🪔</div>
-              <div class="tube-label">灵签筒</div>
-            </div>
-          </div>
-          <button class="btn-primary btn-glow" id="shakeBtn" onclick="DailyModule.shake()">🪔 摇签</button>
-          <div class="stick-result" id="stickResult" style="display:none;">
-            <div class="stick-level" id="stickLevel"></div>
-            <div class="stick-poem" id="stickPoem"></div>
-            <div class="stick-interpretation" id="stickInterpretation"></div>
-            <div class="stick-extras" id="stickExtras"></div>
-            <button class="btn-secondary" onclick="DailyModule.reshake()">🪔 明日再来</button>
-          </div>
-        </div>
+  <!-- ====== Hero ====== -->
+  <section class="hero-section">
+    <div class="hero-inner">
+      <h2 class="hero-heading">一屏入局，诸术同参</h2>
+      <p class="hero-desc">以时间为轴，以卦象为镜，八字命理、梅花易数、六爻起卦、塔罗牌阵与古籍线索，一屏进入。</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hs-num">15</span><span class="hs-label">占卜工具</span></div>
+        <div class="hero-stat"><span class="hs-num">78</span><span class="hs-label">塔罗牌</span></div>
+        <div class="hero-stat"><span class="hs-num">384</span><span class="hs-label">诸葛神签</span></div>
       </div>
-    </section>
+      <button class="btn-hero" onclick="document.getElementById('toolsGrid').scrollIntoView({behavior:'smooth'})">开始入局</button>
+    </div>
+  </section>
 
-    <section class="module" id="module-bazi">
-      <div class="module-card">
-        <h2 class="module-title">☯️ 五行八字测算</h2>
-        <p class="module-desc">输入出生时间，排出四柱八字，洞悉五行命理</p>
-        <form class="fortune-form" id="baziForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>姓名</label>
-              <input type="text" id="baziName" placeholder="输入你的姓名" required>
-            </div>
-            <div class="form-group">
-              <label>性别</label>
-              <select id="baziGender"><option value="男">男</option><option value="女">女</option></select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>出生年份</label>
-              <input type="number" id="baziYear" placeholder="如 1990" min="1900" max="2100" required>
-            </div>
-            <div class="form-group">
-              <label>出生月份</label>
-              <input type="number" id="baziMonth" placeholder="1-12" min="1" max="12" required>
-            </div>
-            <div class="form-group">
-              <label>出生日期</label>
-              <input type="number" id="baziDay" placeholder="1-31" min="1" max="31" required>
-            </div>
-            <div class="form-group">
-              <label>出生时辰</label>
-              <select id="baziHour">
-                <option value="0">子时 (23-1点)</option><option value="1">丑时 (1-3点)</option>
-                <option value="2">寅时 (3-5点)</option><option value="3">卯时 (5-7点)</option>
-                <option value="4">辰时 (7-9点)</option><option value="5">巳时 (9-11点)</option>
-                <option value="6">午时 (11-13点)</option><option value="7">未时 (13-15点)</option>
-                <option value="8">申时 (15-17点)</option><option value="9">酉时 (17-19点)</option>
-                <option value="10">戌时 (19-21点)</option><option value="11">亥时 (21-23点)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>精确分钟</label>
-              <input type="number" id="baziMinute" placeholder="0-59" min="0" max="59" value="0">
-            </div>
-          </div>
-          <div class="form-row address-row">
-            <div class="form-group">
-              <label>出生地址</label>
-              <select id="baziProvince" class="address-select">
-                <option value="">省/直辖市</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>&nbsp;</label>
-              <select id="baziCity" class="address-select">
-                <option value="">市/区</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>&nbsp;</label>
-              <select id="baziDistrict" class="address-select">
-                <option value="">县/区</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn-primary btn-glow">☯️ 排盘测算</button>
-        </form>
-        <div class="result-container" id="baziResult" style="display:none;">
-          <div class="result-header">📊 八字排盘</div>
-          <div class="bazi-table" id="baziTable"></div>
-          <div class="wuxing-chart-container">
-            <canvas id="wuxingChart" width="260" height="260"></canvas>
-          </div>
-          <div class="bazi-analysis" id="baziAnalysis"></div>
-          <button class="btn-secondary" onclick="document.getElementById('baziResult').style.display='none';document.getElementById('baziForm').style.display='block';">重新测算</button>
-        </div>
-      </div>
-    </section>
+  <!-- ====== 分类标题 ====== -->
+  <div class="section-header" id="toolsGrid">
+    <h2 class="section-h2">🔮 卜筮占卜</h2>
+    <p class="section-lead">以卦问事，观象取意</p>
+  </div>
 
-    <section class="module" id="module-mbti" style="display:none;">
-      <div class="module-card">
-        <h2 class="module-title">🌙 MBTI × 星座 趣味算命</h2>
-        <p class="module-desc">回答几道趣味题目，发现你的命理人格</p>
-        <div class="mbti-flow" id="mbtiFlow">
-          <div id="mbtiStart">
-            <div class="form-group">
-              <label>你的星座</label>
-              <select id="mbtiZodiac">
-                <option value="白羊座">♈ 白羊座 (3.21-4.19)</option><option value="金牛座">♉ 金牛座 (4.20-5.20)</option>
-                <option value="双子座">♊ 双子座 (5.21-6.21)</option><option value="巨蟹座">♋ 巨蟹座 (6.22-7.22)</option>
-                <option value="狮子座">♌ 狮子座 (7.23-8.22)</option><option value="处女座">♍ 处女座 (8.23-9.22)</option>
-                <option value="天秤座">♎ 天秤座 (9.23-10.23)</option><option value="天蝎座">♏ 天蝎座 (10.24-11.22)</option>
-                <option value="射手座">♐ 射手座 (11.23-12.21)</option><option value="摩羯座">♑ 摩羯座 (12.22-1.19)</option>
-                <option value="水瓶座">♒ 水瓶座 (1.20-2.18)</option><option value="双鱼座">♓ 双鱼座 (2.19-3.20)</option>
-              </select>
-            </div>
-            <button class="btn-primary btn-glow" onclick="MbtiModule.start()">🌙 开始测试</button>
-          </div>
-          <div id="mbtiQuiz" style="display:none;">
-            <div class="quiz-progress">
-              <div class="progress-bar"><div class="progress-fill" id="quizProgress"></div></div>
-              <span class="progress-text" id="quizProgressText">1/10</span>
-            </div>
-            <h3 class="quiz-question" id="quizQuestion"></h3>
-            <div class="quiz-options" id="quizOptions"></div>
-          </div>
-          <div class="result-container" id="mbtiResult" style="display:none;">
-            <div class="result-header" id="mbtiResultHeader"></div>
-            <div class="result-content" id="mbtiResultContent"></div>
-            <button class="btn-secondary" onclick="MbtiModule.reset()">🔄 重新测试</button>
-          </div>
-        </div>
-      </div>
-    </section>
+  <!-- ====== 卜筮工具卡片 ====== -->
+  <div class="tools-grid">
+    <div class="tool-card" onclick="MeihuaModule.open()">
+      <div class="tc-icon">🌸</div>
+      <div class="tc-name">梅花易数</div>
+      <div class="tc-desc">以数起卦，观象取意。输入数字或使用时间起卦。</div>
+      <div class="tc-tag">数字起卦</div>
+    </div>
+    <div class="tool-card" onclick="LiuyaoModule.open()">
+      <div class="tc-icon">🪙</div>
+      <div class="tc-name">六爻起卦</div>
+      <div class="tc-desc">铜钱摇卦，六爻成卦，动静相参，六亲六神同观。</div>
+      <div class="tc-tag">铜钱法</div>
+    </div>
+    <div class="tool-card" onclick="XiaoLiuRenModule.open()">
+      <div class="tc-icon">🖐️</div>
+      <div class="tc-name">小六壬</div>
+      <div class="tc-desc">月日时起课，六宫直断。大安、留连、速喜、赤口、小吉、空亡。</div>
+      <div class="tc-tag">掌诀</div>
+    </div>
+    <div class="tool-card" onclick="ZhugeModule.open()">
+      <div class="tc-icon">📜</div>
+      <div class="tc-name">诸葛神数</div>
+      <div class="tc-desc">三字起数，384签问事。观签文，断吉凶，得行动提醒。</div>
+      <div class="tc-tag">384签</div>
+    </div>
+    <div class="tool-card" onclick="CeziModule.open()">
+      <div class="tc-icon">✍️</div>
+      <div class="tc-name">测字</div>
+      <div class="tc-desc">单字取象，拆形观意。一字测事，观字断吉凶。</div>
+      <div class="tc-tag">测字</div>
+    </div>
+    <div class="tool-card" onclick="TarotModule.shuffle()">
+      <div class="tc-icon">🎴</div>
+      <div class="tc-name">塔罗牌占卜</div>
+      <div class="tc-desc">完整78张牌，三张牌阵揭示过去、现在与未来。</div>
+      <div class="tc-tag">78张牌</div>
+    </div>
+  </div>
 
-    <section class="module" id="module-tarot" style="display:none;">
-      <div class="module-card">
-        <h2 class="module-title">🎴 塔罗牌占卜</h2>
-        <p class="module-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
-        <div class="tarot-steps" id="tarotSteps">
-          <div class="tarot-step" id="tarotStep1">
-            <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
-            <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
-            <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
-          </div>
-          <div class="tarot-step" id="tarotStep2" style="display:none;">
-            <p class="step-hint">请凭直觉选择 3 张牌</p>
-            <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
-            <div class="card-deck" id="cardDeck"></div>
-            <div class="card-slots">
-              <div class="card-slot" data-slot="0"><div class="slot-label">过去</div><div class="slot-card empty" id="slot0">?</div></div>
-              <div class="card-slot" data-slot="1"><div class="slot-label">现在</div><div class="slot-card empty" id="slot1">?</div></div>
-              <div class="card-slot" data-slot="2"><div class="slot-label">未来</div><div class="slot-card empty" id="slot2">?</div></div>
-            </div>
-          </div>
-          <div class="tarot-step" id="tarotStep3" style="display:none;">
-            <div class="tarot-reading" id="tarotReading"></div>
-            <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
-          </div>
-        </div>
-      </div>
-    </section>
+  <!-- ====== 日用查询 ====== -->
+  <div class="section-header">
+    <h2 class="section-h2">📅 日用查询</h2>
+    <p class="section-lead">每日必备，时令参考</p>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card" onclick="DailyModule.openModule()">
+      <div class="tc-icon">🪔</div>
+      <div class="tc-name">每日运势签</div>
+      <div class="tc-desc">诚心祈福，摇出一支灵签，窥见今日运势与提醒。</div>
+      <div class="tc-tag">100签</div>
+    </div>
+    <div class="tool-card" onclick="AlmanacModule.open()">
+      <div class="tc-icon">📆</div>
+      <div class="tc-name">黄历查询</div>
+      <div class="tc-desc">宜忌、冲煞、星宿、彭祖百忌、吉神方位一屏查看。</div>
+      <div class="tc-tag">老黄历</div>
+    </div>
+    <div class="tool-card" onclick="DailyHexagramModule.open()">
+      <div class="tc-icon">☰</div>
+      <div class="tc-name">每日一卦</div>
+      <div class="tc-desc">每天一卦，给今天的行动一个参考锚点，本卦变卦同观。</div>
+      <div class="tc-tag">易经</div>
+    </div>
+    <div class="tool-card" onclick="SolarTermModule.open()">
+      <div class="tc-icon">🌿</div>
+      <div class="tc-name">节气查询</div>
+      <div class="tc-desc">查看今日所处节气、下一节令和农历干支信息。</div>
+      <div class="tc-tag">二十四节气</div>
+    </div>
+    <div class="tool-card" onclick="AuspiciousDateModule.open()">
+      <div class="tc-icon">🗓️</div>
+      <div class="tc-name">择日速览</div>
+      <div class="tc-desc">按日期和事项快速看宜忌，搬家、开业、结婚择日参考。</div>
+      <div class="tc-tag">择吉</div>
+    </div>
+    <div class="tool-card" onclick="DreamModule.open()">
+      <div class="tc-icon">💭</div>
+      <div class="tc-name">周公解梦</div>
+      <div class="tc-desc">输入梦境关键词，匹配传统意象与心理提示。</div>
+      <div class="tc-tag">解梦</div>
+    </div>
+  </div>
 
-  </main>
+  <!-- ====== 自我分析 ====== -->
+  <div class="section-header">
+    <h2 class="section-h2">🧠 自我分析</h2>
+    <p class="section-lead">了解自己，洞悉人格</p>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card" onclick="MbtiModule.openModule()">
+      <div class="tc-icon">🌙</div>
+      <div class="tc-name">MBTI × 星座</div>
+      <div class="tc-desc">四维偏好测试，生成16型人格图谱，结合星座解读。</div>
+      <div class="tc-tag">16型人格</div>
+    </div>
+    <div class="tool-card" onclick="NameModule.open()">
+      <div class="tc-icon">📛</div>
+      <div class="tc-name">姓名分析</div>
+      <div class="tc-desc">判断名字整体气质、读音顺口度和使用场景。</div>
+      <div class="tc-tag">起名参考</div>
+    </div>
+  </div>
 
+  <!-- ====== 知识图解 ====== -->
+  <div class="section-header">
+    <h2 class="section-h2">📖 知识图解</h2>
+    <p class="section-lead">先看懂关系，再看结果</p>
+  </div>
+  <div class="knowledge-section">
+    <div class="knowledge-card" id="wuxingDiagram">
+      <h3>五行生克环</h3>
+      <p>把木火土金水的相生、相克关系放在同一张图里。</p>
+      <div class="diagram-svg" id="wuxingSvg"></div>
+      <p class="knote">判断五行时先看结构和力量流向，不把"缺什么补什么"当成唯一规则。</p>
+    </div>
+    <div class="knowledge-card" id="luoshuDiagram">
+      <h3>洛书九宫</h3>
+      <p>九宫把方位、数字和节律放到一个 3×3 结构里。</p>
+      <div class="diagram-svg" id="luoshuSvg"></div>
+      <p class="knote">先把宫位、方位和五行对应看清，再进入具体盘式。</p>
+    </div>
+    <div class="knowledge-card" id="jieqiDiagram">
+      <h3>二十四节气</h3>
+      <p>节气是传统历法里的时间骨架，八字、黄历和时令养生都会用到它。</p>
+      <div class="diagram-svg" id="jieqiSvg"></div>
+      <p class="knote">涉及出生时间和黄历时，节气比农历月份更关键。</p>
+    </div>
+  </div>
+
+  <!-- ====== 服务说明 ====== -->
+  <div class="section-header">
+    <h2 class="section-h2">🆓 服务方式</h2>
+    <p class="section-lead">全部功能免费，无需登录</p>
+  </div>
+  <div class="pricing-row">
+    <div class="pricing-card">
+      <div class="pc-price">¥0</div>
+      <div class="pc-title">全部免费</div>
+      <div class="pc-desc">排盘、抽牌、起卦、黄历、解梦全部免费，打开即用。</div>
+    </div>
+    <div class="pricing-card">
+      <div class="pc-price">100%</div>
+      <div class="pc-title">本地计算</div>
+      <div class="pc-desc">所有工具默认在浏览器本地运行，无需上传数据。</div>
+    </div>
+    <div class="pricing-card">
+      <div class="pc-price">15+</div>
+      <div class="pc-title">占卜工具</div>
+      <div class="pc-desc">覆盖卜筮、日用、命理分析等多个维度。</div>
+    </div>
+  </div>
+
+  <!-- ====== Footer ====== -->
   <footer class="footer">
-    <p>🪷 道问 — 仅供娱乐参考，愿好运常伴 🪷</p>
+    <p>🪷 道问 — 东方命理推演云台 · 仅供娱乐参考，愿好运常伴 🪷</p>
+    <p class="footer-quote">但行好事，莫问前程。</p>
   </footer>
 
+  <!-- ====== 模块区域（隐藏） ====== -->
+
+  <!-- 梅花易数 模块 -->
+  <div class="tool-overlay" id="meihuaOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="MeihuaModule.close()">✕</button>
+      <h2 class="modal-title">🌸 梅花易数</h2>
+      <p class="modal-desc">以数起卦，观象取意。输入三个数字或使用当前时间起卦。</p>
+      <div class="form-row">
+        <div class="form-group"><label>数字一</label><input type="number" id="meihuaNum1" placeholder="1-999" min="1" max="999"></div>
+        <div class="form-group"><label>数字二</label><input type="number" id="meihuaNum2" placeholder="1-999" min="1" max="999"></div>
+        <div class="form-group"><label>数字三</label><input type="number" id="meihuaNum3" placeholder="1-999" min="1" max="999"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="MeihuaModule.calculate()">🌸 起卦</button>
+        <button class="btn-secondary" onclick="MeihuaModule.useTime()">⏰ 时间起卦</button>
+      </div>
+      <div class="result-container" id="meihuaResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 六爻起卦 模块 -->
+  <div class="tool-overlay" id="liuyaoOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="LiuyaoModule.close()">✕</button>
+      <h2 class="modal-title">🪙 六爻起卦</h2>
+      <p class="modal-desc">心中默念所问之事，摇动六次铜钱，逐爻成卦。</p>
+      <div id="liuyaoFlow">
+        <div id="liuyaoStart">
+          <input type="text" id="liuyaoQuestion" class="form-input full" placeholder="心中所问之事（可选）">
+          <button class="btn-primary btn-glow" onclick="LiuyaoModule.start()">🪙 开始摇卦</button>
+        </div>
+        <div id="liuyaoShaking" style="display:none;">
+          <div class="coin-anim" id="coinAnim">🪙</div>
+          <p>第 <span id="liuyaoRound">1</span> / 6 次摇卦</p>
+          <button class="btn-primary" onclick="LiuyaoModule.shake()">🪙 摇第 <span id="liuyaoRoundBtn">1</span> 次</button>
+          <div class="yao-display" id="yaoDisplay"></div>
+        </div>
+        <div id="liuyaoResult" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 小六壬 模块 -->
+  <div class="tool-overlay" id="xiaoliurenOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="XiaoLiuRenModule.close()">✕</button>
+      <h2 class="modal-title">🖐️ 小六壬</h2>
+      <p class="modal-desc">掌中掐诀，月日时起课，六宫直断。</p>
+      <div class="form-row">
+        <div class="form-group"><label>农历月份</label><input type="number" id="xlrMonth" placeholder="1-12" min="1" max="12"></div>
+        <div class="form-group"><label>农历日期</label><input type="number" id="xlrDay" placeholder="1-30" min="1" max="30"></div>
+        <div class="form-group"><label>时辰(0-11)</label><select id="xlrHour"><option value="0">子时(23-1)</option><option value="1">丑时(1-3)</option><option value="2">寅时(3-5)</option><option value="3">卯时(5-7)</option><option value="4">辰时(7-9)</option><option value="5">巳时(9-11)</option><option value="6">午时(11-13)</option><option value="7">未时(13-15)</option><option value="8">申时(15-17)</option><option value="9">酉时(17-19)</option><option value="10">戌时(19-21)</option><option value="11">亥时(21-23)</option></select></div>
+      </div>
+      <button class="btn-primary" onclick="XiaoLiuRenModule.calculate()">🖐️ 掐指一算</button>
+      <button class="btn-secondary" onclick="XiaoLiuRenModule.useNow()">⏰ 当前时间</button>
+      <div class="result-container" id="xlrResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 诸葛神数 模块 -->
+  <div class="tool-overlay" id="zhugeOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="ZhugeModule.close()">✕</button>
+      <h2 class="modal-title">📜 诸葛神数</h2>
+      <p class="modal-desc">输入三个汉字，起数查签，384签问事。</p>
+      <div class="form-row">
+        <div class="form-group"><label>第一字</label><input type="text" id="zhugeWord1" maxlength="1" placeholder="输入汉字"></div>
+        <div class="form-group"><label>第二字</label><input type="text" id="zhugeWord2" maxlength="1" placeholder="输入汉字"></div>
+        <div class="form-group"><label>第三字</label><input type="text" id="zhugeWord3" maxlength="1" placeholder="输入汉字"></div>
+      </div>
+      <button class="btn-primary" onclick="ZhugeModule.calculate()">📜 查签</button>
+      <p class="form-hint">也可直接输入签号查阅</p>
+      <div class="form-row">
+        <div class="form-group"><label>签号</label><input type="number" id="zhugeNumber" placeholder="1-384" min="1" max="384"></div>
+      </div>
+      <button class="btn-secondary" onclick="ZhugeModule.byNumber()">🔍 按签号查询</button>
+      <div class="result-container" id="zhugeResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 测字 模块 -->
+  <div class="tool-overlay" id="ceziOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="CeziModule.close()">✕</button>
+      <h2 class="modal-title">✍️ 测字</h2>
+      <p class="modal-desc">单字取象，拆形观意。输入一字，观字断吉凶。</p>
+      <div class="form-group">
+        <label>请输入一个字</label>
+        <input type="text" id="ceziChar" class="form-input full large-input" maxlength="1" placeholder="输入你想要测的汉字">
+      </div>
+      <div class="form-group">
+        <label>所问之事（可选）</label>
+        <select id="ceziCategory">
+          <option value="general">综合运势</option>
+          <option value="career">事业前程</option>
+          <option value="love">感情姻缘</option>
+          <option value="wealth">财运</option>
+          <option value="health">健康</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="CeziModule.analyze()">✍️ 测字</button>
+      <div class="result-container" id="ceziResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 黄历查询 模块 -->
+  <div class="tool-overlay" id="almanacOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="AlmanacModule.close()">✕</button>
+      <h2 class="modal-title">📆 黄历查询</h2>
+      <p class="modal-desc">查看农历、干支、宜忌、冲煞、星宿等信息。</p>
+      <div class="form-row">
+        <div class="form-group"><label>年份</label><input type="number" id="almanacYear" placeholder="2026" min="1900" max="2100"></div>
+        <div class="form-group"><label>月份</label><input type="number" id="almanacMonth" placeholder="1-12" min="1" max="12"></div>
+        <div class="form-group"><label>日期</label><input type="number" id="almanacDay" placeholder="1-31" min="1" max="31"></div>
+      </div>
+      <button class="btn-primary" onclick="AlmanacModule.lookup()">📆 查看黄历</button>
+      <button class="btn-secondary" onclick="AlmanacModule.today()">📅 今日黄历</button>
+      <div class="result-container" id="almanacResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 每日一卦 模块 -->
+  <div class="tool-overlay" id="dailyHexagramOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="DailyHexagramModule.close()">✕</button>
+      <h2 class="modal-title">☰ 每日一卦</h2>
+      <p class="modal-desc">每天一卦，给今天一个行动锚点。查看今日卦象与提醒。</p>
+      <div class="result-container" id="dailyHexagramResult"></div>
+    </div>
+  </div>
+
+  <!-- 节气查询 模块 -->
+  <div class="tool-overlay" id="solarTermOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="SolarTermModule.close()">✕</button>
+      <h2 class="modal-title">🌿 节气查询</h2>
+      <p class="modal-desc">查看今日所处节气和下一节令信息。</p>
+      <div class="form-row">
+        <div class="form-group"><label>年份</label><input type="number" id="solarTermYear" placeholder="2026" min="1900" max="2100"></div>
+        <div class="form-group"><label>月份</label><input type="number" id="solarTermMonth" placeholder="1-12" min="1" max="12"></div>
+        <div class="form-group"><label>日期</label><input type="number" id="solarTermDay" placeholder="1-31" min="1" max="31"></div>
+      </div>
+      <button class="btn-primary" onclick="SolarTermModule.lookup()">🌿 查询节气</button>
+      <button class="btn-secondary" onclick="SolarTermModule.today()">📅 今日节气</button>
+      <div class="result-container" id="solarTermResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 择日速览 模块 -->
+  <div class="tool-overlay" id="auspiciousDateOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="AuspiciousDateModule.close()">✕</button>
+      <h2 class="modal-title">🗓️ 择日速览</h2>
+      <p class="modal-desc">按日期和事项快速查看宜忌参考。</p>
+      <div class="form-row">
+        <div class="form-group"><label>年份</label><input type="number" id="ausDateYear" placeholder="2026" min="2024" max="2030"></div>
+        <div class="form-group"><label>月份</label><input type="number" id="ausDateMonth" placeholder="1-12" min="1" max="12"></div>
+        <div class="form-group"><label>日期</label><input type="number" id="ausDateDay" placeholder="1-31" min="1" max="31"></div>
+      </div>
+      <div class="form-group">
+        <label>事项</label>
+        <select id="ausDateEvent">
+          <option value="move">搬家入宅</option>
+          <option value="marry">结婚嫁娶</option>
+          <option value="open">开业开市</option>
+          <option value="travel">出行远行</option>
+          <option value="build">动土装修</option>
+          <option value="bury">安葬入土</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="AuspiciousDateModule.lookup()">🗓️ 择日查询</button>
+      <div class="result-container" id="ausDateResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 周公解梦 模块 -->
+  <div class="tool-overlay" id="dreamOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="DreamModule.close()">✕</button>
+      <h2 class="modal-title">💭 周公解梦</h2>
+      <p class="modal-desc">输入梦境关键词，匹配传统意象与现代心理提示。</p>
+      <input type="text" id="dreamKeyword" class="form-input full" placeholder="输入梦境关键词，如：水、蛇、飞、掉牙...">
+      <button class="btn-primary" onclick="DreamModule.interpret()">💭 解梦</button>
+      <p class="form-hint">常见梦境：水、蛇、飞、掉牙、考试、追逐、坠落、死亡、火、鱼</p>
+      <div class="dream-quick" id="dreamQuickTags"></div>
+      <div class="result-container" id="dreamResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 姓名分析 模块 -->
+  <div class="tool-overlay" id="nameOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="NameModule.close()">✕</button>
+      <h2 class="modal-title">📛 姓名分析</h2>
+      <p class="modal-desc">分析名字的整体气质、读音顺口度和五行偏向。</p>
+      <div class="form-group">
+        <label>请输入姓名</label>
+        <input type="text" id="nameInput" class="form-input full" placeholder="输入中文姓名（2-4个字）">
+      </div>
+      <button class="btn-primary" onclick="NameModule.analyze()">📛 分析姓名</button>
+      <div class="result-container" id="nameResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 每日运势签 模块 -->
+  <div class="tool-overlay" id="dailyFortuneOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="DailyModule.closeModule()">✕</button>
+      <h2 class="modal-title">🪔 每日运势签</h2>
+      <p class="modal-desc">诚心祈福，摇出一支灵签，窥见今日运势</p>
+      <div class="daily-container" id="dailyContainer">
+        <div class="stick-holder" id="stickHolder">
+          <div class="stick-tube">
+            <div class="tube-body">🪔</div>
+            <div class="tube-label">灵签筒</div>
+          </div>
+        </div>
+        <button class="btn-primary btn-glow" id="shakeBtn" onclick="DailyModule.shake()">🪔 摇签</button>
+        <div class="stick-result" id="stickResult" style="display:none;">
+          <div class="stick-level" id="stickLevel"></div>
+          <div class="stick-poem" id="stickPoem"></div>
+          <div class="stick-interpretation" id="stickInterpretation"></div>
+          <div class="stick-extras" id="stickExtras"></div>
+          <button class="btn-secondary" onclick="DailyModule.reshake()">🪔 明日再来</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MBTI 模块 -->
+  <div class="tool-overlay" id="mbtiOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="MbtiModule.closeModule()">✕</button>
+      <h2 class="modal-title">🌙 MBTI × 星座 趣味算命</h2>
+      <p class="modal-desc">回答几道趣味题目，发现你的命理人格</p>
+      <div class="mbti-flow" id="mbtiFlow">
+        <div id="mbtiStart">
+          <div class="form-group">
+            <label>你的星座</label>
+            <select id="mbtiZodiac">
+              <option value="白羊座">♈ 白羊座 (3.21-4.19)</option><option value="金牛座">♉ 金牛座 (4.20-5.20)</option>
+              <option value="双子座">♊ 双子座 (5.21-6.21)</option><option value="巨蟹座">♋ 巨蟹座 (6.22-7.22)</option>
+              <option value="狮子座">♌ 狮子座 (7.23-8.22)</option><option value="处女座">♍ 处女座 (8.23-9.22)</option>
+              <option value="天秤座">♎ 天秤座 (9.23-10.23)</option><option value="天蝎座">♏ 天蝎座 (10.24-11.22)</option>
+              <option value="射手座">♐ 射手座 (11.23-12.21)</option><option value="摩羯座">♑ 摩羯座 (12.22-1.19)</option>
+              <option value="水瓶座">♒ 水瓶座 (1.20-2.18)</option><option value="双鱼座">♓ 双鱼座 (2.19-3.20)</option>
+            </select>
+          </div>
+          <button class="btn-primary btn-glow" onclick="MbtiModule.start()">🌙 开始测试</button>
+        </div>
+        <div id="mbtiQuiz" style="display:none;">
+          <div class="quiz-progress">
+            <div class="progress-bar"><div class="progress-fill" id="quizProgress"></div></div>
+            <span class="progress-text" id="quizProgressText">1/10</span>
+          </div>
+          <h3 class="quiz-question" id="quizQuestion"></h3>
+          <div class="quiz-options" id="quizOptions"></div>
+        </div>
+        <div class="result-container" id="mbtiResult" style="display:none;">
+          <div class="result-header" id="mbtiResultHeader"></div>
+          <div class="result-content" id="mbtiResultContent"></div>
+          <button class="btn-secondary" onclick="MbtiModule.reset()">🔄 重新测试</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 塔罗牌 模块 -->
+  <div class="tool-overlay" id="tarotOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="TarotModule.closeReading()">✕</button>
+      <h2 class="modal-title">🎴 塔罗牌占卜</h2>
+      <p class="modal-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
+      <div class="tarot-steps" id="tarotSteps">
+        <div class="tarot-step" id="tarotStep1">
+          <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
+          <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
+          <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">✨ 开始洗牌</button>
+        </div>
+        <div class="tarot-step" id="tarotStep2" style="display:none;">
+          <p class="step-hint">请凭直觉选择 3 张牌</p>
+          <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
+          <div class="card-deck" id="cardDeck"></div>
+          <div class="card-slots">
+            <div class="card-slot" data-slot="0"><div class="slot-label">过去</div><div class="slot-card empty" id="slot0">?</div></div>
+            <div class="card-slot" data-slot="1"><div class="slot-label">现在</div><div class="slot-card empty" id="slot1">?</div></div>
+            <div class="card-slot" data-slot="2"><div class="slot-label">未来</div><div class="slot-card empty" id="slot2">?</div></div>
+          </div>
+        </div>
+        <div class="tarot-step" id="tarotStep3" style="display:none;">
+          <div class="tarot-reading" id="tarotReading"></div>
+          <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== JS 引用 ====== -->
   <script src="js/lunar.js"></script>
   <script src="js/china-address.js"></script>
   <script src="js/app.js"></script>
-  <script src="js/tarot.js"></script>
   <script src="js/daily-fortune.js"></script>
-  <script src="js/bazi.js"></script>
+  <script src="js/tarot.js"></script>
   <script src="js/mbti-zodiac.js"></script>
+  <script src="js/meihua-yishu.js"></script>
+  <script src="js/liuyao.js"></script>
+  <script src="js/xiaoliuren.js"></script>
+  <script src="js/zhuge.js"></script>
+  <script src="js/cezi.js"></script>
+  <script src="js/almanac.js"></script>
+  <script src="js/daily-hexagram.js"></script>
+  <script src="js/solar-terms.js"></script>
+  <script src="js/auspicious-date.js"></script>
+  <script src="js/dream.js"></script>
+  <script src="js/name-analysis.js"></script>
+  <script src="js/knowledge-diagrams.js"></script>
 </body>
 </html>

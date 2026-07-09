@@ -8,6 +8,15 @@ const MbtiModule = {
   scores: { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 },
   zodiac: '',
 
+  openModule: function() {
+    document.getElementById('mbtiOverlay').classList.add('active');
+    this.reset();
+  },
+
+  closeModule: function() {
+    document.getElementById('mbtiOverlay').classList.remove('active');
+  },
+
   questions: [
     {
       text: '🌍 来到一个陌生的城市旅行，你更喜欢？',
@@ -253,8 +262,9 @@ const MbtiModule = {
   },
 
   reset() {
-    hideEl('mbtiResult');
-    showEl('mbtiStart');
+    document.getElementById('mbtiResult').style.display = 'none';
+    document.getElementById('mbtiStart').style.display = 'block';
+    document.getElementById('mbtiQuiz').style.display = 'none';
     this.scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
     this.currentQuestion = 0;
   }

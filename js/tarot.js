@@ -9,6 +9,10 @@ var TarotModule = {
 
   init: function() { this.generateCards(); },
 
+  closeReading: function() {
+    document.getElementById('tarotOverlay').classList.remove('active');
+  },
+
   generateCards: function() {
     var major = [
       {n:'愚者',kw:'开始·冒险·天真',u:'新的旅程即将开启，带着纯真的心踏上未知之路。',r:'冲动鲁莽，计划不周，可能有逃避现实的倾向。'},
@@ -55,8 +59,14 @@ var TarotModule = {
   },
 
   shuffle: function() {
-    hideEl('tarotStep1');
-    showEl('tarotStep2');
+    // Open modal first if not already open
+    var overlay = document.getElementById('tarotOverlay');
+    if (!overlay.classList.contains('active')) {
+      overlay.classList.add('active');
+    }
+    document.getElementById('tarotStep1').style.display = 'none';
+    document.getElementById('tarotStep2').style.display = 'block';
+    document.getElementById('tarotStep3').style.display = 'none';
     this.drawnCount = 0;
     this.selectedCards = [];
     this.shuffledDeck = shuffle(this.cards);
@@ -184,8 +194,8 @@ var TarotModule = {
   },
 
   showReading: function() {
-    hideEl('tarotStep2');
-    showEl('tarotStep3');
+    document.getElementById('tarotStep2').style.display = 'none';
+    document.getElementById('tarotStep3').style.display = 'block';
     var reading = document.getElementById('tarotReading');
     var positions = ['过去','现在','未来'];
     var html = '<div class="reading-cards">';
@@ -219,7 +229,9 @@ var TarotModule = {
       var s = document.getElementById('slot'+i);
       s.classList.add('empty'); s.classList.remove('revealed'); s.innerHTML = '?';
     }
-    hideEl('tarotStep2'); hideEl('tarotStep3'); showEl('tarotStep1');
+    document.getElementById('tarotStep2').style.display = 'none';
+    document.getElementById('tarotStep3').style.display = 'none';
+    document.getElementById('tarotStep1').style.display = 'block';
   }
 };
 
