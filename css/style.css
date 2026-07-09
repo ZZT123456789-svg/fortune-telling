@@ -48,7 +48,7 @@ body {
 /* ========== SPLASH - 水墨画风格 ========== */
 .splash-overlay {
   position:fixed;inset:0;z-index:10000;
-  background:radial-gradient(ellipse at center, rgba(250,248,240,0.8) 0%, rgba(230,225,215,0.9) 55%, rgba(210,200,185,0.95) 100%);
+  background:radial-gradient(ellipse at center, rgba(30,28,25,0.85) 0%, rgba(20,18,15,0.92) 55%, rgba(10,8,5,0.97) 100%);
   cursor:pointer;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
@@ -59,13 +59,13 @@ body {
 .ink-mountains { position:absolute;bottom:0;left:0;right:0;height:45%; }
 .ink-mountain {
   position:absolute;bottom:0;width:100%;
-  background:linear-gradient(180deg, transparent, rgba(80,70,55,0.7) 40%, rgba(60,50,38,0.9));
+  background:linear-gradient(180deg, transparent, rgba(20,18,15,0.7) 40%, rgba(10,8,5,0.9));
   border-radius:50% 60% 0 0;
   filter:blur(2px);
 }
 .ink-mountain::after {
   content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg, transparent 20%, rgba(50,42,32,0.85));
+  background:linear-gradient(180deg, transparent 20%, rgba(15,12,8,0.85));
   border-radius:inherit;
 }
 .m1 { left:-30%;width:160%;height:70%;border-radius:70% 30% 0 0;filter:blur(4px);opacity:0.95; }
@@ -75,7 +75,7 @@ body {
 /* ---- 水墨云雾 ---- */
 .ink-mist {
   position:absolute;height:20%;border-radius:50%;
-  background:radial-gradient(ellipse, rgba(120,110,95,0.35) 0%, transparent 70%);
+  background:radial-gradient(ellipse, rgba(60,55,45,0.4) 0%, transparent 70%);
   filter:blur(16px);
   animation:mistFloat 8s ease-in-out infinite;
 }
@@ -99,8 +99,8 @@ body {
   position:absolute;
   width:min(45vw,45vh);height:min(45vw,45vh);
   border-radius:50%;
-  border:2px solid rgba(190,155,100,0.55);
-  box-shadow:0 0 60px rgba(190,150,100,0.3),0 0 120px rgba(190,150,100,0.15);
+  border:2px solid rgba(200,170,110,0.6);
+  box-shadow:0 0 80px rgba(200,160,100,0.35),0 0 140px rgba(200,160,100,0.2);
   animation:ringBreath 4s ease-in-out infinite;
 }
 @keyframes ringBreath {
@@ -126,13 +126,13 @@ body {
 }
 .splash-sub {
   position:relative;z-index:3;margin-top:0.6rem;
-  color:#5c4a28;font-size:clamp(0.8rem,1.8vw,0.95rem);
+  color:#c0b090;font-size:clamp(0.8rem,1.8vw,0.95rem);
   letter-spacing:0.25em;opacity:0;
   animation:textIn 1s ease 0.7s forwards;
 }
 .splash-hint {
   position:absolute;bottom:2.5rem;z-index:3;
-  color:rgba(120,100,70,0.85);font-size:0.85rem;
+  color:rgba(180,160,130,0.8);font-size:0.85rem;
   letter-spacing:0.2em;
   animation:hintPulse 2.5s ease-in-out 1.5s infinite;
 }
