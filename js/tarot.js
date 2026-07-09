@@ -122,7 +122,7 @@ var TarotModule = {
 
   _showCards: function() {
     var deck = document.getElementById('cardDeck');
-    deck.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px;padding:6px;max-height:55vh;overflow-y:auto;justify-items:center;';
+    deck.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:4px;max-height:55vh;overflow-y:auto;justify-items:center;';
     deck.innerHTML = '';
 
     var hint = document.createElement('div');
@@ -135,7 +135,7 @@ var TarotModule = {
     this.shuffledDeck.forEach(function(cardData, i){
       var card = document.createElement('div');
       card.title = cardData.name;
-      card.style.cssText = 'width:46px;height:66px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 1px 3px rgba(0,0,0,0.08);cursor:pointer;transition:all 0.2s ease;color:#5c4a28;font-family:KaiTi,STKaiti,serif;opacity:0;animation:bounceIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;animation-delay:'+(i*0.008)+'s;user-select:none;';
+      card.style.cssText = 'width:40px;height:58px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 1px 2px rgba(0,0,0,0.08);cursor:pointer;transition:all 0.2s ease;color:#5c4a28;font-family:KaiTi,STKaiti,serif;opacity:0;animation:bounceIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;animation-delay:'+(i*0.008)+'s;user-select:none;';
       card.textContent = '🃏';
 
       card.addEventListener('click', function(){
