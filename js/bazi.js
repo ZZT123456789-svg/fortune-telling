@@ -229,7 +229,7 @@ var BaziModule = {
     var self = this;
     var gid = function(gan,zhi){ return (gan%8)*8+(zhi%8)+1; };
     var tid = ((p.year.gan+p.month.gan+p.day.gan+p.hour.gan)*4+(p.year.zhi+p.month.zhi+p.day.zhi+p.hour.zhi))%64+1;
-    var find = function(id){ return self._hexagrams.find(function(h){return h.id===id;})||self._hexagrams[0]; };
+    var find = function(id){ for(var fi=0;fi<self._hexagrams.length;fi++){if(self._hexagrams[fi].id===id)return self._hexagrams[fi];} return self._hexagrams[0]; };
     return {
       year: find(gid(p.year.gan,p.year.zhi)),
       month: find(gid(p.month.gan,p.month.zhi)),

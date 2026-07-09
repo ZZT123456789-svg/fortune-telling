@@ -76,7 +76,8 @@ var DailyModule = {
     while (this.sticks.length > 100) this.sticks.pop();
     while (this.sticks.length < 100) {
       var idx = this.sticks.length % 20;
-      this.sticks.push(Object.assign({}, this.sticks[idx], { id: this.sticks.length + 1 }));
+      var base = this.sticks[idx];
+      this.sticks.push({ id: this.sticks.length + 1, level: base.level, levelColor: base.levelColor, levelEmoji: base.levelEmoji, title: base.title, poem: base.poem, summary: base.summary, career: base.career, love: base.love, wealth: base.wealth, health: base.health, study: base.study });
     }
   },
 

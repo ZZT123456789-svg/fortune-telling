@@ -228,14 +228,14 @@ const MbtiModule = {
     const extrovertTypes = ['E'];
     const firstLetter = type[0];
 
-    if (firstLetter === 'E' && fireSigns.includes(zodiac)) return '你的外向特质与火象星座的热情完美匹配，注定光芒四射！';
-    if (firstLetter === 'E' && airSigns.includes(zodiac)) return '你的社交天赋与风象星座的灵动相得益彰，人脉是你的财富。';
-    if (firstLetter === 'I' && waterSigns.includes(zodiac)) return '你的内敛与水象星座的深邃不谋而合，内心世界丰富而强大。';
-    if (firstLetter === 'I' && earthSigns.includes(zodiac)) return '你的沉稳与土象星座的务实完美契合，脚踏实地终成大器。';
+    if (firstLetter === 'E' && fireSigns.indexOf(zodiac) >= 0) return '你的外向特质与火象星座的热情完美匹配，注定光芒四射！';
+    if (firstLetter === 'E' && airSigns.indexOf(zodiac) >= 0) return '你的社交天赋与风象星座的灵动相得益彰，人脉是你的财富。';
+    if (firstLetter === 'I' && waterSigns.indexOf(zodiac) >= 0) return '你的内敛与水象星座的深邃不谋而合，内心世界丰富而强大。';
+    if (firstLetter === 'I' && earthSigns.indexOf(zodiac) >= 0) return '你的沉稳与土象星座的务实完美契合，脚踏实地终成大器。';
 
-    if (type[1] === 'N' && (waterSigns.includes(zodiac) || airSigns.includes(zodiac)))
+    if (type[1] === 'N' && (waterSigns.indexOf(zodiac) >= 0 || airSigns.indexOf(zodiac) >= 0))
       return '你的直觉力与星座的灵性特质相互加持，创意和灵感源源不断。';
-    if (type[1] === 'S' && (earthSigns.includes(zodiac) || fireSigns.includes(zodiac)))
+    if (type[1] === 'S' && (earthSigns.indexOf(zodiac) >= 0 || fireSigns.indexOf(zodiac) >= 0))
       return '你的务实作风与星座的现实特质相辅相成，执行力是你的王牌。';
 
     return '形成了独特的性格组合，既有理性的思考，又有星座赋予的独特魅力。';
