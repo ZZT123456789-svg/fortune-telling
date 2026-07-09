@@ -52,6 +52,12 @@
 
   <!-- ====== 卜筮工具卡片 ====== -->
   <div class="tools-grid">
+    <div class="tool-card" onclick="BaziModule.open()">
+      <div class="tc-icon">☯️</div>
+      <div class="tc-name">八字排盘</div>
+      <div class="tc-desc">真太阳时八字排盘，单人/双人模式，多维度命理分析。</div>
+      <div class="tc-tag">四柱八字</div>
+    </div>
     <div class="tool-card" onclick="MeihuaModule.open()">
       <div class="tc-icon">🌸</div>
       <div class="tc-name">梅花易数</div>
@@ -155,6 +161,102 @@
   </div>
 
   <!-- ====== 模块区域（隐藏） ====== -->
+
+  <!-- 八字排盘 模块 -->
+  <div class="tool-overlay" id="baziOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="BaziModule.close()">✕</button>
+      <h2 class="modal-title">☯️ 八字排盘</h2>
+      <p class="modal-desc">真太阳时八字排盘，多维命理解析</p>
+
+      <!-- 模式切换 -->
+      <div class="bazi-mode-tabs">
+        <button class="bazi-mode-btn active" onclick="BaziModule.switchMode('single')">🧑 单人排盘</button>
+        <button class="bazi-mode-btn" onclick="BaziModule.switchMode('dual')">👫 双人合盘</button>
+      </div>
+
+      <!-- 单人排盘 -->
+      <div id="baziSinglePanel">
+        <div class="form-row">
+          <div class="form-group"><label>姓名</label><input type="text" id="baziName1" placeholder="输入姓名"></div>
+          <div class="form-group"><label>性别</label><select id="baziGender1"><option value="男">男</option><option value="女">女</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>出生年份</label><input type="number" id="baziYear1" placeholder="1990" min="1900" max="2100"></div>
+          <div class="form-group"><label>出生月份</label><input type="number" id="baziMonth1" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>出生日期</label><input type="number" id="baziDay1" placeholder="1-31" min="1" max="31"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>出生小时</label><input type="number" id="baziHour1" placeholder="0-23" min="0" max="23"></div>
+          <div class="form-group"><label>出生分钟</label><input type="number" id="baziMinute1" placeholder="0-59" min="0" max="59" value="0"></div>
+        </div>
+        <!-- 真太阳时显示 -->
+        <div class="true-solar-display" id="trueSolar1" style="display:none;">
+          <span>🌞 真太阳时：<b id="trueSolarTime1">--</b></span>
+          <span class="ts-note">（已自动校正经度时差与均时差）</span>
+        </div>
+        <div class="form-row address-row">
+          <div class="form-group"><label>出生地（用于真太阳时）</label><select id="baziProvince1" class="address-select"><option value="">省/直辖市</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziCity1" class="address-select"><option value="">市/区</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziDistrict1" class="address-select"><option value="">县/区</option></select></div>
+        </div>
+      </div>
+
+      <!-- 双人合盘 -->
+      <div id="baziDualPanel" style="display:none;">
+        <h3 class="dual-label">👤 第一位</h3>
+        <div class="form-row">
+          <div class="form-group"><label>姓名</label><input type="text" id="baziNameA" placeholder="输入姓名"></div>
+          <div class="form-group"><label>性别</label><select id="baziGenderA"><option value="男">男</option><option value="女">女</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>出生年份</label><input type="number" id="baziYearA" placeholder="1990" min="1900" max="2100"></div>
+          <div class="form-group"><label>月份</label><input type="number" id="baziMonthA" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>日期</label><input type="number" id="baziDayA" placeholder="1-31" min="1" max="31"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>小时</label><input type="number" id="baziHourA" placeholder="0-23" min="0" max="23"></div>
+          <div class="form-group"><label>分钟</label><input type="number" id="baziMinuteA" placeholder="0-59" min="0" max="59" value="0"></div>
+        </div>
+        <div class="true-solar-display" id="trueSolarA" style="display:none;">
+          <span>🌞 真太阳时：<b id="trueSolarTimeA">--</b></span>
+        </div>
+        <div class="form-row address-row">
+          <div class="form-group"><label>出生地</label><select id="baziProvinceA" class="address-select"><option value="">省</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziCityA" class="address-select"><option value="">市</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziDistrictA" class="address-select"><option value="">县</option></select></div>
+        </div>
+        <hr style="border-color:var(--border-subtle);margin:1rem 0;">
+        <h3 class="dual-label">👤 第二位</h3>
+        <div class="form-row">
+          <div class="form-group"><label>姓名</label><input type="text" id="baziNameB" placeholder="输入姓名"></div>
+          <div class="form-group"><label>性别</label><select id="baziGenderB"><option value="男">男</option><option value="女">女</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>出生年份</label><input type="number" id="baziYearB" placeholder="1990" min="1900" max="2100"></div>
+          <div class="form-group"><label>月份</label><input type="number" id="baziMonthB" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>日期</label><input type="number" id="baziDayB" placeholder="1-31" min="1" max="31"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>小时</label><input type="number" id="baziHourB" placeholder="0-23" min="0" max="23"></div>
+          <div class="form-group"><label>分钟</label><input type="number" id="baziMinuteB" placeholder="0-59" min="0" max="59" value="0"></div>
+        </div>
+        <div class="true-solar-display" id="trueSolarB" style="display:none;">
+          <span>🌞 真太阳时：<b id="trueSolarTimeB">--</b></span>
+        </div>
+        <div class="form-row address-row">
+          <div class="form-group"><label>出生地</label><select id="baziProvinceB" class="address-select"><option value="">省</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziCityB" class="address-select"><option value="">市</option></select></div>
+          <div class="form-group"><label>&nbsp;</label><select id="baziDistrictB" class="address-select"><option value="">县</option></select></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="BaziModule.calculate()">☯️ 排盘测算</button>
+      </div>
+      <div class="result-container" id="baziResult" style="display:none;"></div>
+    </div>
+  </div>
 
   <!-- 梅花易数 模块 -->
   <div class="tool-overlay" id="meihuaOverlay">
@@ -456,6 +558,7 @@
   <!-- ====== JS 引用 ====== -->
   <script src="js/lunar.js"></script>
   <script src="js/china-address.js"></script>
+  <script src="js/bazi.js"></script>
   <script src="js/app.js"></script>
   <script src="js/daily-fortune.js"></script>
   <script src="js/tarot.js"></script>
