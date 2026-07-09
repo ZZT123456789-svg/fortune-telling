@@ -356,6 +356,17 @@ var BaziModule = {
     var ctn = document.getElementById('baziResult');
     ctn.style.display = 'block';
 
+    // 运行全部分析
+    var bodyStrength = this._judgeBodyStrength(r);
+    var favorableElements = this._getFavorableElements(r, bodyStrength);
+    var careerAnalysis = this._getCareerAnalysis(r, bodyStrength);
+    var bestDir = this._getBestDirection(r, favorableElements);
+    var industries = this._getSuitableIndustries(r, favorableElements);
+    var lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength);
+    var nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements);
+    var detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength);
+
+    // 四柱表
     var tableHtml = '<table class="pillar-table"><thead><tr><th>柱</th><th>天干</th><th>地支</th><th>五行</th></tr></thead><tbody>' +
       this._buildPillarHtml('年柱', r.yearP) +
       this._buildPillarHtml('月柱', r.monthP) +
@@ -367,6 +378,7 @@ var BaziModule = {
       this._buildPillarHtml('时柱', r.hourP) +
       '</tbody></table>';
 
+    // 五行图
     var wxMax = Math.max(1, r.wxCount['金'], r.wxCount['木'], r.wxCount['水'], r.wxCount['火'], r.wxCount['土']);
     var wxBars = '';
     var wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
@@ -377,12 +389,7 @@ var BaziModule = {
         '<span class="wx-count">' + r.wxCount[k] + '</span></div>';
     });
 
-    var daYunHtml = '<div class="bazi-info-row">';
-    r.daYun.forEach(function(dy) {
-      daYunHtml += '<span style="padding:0 0.25rem;">' + dy.age + '岁:<b>' + dy.gan + dy.zhi + '</b></span>';
-    });
-    daYunHtml += '</div>';
-
+    // 十神
     var labels = ['年柱','月柱','日柱','时柱'];
     var ssHtml = '';
     labels.forEach(function(l, i) {
@@ -390,6 +397,7 @@ var BaziModule = {
     });
 
     var dmAnalysis = this._getDayMasterAnalysis(r.dayMaster, r.dmElement, r.wxCount);
+    var favElemStr = favorableElements.favorable.join('、');
 
     ctn.innerHTML =
       '<div class="result-header">☯️ ' + r.name + ' 八字排盘</div>' +
@@ -401,10 +409,39 @@ var BaziModule = {
         '（经度' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分 + 均时差' +
         (r.trueSolar.eot >= 0 ? '+' : '') + r.trueSolar.eot + '分）</div>' +
       tableHtml +
-      '<div class="analysis-card"><h4>📊 日主分析</h4><p>' + dmAnalysis + '</p></div>' +
+
+      // 身强弱
+      '<div class="analysis-card"><h4>⚖️ 身强弱判断</h4>' +
+        '<p style="text-align:center;font-size:1.3rem;font-weight:bold;color:var(--gold);">' + bodyStrength.level + '</p>' +
+        '<p>' + bodyStrength.desc + '</p>' +
+        '<p style="font-size:0.85rem;color:var(--text-secondary);">💡 ' + bodyStrength.advice + '</p>' +
+        '<p style="font-size:0.8rem;color:var(--gold);">喜用神：' + favElemStr + '</p>' +
+      '</div>' +
+
+      // 日主分析
+      '<div class="analysis-card"><h4>🎯 日主分析</h4><p>' + dmAnalysis + '</p></div>' +
+
+      // 事业分析
+      '<div class="analysis-card"><h4>💼 事业分析</h4><p>' + careerAnalysis + '</p>' +
+        '<p style="font-size:0.85rem;"><b>🧭 适合发展方位：</b>' + bestDir + '</p>' +
+        '<p style="font-size:0.85rem;"><b>🏭 适合行业方向：</b>' + industries + '</p>' +
+      '</div>' +
+
+      // 五行分布
       '<div class="analysis-card"><h4>📊 五行分布</h4>' + wxBars + '</div>' +
+
+      // 十神
       '<div class="analysis-card"><h4>🔗 十神关系</h4><p>' + ssHtml + '</p></div>' +
-      '<div class="analysis-card"><h4>📅 大运走势</h4>' + daYunHtml + '</div>' +
+
+      // 人生起伏
+      '<div class="analysis-card"><h4>📈 人生起伏</h4><p style="line-height:1.8;">' + lifeTraj + '</p></div>' +
+
+      // 名字与八字
+      '<div class="analysis-card"><h4>📛 名字与八字</h4>' + nameAnalysis + '</div>' +
+
+      // 大运详解
+      '<div class="analysis-card"><h4>📅 大运详细分析</h4>' + detailedDaYun + '</div>' +
+
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">仅供娱乐参考，八字命理博大精深</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
   },
@@ -430,6 +467,286 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析仅供参考，感情更需用心经营</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+  },
+
+  // ==== 身强弱判断 ====
+  _judgeBodyStrength: function(r) {
+    // Count supporting elements: 印星(生我) + 比劫(同我)
+    // Count controlling: 官杀(克我) + 财星(我克) + 食伤(我生)
+    var sameMap = {甲:'甲',乙:'乙',丙:'丙',丁:'丁',戊:'戊',己:'己',庚:'庚',辛:'辛',壬:'壬',癸:'癸'};
+    var shengWoMap = {甲:'癸',乙:'壬',丙:'甲',丁:'乙',戊:'丙',己:'丁',庚:'戊',辛:'己',壬:'庚',癸:'辛'};
+    var keWoMap = {甲:'庚',乙:'辛',丙:'壬',丁:'癸',戊:'甲',己:'乙',庚:'丙',辛:'丁',壬:'戊',癸:'己'};
+
+    var support = 0, control = 0;
+    var pillars = [r.yearP, r.monthP, r.dayP, r.hourP];
+
+    // Month branch weight is higher
+    var monthZhi = r.monthP.zhi;
+    var monthElem = this.wuXingMap[monthZhi];
+    if (monthElem === r.dmElement) support += 2;
+    else if (shengWoMap[r.dayMaster] && this.wuXingMap[shengWoMap[r.dayMaster]] === monthElem) support += 1.5;
+    else control += 1;
+
+    pillars.forEach(function(p) {
+      var gElem = this.wuXingMap[p.gan];
+      if (gElem === r.dmElement) support += 1;
+      else if (shengWoMap[r.dayMaster] && this.wuXingMap[shengWoMap[r.dayMaster]] === gElem) support += 1;
+      else if (keWoMap[r.dayMaster] && this.wuXingMap[keWoMap[r.dayMaster]] === gElem) control += 1;
+      else control += 0.5;
+    }.bind(this));
+
+    var level, desc, advice;
+    if (support >= control + 2) {
+      level = '身强';
+      desc = '命主身强，精力充沛，有较强的主见和行动力。适合担当重任，但也需注意过于强势可能影响人际关系。';
+      advice = '宜用克泄耗：适合从事需要发挥才能的行业，多社交多表达，适当收敛锋芒。喜用财星和官星来平衡。';
+    } else if (support >= control) {
+      level = '身中等偏强';
+      desc = '命主身量适中偏强，既有足够的能量支撑事业，又不会过于强势。是比较平衡的命局。';
+      advice = '宜顺势而为，不强求不退缩。保持目前的节奏，稳中求进。';
+    } else if (support >= control - 1) {
+      level = '身中等偏弱';
+      desc = '命主身量适中偏弱，需要借助外界力量来补充能量。性格较温和，善与人合作。';
+      advice = '宜补充印星和比劫的力量：多学习充电，结交志同道合的朋友，寻求贵人帮助。';
+    } else {
+      level = '身弱';
+      desc = '命主身弱，能量有限，需要注意精力管理。性格敏感细腻，适合配合型工作而非独立扛大旗。';
+      advice = '宜帮扶：需要补充印星（学习、贵人）和比劫（合作、伙伴）。不宜过度劳累和独立承担大项目。';
+    }
+    return {level: level, support: support, control: control, desc: desc, advice: advice};
+  },
+
+  // ==== 喜用神判断 ====
+  _getFavorableElements: function(r, bodyStrength) {
+    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var keMap = {木:'金',火:'水',土:'木',金:'火',水:'土'};
+
+    var favorable = [], unfavorable = [];
+    var dm = r.dmElement;
+
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      // 身强喜克泄耗: 官杀(克我), 食伤(我生), 财星(我克)
+      favorable.push(keMap[dm]); // 官杀
+      var shengOut = {木:'火',火:'土',土:'金',金:'水',水:'木'};
+      favorable.push(shengOut[dm]); // 食伤
+      var keOut = {木:'土',火:'金',土:'水',金:'木',水:'火'};
+      favorable.push(keOut[dm]); // 财星
+    } else {
+      // 身弱喜生扶: 印星(生我), 比劫(同我)
+      favorable.push(shengMap[dm]); // 印星
+      favorable.push(dm); // 比劫
+    }
+
+    return {favorable: favorable, unfavorable: unfavorable};
+  },
+
+  // ==== 事业分析 ====
+  _getCareerAnalysis: function(r, bodyStrength) {
+    var dmChars = {
+      '甲':'领导型人才，适合做管理者、企业家、政府官员。优点是格局大、有远见，缺点是容易强势。',
+      '乙':'协调型人才，适合做HR、公关、艺术设计、咨询。优点是灵活适应，缺点是容易没原则。',
+      '丙':'影响型人才，适合做演讲者、主持人、销售、演员。优点是有感染力，缺点是容易浮躁。',
+      '丁':'钻研型人才，适合做研究、数据分析、财务、编程。优点是专注深入，缺点是容易孤僻。',
+      '戊':'稳健型人才，适合做房地产、建筑、金融、行政。优点是踏实可靠，缺点是容易保守。',
+      '己':'服务型人才，适合做教育、医疗、护理、社工。优点是温和包容，缺点是容易被动。',
+      '庚':'执行型人才，适合做法律、军警、工程师、外科医生。优点是果断利落，缺点是容易刚烈。',
+      '辛':'精致型人才，适合做珠宝鉴定、手工艺、会计、编辑。优点是精益求精，缺点是容易挑剔。',
+      '壬':'开拓型人才，适合做贸易、物流、外交、摄影。优点是灵活多变，缺点是容易散漫。',
+      '癸':'创意型人才，适合做文学、音乐、心理学、灵性导师。优点是直觉敏锐，缺点是容易消极。'
+    };
+
+    var base = dmChars[r.dmElement] || '';
+    var extra = '';
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      extra = '身强可扛大任，适合独立创业或担任核心领导，事业发展空间大。';
+    } else if (bodyStrength.level.indexOf('弱') !== -1) {
+      extra = '身弱适合团队合作，在大型组织或平台中获得支持，借力发展更佳。';
+    } else {
+      extra = '身量适中，既可以独立运作，也可以团队合作，事业灵活度较高。';
+    }
+    return base + ' ' + extra;
+  },
+
+  // ==== 适合方位 ====
+  _getBestDirection: function(r, favorableElements) {
+    var dirMap = {
+      '木':['东方','东南方'],'火':['南方'],'土':['中部','西南方','东北方'],
+      '金':['西方','西北方'],'水':['北方']
+    };
+    var dirs = [];
+    favorableElements.favorable.forEach(function(e) {
+      var d = dirMap[e] || [];
+      d.forEach(function(dd) { if (dirs.indexOf(dd) === -1) dirs.push(dd); });
+    });
+    return dirs.length > 0 ? dirs.join('、') : '中部';
+  },
+
+  // ==== 适合行业 ====
+  _getSuitableIndustries: function(r, favorableElements) {
+    var industryMap = {
+      '木':['教育','出版','文化传媒','园林设计','医药健康','环保能源','服装纺织','农林牧渔'],
+      '火':['互联网','影视娱乐','餐饮美食','能源化工','航空航天','美容美发','心理咨询','广告营销'],
+      '土':['房地产','建筑工程','矿业资源','农业种植','仓储物流','酒店管理','保险金融','城市规划'],
+      '金':['金融证券','法律咨询','机械制造','汽车工业','珠宝首饰','外科医疗','军警安保','精密仪器'],
+      '水':['航运物流','国际贸易','旅游观光','渔业水产','饮料食品','清洁能源','数据科学','新闻传媒']
+    };
+
+    var industries = [];
+    favorableElements.favorable.forEach(function(e) {
+      var inds = industryMap[e] || [];
+      inds.forEach(function(ind) { if (industries.indexOf(ind) === -1) industries.push(ind); });
+    });
+
+    // Pick top 8
+    var result = industries.slice(0, 8);
+    return result.length > 0 ? result.join('、') : '综合多元化发展';
+  },
+
+  // ==== 人生起伏分析 ====
+  _getLifeTrajectory: function(r, daYun, bodyStrength) {
+    var trajectory = '';
+    // Analyze based on body strength and da yun
+    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
+
+    // Youth (0-30), Prime (30-60), Later (60+)
+    var youth = daYun.slice(0, 3);
+    var prime = daYun.slice(3, 6);
+    var later = daYun.slice(6, 8);
+
+    var self = this;
+    function evalPeriod(pillars) {
+      var score = 0;
+      pillars.forEach(function(p) {
+        var elem = self.wuXingMap[p.gan];
+        if (bodyStrength.level.indexOf('强') !== -1) {
+          // For strong body, favorable are controlling elements
+          if (elem !== r.dmElement && shengMap[r.dmElement] !== elem) score += 1;
+        } else {
+          // For weak body, favorable are supporting elements
+          if (elem === r.dmElement || shengMap[r.dmElement] === elem) score += 1;
+        }
+      });
+      return score;
+    }
+
+    var yScore = evalPeriod(youth);
+    var pScore = evalPeriod(prime);
+    var lScore = evalPeriod(later);
+
+    trajectory += '<b>👦 青年时期（0-30岁）：</b>';
+    if (yScore >= 2) trajectory += '运势较顺，早年得家庭和师长助力，学业有成。打好基础是关键。';
+    else if (yScore >= 1) trajectory += '运势平稳，需自己努力打拼。青年时期多尝试不同方向，积累经验。';
+    else trajectory += '早年可能较多波折，但这些都是宝贵的成长经历。30岁后运势逐步好转。';
+
+    trajectory += '<br/><b>🏢 壮年时期（30-60岁）：</b>';
+    if (pScore >= 2) trajectory += '此阶段是人生黄金期，事业有成，财运亨通。应把握时机大力开拓。';
+    else if (pScore >= 1) trajectory += '中年运势稳定向上，稳步发展事业和家庭。注意平衡工作与生活。';
+    else trajectory += '壮年需注意规划和风险管理，以稳为主不宜冒进，守成也是智慧。';
+
+    trajectory += '<br/><b>🧘 晚年时期（60岁以后）：</b>';
+    if (lScore >= 2) trajectory += '晚年运势佳，子女有靠，幸福安康。适合从事公益和兴趣事业。';
+    else if (lScore >= 1) trajectory += '晚年生活平静，有稳定的生活来源。注意身体健康，保持乐观心态。';
+    else trajectory += '晚年需提前做好养老规划，注意健康和财务安排。家庭和睦是幸福的基石。';
+
+    return trajectory;
+  },
+
+  // ==== 姓名与八字关系 ====
+  _getNameBaziRelation: function(name, r, bodyStrength, favorableElements) {
+    if (!name || name === '未命名') return '<p style="color:var(--text-muted);">请输入姓名以获取姓名与八字的关联分析</p>';
+
+    var nameWuxing = {金:0,木:0,水:0,火:0,土:0};
+    var self = this;
+
+    // Analyze each character's element
+    var wuXingChars = {
+      '木':'林森林桐柏树杨李柳桂梁梅朴','火':'明辉星晨昊景晶照炎炜',
+      '土':'山岚岩峰田地城圣坚','金':'鑫铭钰钧锐锋剑铁银',
+      '水':'海涛洋波澜渊江汉浩浩'
+    };
+
+    var charAnalysis = '';
+    for (var i = 0; i < name.length; i++) {
+      var ch = name[i];
+      var elem = '土';
+      for (var key in wuXingChars) {
+        if (wuXingChars[key].indexOf(ch) !== -1) { elem = key; break; }
+      }
+      nameWuxing[elem] = (nameWuxing[elem] || 0) + 1;
+      var elemDesc = {木:'生发向上',火:'热情光明',土:'厚重稳定',金:'坚毅果断',水:'灵动智慧'};
+      charAnalysis += '<div style="padding:0.25rem 0;"><b>' + ch + '</b>：五行属' + elem + '，' + (elemDesc[elem] || '') + '。</div>';
+    }
+
+    // Check if name elements help the Bazi
+    var nameHelps = false;
+    var helpfulChars = [];
+    favorableElements.favorable.forEach(function(fe) {
+      if (nameWuxing[fe] > 0) { nameHelps = true; helpfulChars.push(fe); }
+    });
+
+    var nameScore = 0;
+    var nameAdvice = '';
+    if (nameHelps) {
+      nameScore = 75 + helpfulChars.length * 10;
+      nameAdvice = '✅ 名字中的' + helpfulChars.join('、') + '元素对八字有利，能够补充命局所需。名字与八字配合较好。';
+    } else {
+      nameScore = 50;
+      nameAdvice = '名字中的五行元素与八字所需不完全匹配。如果能增加' + favorableElements.favorable.join('或') + '元素的字，会更加有利。';
+    }
+
+    return '<div style="line-height:1.7;">' +
+      '<p><b>名字五行组成：</b></p>' + charAnalysis +
+      '<p style="margin-top:0.4rem;"><b>八字匹配度：</b><span style="color:var(--gold);font-size:1.1rem;">' + nameScore + '%</span></p>' +
+      '<p>' + nameAdvice + '</p>' +
+      '<p style="font-size:0.8rem;color:var(--text-muted);">姓名学与八字结合分析，旨在提供参考。好名字的核心是好听、好记、有意义。</p>' +
+      '</div>';
+  },
+
+  // ==== 详细大运分析 ====
+  _getDetailedDaYun: function(r, daYun, bodyStrength) {
+    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var self = this;
+    var html = '';
+
+    var industryByElement = {
+      '木':'教育、出版、文化、园林、医疗、环保',
+      '火':'互联网、影视、餐饮、能源、美容、广告',
+      '土':'房地产、建筑、矿业、农业、物流、金融',
+      '金':'金融、法律、制造、汽车、珠宝、军警',
+      '水':'贸易、物流、旅游、渔业、清洁能源、数据'
+    };
+
+    daYun.forEach(function(dy, idx) {
+      var elem = self.wuXingMap[dy.gan];
+      var isFavorable = false;
+      if (bodyStrength.level.indexOf('强') !== -1) {
+        if (elem !== r.dmElement && shengMap[r.dmElement] !== elem) isFavorable = true;
+      } else {
+        if (elem === r.dmElement || shengMap[r.dmElement] === elem) isFavorable = true;
+      }
+
+      var icon = isFavorable ? '✅' : '⚠️';
+      var label = isFavorable ? '有利' : '需注意';
+      var role = '';
+      var advice = '';
+
+      if (idx === 0) { role = '奠定人生基础阶段。'; advice = '学习力强，适合打好学业和技能基础。'; }
+      else if (idx === 1) { role = '确立人生方向。'; advice = '选对行业比努力更重要，找到适合的发展方向。'; }
+      else if (idx === 2) { role = '事业起步期。'; advice = '积累经验和人脉，不必急于求成。适合' + (industryByElement[elem] || '综合发展') + '。'; }
+      else if (idx === 3) { role = '事业上升期。'; advice = '事业进入快车道，抓住机遇大胆尝试。注意理财规划。'; }
+      else if (idx === 4) { role = '事业高峰期。'; advice = '此阶段收获最大，名利双收。但要注意健康和家庭平衡。'; }
+      else if (idx === 5) { role = '事业稳定期。'; advice = '巩固已有成果，培养接班人。开始规划退休生活。'; }
+      else if (idx === 6) { role = '人生转型期。'; advice = '从事业转向兴趣爱好，享受生活。发挥余热回馈社会。'; }
+      else { role = '安享晚年期。'; advice = '以健康为重，家庭和睦是最大的财富。传承智慧和经验。'; }
+
+      html += '<div style="padding:0.4rem 0;border-bottom:1px solid var(--border-subtle);">' +
+        '<b>' + icon + ' ' + dy.age + '岁 ' + dy.gan + dy.zhi + '（' + elem + '） ' + label + '</b>' +
+        '<br/><span style="font-size:0.82rem;color:var(--text-secondary);">作用：' + role + '</span>' +
+        '<br/><span style="font-size:0.82rem;color:var(--text);">建议：' + advice + '</span>' +
+        '</div>';
+    });
+
+    return html;
   },
 
   _getDayMasterAnalysis: function(dm, element, wxCount) {
