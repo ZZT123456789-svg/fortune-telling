@@ -122,36 +122,21 @@ var TarotModule = {
 
   _showCards: function() {
     var deck = document.getElementById('cardDeck');
-    deck.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:10px;max-height:400px;overflow-y:auto;';
+    deck.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;padding:10px;max-height:60vh;overflow-y:auto;justify-items:center;';
     deck.innerHTML = '';
 
     var hint = document.createElement('div');
-    hint.style.cssText = 'width:100%;text-align:center;color:#8b6f3a;font-size:0.9rem;font-family:KaiTi,STKaiti,serif;margin-bottom:8px;';
-    hint.textContent = '请凭直觉点击选择 3 张牌';
+    hint.style.cssText = 'grid-column:1/-1;text-align:center;color:#8b6f3a;font-size:0.9rem;font-family:KaiTi,STKaiti,serif;margin-bottom:4px;';
+    hint.textContent = '请凭直觉点击选择 3 张牌（已选 0/3）';
+    hint.id = 'cardSelectHint';
     deck.appendChild(hint);
 
     var self = this;
     this.shuffledDeck.forEach(function(cardData, i){
       var card = document.createElement('div');
-      card.className = 'mini-card bounce-in';
       card.title = cardData.name;
-      card.style.cssText = 'width:62px;height:94px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;transition:all 0.2s ease;color:#5c4a28;font-family:KaiTi,STKaiti,serif;opacity:0;animation:bounceIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;animation-delay:'+(i*0.008)+'s;user-select:none;';
+      card.style.cssText = 'width:64px;height:90px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;box-shadow:0 2px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;color:#5c4a28;font-family:KaiTi,STKaiti,serif;opacity:0;animation:bounceIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;animation-delay:'+(i*0.008)+'s;user-select:none;';
       card.textContent = '🃏';
-
-      card.addEventListener('mouseenter', function(){
-        if (!card.classList.contains('selected')) {
-          card.style.transform = 'translateY(-6px) scale(1.06)';
-          card.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
-          card.style.borderColor = '#c9a96e';
-        }
-      });
-      card.addEventListener('mouseleave', function(){
-        if (!card.classList.contains('selected')) {
-          card.style.transform = '';
-          card.style.boxShadow = '';
-          card.style.borderColor = '#8b6f3a';
-        }
-      });
 
       card.addEventListener('click', function(){
         self._selectCard(card, cardData);
@@ -166,8 +151,8 @@ var TarotModule = {
     if (cardEl.classList.contains('selected')) return;
 
     cardEl.classList.add('selected');
-    cardEl.style.transform = 'translateY(-8px) scale(1.1)';
-    cardEl.style.boxShadow = '0 8px 24px rgba(140,110,60,0.45)';
+    cardEl.style.transform = 'translateY(-4px) scale(1.08)';
+    cardEl.style.boxShadow = '0 6px 18px rgba(140,110,60,0.4)';
     cardEl.style.borderColor = '#c9a96e';
     cardEl.style.borderWidth = '3px';
     cardEl.style.background = 'linear-gradient(135deg,#fffdf5,#f5edd8)';
@@ -188,9 +173,13 @@ var TarotModule = {
     slot.innerHTML = inner;
     this.drawnCount++;
 
+    // 更新提示
+    var hint = document.getElementById('cardSelectHint');
+    if (hint) hint.textContent = '请凭直觉点击选择 3 张牌（已选 '+this.drawnCount+'/3）';
+
     if (this.drawnCount >= 3) {
       var self = this;
-      setTimeout(function(){ self.showReading(); }, 600);
+      setTimeout(function(){ self.showReading(); }, 500);
     }
   },
 
