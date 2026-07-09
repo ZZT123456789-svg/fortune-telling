@@ -365,6 +365,9 @@ var BaziModule = {
     var lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength);
     var nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements);
     var detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength);
+    var pattern = this._getPattern(r, bodyStrength);
+    var healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount);
+    var cautions = this._getCautions(r, bodyStrength, r.wxCount);
 
     // 四柱表
     var tableHtml = '<table class="pillar-table"><thead><tr><th>柱</th><th>天干</th><th>地支</th><th>五行</th></tr></thead><tbody>' +
@@ -427,11 +430,24 @@ var BaziModule = {
         '<p style="font-size:0.85rem;"><b>🏭 适合行业方向：</b>' + industries + '</p>' +
       '</div>' +
 
+      // 格局分析
+      '<div class="analysis-card"><h4>🏛️ 八字格局</h4>' +
+        '<p style="text-align:center;font-size:1.1rem;color:var(--gold);font-weight:bold;">格局层次：' + pattern.level + '</p>' +
+        '<p>' + pattern.levelDesc + '</p>' +
+        pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('') +
+      '</div>' +
+
       // 五行分布
       '<div class="analysis-card"><h4>📊 五行分布</h4>' + wxBars + '</div>' +
 
       // 十神
       '<div class="analysis-card"><h4>🔗 十神关系</h4><p>' + ssHtml + '</p></div>' +
+
+      // 健康分析
+      '<div class="analysis-card"><h4>🏥 健康分析</h4>' + healthAnalysis + '</div>' +
+
+      // 注意事项
+      '<div class="analysis-card"><h4>⚠️ 注意事项</h4>' + cautions + '</div>' +
 
       // 人生起伏
       '<div class="analysis-card"><h4>📈 人生起伏</h4><p style="line-height:1.8;">' + lifeTraj + '</p></div>' +
@@ -442,7 +458,13 @@ var BaziModule = {
       // 大运详解
       '<div class="analysis-card"><h4>📅 大运详细分析</h4>' + detailedDaYun + '</div>' +
 
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">仅供娱乐参考，八字命理博大精深</p>' +
+      // 结尾赠言
+      '<div style="text-align:center;padding:1.2rem 0.8rem;margin-top:0.5rem;background:rgba(201,169,110,0.06);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">' +
+        '<p style="font-family:KaiTi,STKaiti,serif;font-size:1.2rem;color:var(--gold);letter-spacing:0.15em;">天行健，君子以自强不息</p>' +
+        '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
+      '</div>' +
+
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">仅供娱乐参考，八字命理博大精深</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
   },
 
@@ -744,6 +766,167 @@ var BaziModule = {
         '<br/><span style="font-size:0.82rem;color:var(--text-secondary);">作用：' + role + '</span>' +
         '<br/><span style="font-size:0.82rem;color:var(--text);">建议：' + advice + '</span>' +
         '</div>';
+    });
+
+    return html;
+  },
+
+  // ==== 八字格局分析 ====
+  _getPattern: function(r, bodyStrength) {
+    var patterns = [];
+    var dayMaster = r.dayMaster;
+    var monthZhi = r.monthP.zhi;
+
+    // 正格分析
+    var zhengGeMap = {
+      '甲':'建禄格/比肩格，甲木得寅卯月之气，自坐禄位。格局清正，有独立自主之性。',
+      '乙':'建禄格/比肩格，乙木柔韧，得月令之气。灵活的适应力是最大优势。',
+      '丙':'建禄格/比肩格，丙火炎上，得旺气。热情外放，适合领导型工作。',
+      '丁':'建禄格/比肩格，丁火虽柔但持久，细心专注。适合研究型工作。',
+      '戊':'建禄格/比肩格，戊土厚重，得令为旺。稳重可靠，大器晚成型。',
+      '己':'建禄格/比肩格，己土细腻，包容力强。适合服务和支持型角色。',
+      '庚':'建禄格/比肩格，庚金刚锐，得令有威。执行力一流，适合技术和管理。',
+      '辛':'建禄格/比肩格，辛金精巧，得时有光。审美和品味出众，适合精致行业。',
+      '壬':'建禄格/比肩格，壬水通源，得令气势大。格局开阔，适合大平台发展。',
+      '癸':'建禄格/比肩格，癸水至柔，得时内秀。内敛有深度，适合思考和创作。'
+    };
+
+    // 特殊格局检测
+    var hasSpecial = false;
+
+    // Check if 从格 (following pattern)
+    var shengWoMap = {甲:'癸',乙:'壬',丙:'甲',丁:'乙',戊:'丙',己:'丁',庚:'戊',辛:'己',壬:'庚',癸:'辛'};
+    var sameMap = {甲:'甲',乙:'乙',丙:'丙',丁:'丁',戊:'戊',己:'己',庚:'庚',辛:'辛',壬:'壬',癸:'癸'};
+
+    var supportCount = 0;
+    var pillars = [r.yearP, r.monthP, r.dayP, r.hourP];
+    pillars.forEach(function(p) {
+      var elem = this.wuXingMap[p.gan];
+      if (elem === r.dmElement) supportCount++;
+      else if (shengWoMap[dayMaster] && this.wuXingMap[shengWoMap[dayMaster]] === elem) supportCount++;
+    }.bind(this));
+
+    // 从强格: 几乎全是帮扶
+    if (supportCount >= 3 && bodyStrength.level.indexOf('强') !== -1) {
+      patterns.push('命局有<b>从强格</b>倾向：日主极旺，顺势而为，不畏克泄。这种格局的人往往在某一领域有超常天赋。');
+      hasSpecial = true;
+    }
+    // 从弱格: 几乎没有帮扶
+    else if (supportCount <= 1 && bodyStrength.level.indexOf('弱') !== -1) {
+      patterns.push('命局有<b>从弱格</b>倾向：日主极弱而从，宜顺势配合他人，借助外力成功。这种格局的人往往善于借力和合作。');
+      hasSpecial = true;
+    }
+
+    // 化格检测 (simplified: check if day master and month stem form a combination)
+    var huaMap = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
+    if (huaMap[dayMaster] === r.monthP.gan) {
+      patterns.push('日主与月干<b>天干五合</b>，有化气之象。若得时得地，可成化气格。人际关系和合作运较强。');
+    }
+
+    // 月令格局
+    var monthPattern = zhengGeMap[dayMaster] || '';
+    patterns.push('月令格局：' + monthPattern);
+
+    // 格局层次判断
+    var level, levelDesc;
+    if (hasSpecial || supportCount >= 3) { level = '上等'; levelDesc = '命局有特殊格局之象，人生上限较高，适合在自己擅长的领域深耕。'; }
+    else if (supportCount >= 2) { level = '中等'; levelDesc = '命局结构正常，人生发展靠后天努力，稳扎稳打可获不错的成就。'; }
+    else { level = '需调和'; levelDesc = '命局偏颇较大，需要注意五行平衡。但偏颇之中也有独特之处，找到适合的方向可化劣势为优势。'; }
+
+    return {patterns: patterns, level: level, levelDesc: levelDesc};
+  },
+
+  // ==== 健康分析 ====
+  _getHealthAnalysis: function(r, bodyStrength, wxCount) {
+    var dm = r.dmElement;
+    var healthHtml = '';
+
+    // 五行对应身体
+    var healthMap = {
+      '木':{organ:'肝胆',sense:'眼睛',tips:'注意肝胆保养，避免熬夜和过量饮酒。多吃绿色蔬菜，适当运动舒展筋骨。春季需格外关注。'},
+      '火':{organ:'心脏、小肠',sense:'舌',tips:'注意心脑血管健康，保持情绪稳定。避免过度激动和劳累。多吃红色食物，夏季注意防暑。'},
+      '土':{organ:'脾胃',sense:'口',tips:'注意消化系统健康，饮食规律，避免暴饮暴食。黄色食物（如小米、南瓜）有益脾胃。长夏需养护。'},
+      '金':{organ:'肺、大肠',sense:'鼻',tips:'注意呼吸系统健康，避免吸烟和空气污染。白色食物（如银耳、百合）润肺。秋季需防燥。'},
+      '水':{organ:'肾、膀胱',sense:'耳',tips:'注意肾脏和泌尿系统，不憋尿，保持充足饮水。黑色食物（如黑豆、黑芝麻）补肾。冬季需保暖。'}
+    };
+
+    // 旺极和弱极的健康风险
+    healthHtml += '<p><b>日主' + dm + '属' + dm + '：</b>' + (healthMap[r.dmElement] ? healthMap[r.dmElement].organ + '系统是先天关注重点。' + healthMap[r.dmElement].tips : '') + '</p>';
+
+    // 太过和不及
+    var overElements = [], missingElements = [];
+    Object.keys(wxCount).forEach(function(k) {
+      if (wxCount[k] >= 3) overElements.push(k);
+      if (wxCount[k] === 0) missingElements.push(k);
+    });
+
+    if (overElements.length > 0) {
+      healthHtml += '<p><b>⚠ 五行偏旺：</b>';
+      overElements.forEach(function(e) {
+        healthHtml += e + '过旺注意' + (healthMap[e] ? healthMap[e].organ : '') + '负担。';
+      });
+      healthHtml += '</p>';
+    }
+
+    if (missingElements.length > 0) {
+      healthHtml += '<p><b>💡 五行缺失：</b>';
+      missingElements.forEach(function(e) {
+        healthHtml += '缺' + e + '需关注' + (healthMap[e] ? healthMap[e].organ : '') + '功能。';
+      });
+      healthHtml += '</p>';
+    }
+
+    healthHtml += '<p style="font-size:0.78rem;color:var(--text-muted);">以上为五行健康参考，如有身体不适请及时就医，不可替代专业医疗诊断。</p>';
+    return healthHtml;
+  },
+
+  // ==== 注意事项 ====
+  _getCautions: function(r, bodyStrength, wxCount) {
+    var cautions = [];
+
+    // 身强身弱注意事项
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      cautions.push('身强之人需注意控制脾气和强势倾向，多听取他人意见，避免独断专行。');
+      cautions.push('职场中学会授权和团队合作，不必事事亲力亲为。');
+    } else if (bodyStrength.level.indexOf('弱') !== -1) {
+      cautions.push('身弱之人需注意精力管理，避免同时做太多事情，聚焦最重要的一两件事即可。');
+      cautions.push('学会借助贵人和平台的力量，不要独自承担过重的责任。');
+    }
+
+    // 五行失衡提醒
+    var overElements = [];
+    Object.keys(wxCount).forEach(function(k) {
+      if (wxCount[k] >= 3) overElements.push(k);
+    });
+
+    var overCautionMap = {
+      '木':'木过旺需注意情绪波动和肝火旺盛，适当练习静坐或瑜伽平衡身心。',
+      '火':'火过旺需注意焦虑和急躁情绪，多接触大自然和水景来降火。',
+      '土':'土过旺需注意思维固执和行动迟缓，多尝试新事物保持灵活性。',
+      '金':'金过旺需注意锋芒太露和人际摩擦，学会柔和的沟通方式。',
+      '水':'水过旺需注意优柔寡断和精力分散，建立明确的目标和执行计划。'
+    };
+
+    overElements.forEach(function(e) {
+      if (overCautionMap[e]) cautions.push(overCautionMap[e]);
+    });
+
+    // 生肖注意事项
+    var clashMonths = {
+      '鼠':'农历五月注意口舌是非。','牛':'农历六月注意健康波动。','虎':'农历七月注意出行安全。',
+      '兔':'农历八月注意人际关系。','龙':'农历九月注意财务规划。','蛇':'农历十月注意情绪管理。',
+      '马':'农历十一月注意家庭关系。','羊':'农历十二月注意休息充电。','猴':'农历正月注意计划执行。',
+      '鸡':'农历二月注意沟通表达。','狗':'农历三月注意变动调整。','猪':'农历四月注意投资谨慎。'
+    };
+    var sxName = this.shengXiao[r.yearP.zhiIdx];
+    if (clashMonths[sxName]) cautions.push('生肖' + sxName + '：' + clashMonths[sxName]);
+
+    // 大运流年提醒
+    cautions.push('人生选择大于努力，关键节点（择业、婚姻、投资）请三思而后行，结合实际情况做出最适合自己的决定。');
+
+    var html = '';
+    cautions.forEach(function(c, i) {
+      html += '<p style="padding:0.25rem 0;">' + (i + 1) + '. ' + c + '</p>';
     });
 
     return html;
