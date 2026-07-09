@@ -115,8 +115,8 @@ class StarBackground {
     const cy = this.cy;
     const minDim = Math.min(w, h);
 
-    // 深色半透明覆盖产生拖尾
-    ctx.fillStyle = 'rgba(8, 8, 12, 0.22)';
+    // 浅色覆盖产生拖尾（水墨纸纹）
+    ctx.fillStyle = 'rgba(232, 226, 214, 0.28)';
     ctx.fillRect(0, 0, w, h);
 
     // === 水流波纹 ===
@@ -137,7 +137,7 @@ class StarBackground {
       ctx.lineTo(w, h);
       ctx.lineTo(0, h);
       ctx.closePath();
-      ctx.fillStyle = `rgba(180,180,190,${alpha})`;
+      ctx.fillStyle = `rgba(140,130,115,${alpha * 1.8})`;
       ctx.fill();
 
       // 反向波纹
@@ -150,7 +150,7 @@ class StarBackground {
       ctx.lineTo(w, 0);
       ctx.lineTo(0, 0);
       ctx.closePath();
-      ctx.fillStyle = `rgba(160,160,170,${alpha * 0.7})`;
+      ctx.fillStyle = `rgba(120,110,95,${alpha * 1.2})`;
       ctx.fill();
     }
     ctx.restore();
@@ -162,7 +162,7 @@ class StarBackground {
       const waveR = baseR + Math.sin(this.time * 0.5 + i) * 15;
       ctx.beginPath();
       ctx.arc(cx, cy, waveR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(180,180,190,${0.06 - i * 0.01})`;
+      ctx.strokeStyle = `rgba(100,85,65,${0.08 - i * 0.012})`;
       ctx.lineWidth = 0.8;
       ctx.stroke();
     }
@@ -175,13 +175,13 @@ class StarBackground {
     // === 八卦外圈 ===
     ctx.beginPath();
     ctx.arc(cx, cy, baguaR * 1.05, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(180,180,190,0.3)';
+    ctx.strokeStyle = 'rgba(90,75,55,0.4)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(cx, cy, baguaR * 0.68, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(180,180,190,0.2)';
+    ctx.strokeStyle = 'rgba(90,75,55,0.25)';
     ctx.lineWidth = 0.5;
     ctx.setLineDash([4, 8]);
     ctx.stroke();
