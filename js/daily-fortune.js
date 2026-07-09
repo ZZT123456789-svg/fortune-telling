@@ -158,10 +158,14 @@ const DailyModule = {
       </div>
     `;
 
+    var dirs = ['东方','南方','西方','北方','东南方','东北方','西南方','西北方'];
+    var fruits = ['苹果','橙子','葡萄','草莓','香蕉','桃子','西瓜','猕猴桃','火龙果','芒果','樱桃','蓝莓'];
     document.getElementById('stickExtras').innerHTML = `
       <div class="lucky-extras">
         <span class="lucky-item">🎨 幸运色：<b>${randomPick(['金色','红色','紫色','蓝色','绿色','白色'])}</b></span>
         <span class="lucky-item">🔢 幸运数字：<b>${randomInt(1, 99)}</b></span>
+        <span class="lucky-item">🧭 幸运方向：<b>${randomPick(dirs)}</b></span>
+        <span class="lucky-item">🍎 幸运水果：<b>${randomPick(fruits)}</b></span>
         <span class="lucky-item">📅 宜：<b>${randomPick(['出行','会友','签约','学习','投资','表白','求职'])}</b></span>
         <span class="lucky-item">⚠️ 忌：<b>${randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累'])}</b></span>
       </div>
