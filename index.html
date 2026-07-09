@@ -7,8 +7,19 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <script>
+    function dismissSplash() {
+      var el = document.getElementById('splashOverlay');
+      if (!el) return;
+      el.classList.add('fade-out');
+      document.getElementById('starCanvas').style.zIndex = '0';
+      setTimeout(function() { el.remove(); }, 600);
+    }
+    // 5秒后自动进入
+    setTimeout(dismissSplash, 5000);
+  </script>
   <!-- 开场 - 水墨八卦 -->
-  <div class="splash-overlay" id="splashOverlay" onclick="this.classList.add('fade-out');document.getElementById('starCanvas').style.zIndex='0';setTimeout(()=>this.remove(),600)">
+  <div class="splash-overlay" id="splashOverlay" onclick="dismissSplash()">
     <!-- 水墨远山 -->
     <div class="ink-mountains">
       <div class="ink-mountain m1"></div>
