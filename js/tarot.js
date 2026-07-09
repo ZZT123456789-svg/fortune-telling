@@ -1,324 +1,227 @@
 /**
- * 塔罗牌占卜模块
- * 3 张牌阵（过去 → 现在 → 未来），CSS 3D 翻牌动画
+ * 塔罗牌占卜模块 - 弧牌滑动抽牌
+ * 洗牌动画 → 弧牌展开 → 滑动选牌 → 3张解读
  */
-
 const TarotModule = {
   cards: [],
   selectedCards: [],
   drawnCount: 0,
+  shuffledDeck: [],
 
-  init() {
-    this.generateCards();
-  },
+  init() { this.generateCards(); },
 
-  /** 生成 78 张塔罗牌数据 */
   generateCards() {
-    const majorArcana = [
-      { name: '愚者', en: 'The Fool', keywords: '开始·冒险·天真', desc: '新的旅程即将开启，带着纯真的心踏上未知之路。保持开放的心态，宇宙将为你指引方向。', rev: '冲动鲁莽，计划不周，可能有逃避现实的倾向。需要停下来思考，不要盲目行动。' },
-      { name: '魔术师', en: 'The Magician', keywords: '创造·技能·自信', desc: '你拥有实现目标所需的一切资源和能力。现在是行动的最佳时机，专注你的意念，创造奇迹。', rev: '能力被浪费或滥用，可能出现欺骗或操纵。缺乏自信和专注力，机会在指缝间溜走。' },
-      { name: '女祭司', en: 'The High Priestess', keywords: '直觉·智慧·神秘', desc: '相信你的直觉和内在智慧。有些事情不必急于求成，静待时机，答案会自然浮现。', rev: '忽视直觉，过度理性，隐藏的秘密可能被揭露。内心感到迷茫和不安。' },
-      { name: '女皇', en: 'The Empress', keywords: '丰饶·母性·美丽', desc: '丰盛与成长的时期到来。创造力迸发，感情生活甜蜜，事业上也将迎来收获。', rev: '创造力受阻，感情上缺乏安全感，可能过度依赖他人或过度保护。' },
-      { name: '皇帝', en: 'The Emperor', keywords: '权威·秩序·领导', desc: '你需要以理性和秩序来掌控局面。领导才能凸显，适合做规划和决策。纪律和坚持是成功的关键。', rev: '滥用权力或过于专制，缺乏自律。可能遇到官僚主义的阻碍。' },
-      { name: '教皇', en: 'The Hierophant', keywords: '传统·信仰·教导', desc: '遵循传统和规则会带来好运。适合寻求导师的指导，或通过学习和仪式感获得成长。', rev: '打破常规，挑战传统观念。可能出现盲从或教条主义的问题。' },
-      { name: '恋人', en: 'The Lovers', keywords: '爱情·选择·和谐', desc: '重要的选择摆在面前，尤其是在感情和价值观方面。跟随内心，做出真正属于自己的决定。', rev: '感情出现裂痕或面临抉择困境。价值观冲突，需要重新审视关系。' },
-      { name: '战车', en: 'The Chariot', keywords: '胜利·意志·前进', desc: '凭借坚强的意志力克服困难，取得胜利。行动力充沛，勇往直前，但要注意控制方向。', rev: '失控或方向错误，努力付诸东流。需要停下来重新规划，避免硬碰硬。' },
-      { name: '力量', en: 'Strength', keywords: '勇气·耐心·内在', desc: '内在的力量比外在更强大。用耐心和温柔驯服困难，你有足够的勇气面对一切挑战。', rev: '内心脆弱，缺乏信心和勇气。可能被情绪或欲望压倒，需要找回自我。' },
-      { name: '隐者', en: 'The Hermit', keywords: '内省·孤独·指引', desc: '暂时退隐，向内探索。独处的时光是宝贵的，反思过去，找到真正的方向和智慧。', rev: '过度孤立，逃避现实。可能变得孤僻和固执，需要打开心扉接受他人帮助。' },
-      { name: '命运之轮', en: 'Wheel of Fortune', keywords: '转变·机遇·因果', desc: '命运之轮正在转动，好运即将到来。这是转折点，抓住机遇，顺应变化。', rev: '运气不佳，遭遇意外的挫折。需要接受无法改变的事实，耐心等待下一轮好运。' },
-      { name: '正义', en: 'Justice', keywords: '公平·真理·因果', desc: '公正的结果即将出现，真相会浮出水面。做出诚实的选择，承担应尽的责任。', rev: '不公平的待遇，或者逃避责任。法律纠纷可能对你不利，需要诚实面对。' },
-      { name: '倒吊人', en: 'The Hanged Man', keywords: '牺牲·换个角度·等待', desc: '换个角度看问题，暂时的停滞是为了更大的突破。愿意做出牺牲，获得更高的智慧。', rev: '徒劳的牺牲，固执己见不愿改变。停滞不前，陷入僵局。' },
-      { name: '死神', en: 'Death', keywords: '结束·重生·蜕变', desc: '旧的必须结束，新的才能到来。这是蜕变的时刻，放下过去，迎接新生。无需恐惧，这是自然的过程。', rev: '抗拒改变，停滞不前。反复陷入旧的模式，无法走出阴影。' },
-      { name: '节制', en: 'Temperance', keywords: '平衡·调和·耐心', desc: '保持中庸之道，凡事适度。调和不同的力量，找到内心的平衡与和谐。', rev: '失衡，过度放纵或过度节制。缺乏耐心，急于求成导致适得其反。' },
-      { name: '恶魔', en: 'The Devil', keywords: '束缚·欲望·诱惑', desc: '警惕被物质或欲望束缚。认识并面对自己的阴暗面，才能获得真正的自由。', rev: '挣脱束缚，打破不良习惯。开始正视问题，走向解脱。' },
-      { name: '高塔', en: 'The Tower', keywords: '崩塌·觉醒·突变', desc: '突如其来的变化打破旧有秩序。虽然痛苦，但崩塌的是不稳固的基础，重建后会更强大。', rev: '勉强维持摇摇欲坠的局面，压抑变革的需求。但压抑越久，崩塌越猛烈。' },
-      { name: '星星', en: 'The Star', keywords: '希望·治愈·灵感', desc: '希望之光照亮前路，身心得到治愈。灵感涌现，对未来充满信心。这是美好的预兆。', rev: '失去希望，感到迷茫和沮丧。对生活丧失信心，需要重新发现美好。' },
-      { name: '月亮', en: 'The Moon', keywords: '幻象·恐惧·潜意识', desc: '小心迷雾和幻象，事情可能不是你看到的那样。相信直觉，穿越黑暗，光明就在前方。', rev: '恐惧消散，真相渐渐浮现。混乱结束，开始看清现实。' },
-      { name: '太阳', en: 'The Sun', keywords: '喜悦·成功·活力', desc: '阳光普照，一切明朗。成功和喜悦来到身边，充满活力和自信。享受这美好的时光吧！', rev: '暂时的阴霾遮挡了阳光。快乐被抑制，但太阳总会再次升起。' },
-      { name: '审判', en: 'Judgement', keywords: '觉醒·重生·召唤', desc: '聆听内心的召唤，做出重要的觉醒。过去的行为得到评判，这是一个重新开始的机会。', rev: '逃避内心的召唤，拒绝改变。对过去的错误耿耿于怀，无法释怀。' },
-      { name: '世界', en: 'The World', keywords: '圆满·完成·整合', desc: '一个阶段圆满结束，目标达成，获得了完整的体验。这是庆祝和感恩的时刻，新的循环即将开始。', rev: '接近完成但尚有缺憾。延迟的成功，或者成功后感到莫名的空虚。' }
+    const major = [
+      {n:'愚者',kw:'开始·冒险·天真',u:'新的旅程即将开启，带着纯真的心踏上未知之路。',r:'冲动鲁莽，计划不周，可能有逃避现实的倾向。'},
+      {n:'魔术师',kw:'创造·技能·自信',u:'你拥有实现目标所需的一切资源。专注意念，创造奇迹。',r:'能力被浪费或滥用，可能出现欺骗或操纵。'},
+      {n:'女祭司',kw:'直觉·智慧·神秘',u:'相信你的直觉和内在智慧。静待时机，答案会自然浮现。',r:'忽视直觉，过度理性，隐藏的秘密可能被揭露。'},
+      {n:'女皇',kw:'丰饶·母性·美丽',u:'丰盛与成长的时期到来。创造力迸发，感情甜蜜。',r:'创造力受阻，感情上缺乏安全感。'},
+      {n:'皇帝',kw:'权威·秩序·领导',u:'以理性和秩序掌控局面。纪律和坚持是成功的关键。',r:'滥用权力或过于专制，缺乏自律。'},
+      {n:'教皇',kw:'传统·信仰·教导',u:'遵循传统规则会带来好运。适合寻求导师指导。',r:'打破常规，盲从或教条主义。'},
+      {n:'恋人',kw:'爱情·选择·和谐',u:'重要选择摆在面前。跟随内心，做真正属于自己的决定。',r:'感情出现裂痕，价值观冲突。'},
+      {n:'战车',kw:'胜利·意志·前进',u:'凭借坚强意志力克服困难，勇往直前。',r:'失控或方向错误，努力付诸东流。'},
+      {n:'力量',kw:'勇气·耐心·内在',u:'内在的力量比外在更强大。用耐心驯服困难。',r:'内心脆弱，被情绪或欲望压倒。'},
+      {n:'隐者',kw:'内省·孤独·指引',u:'暂时退隐向内探索。独处时光宝贵。',r:'过度孤立，逃避现实，孤僻固执。'},
+      {n:'命运之轮',kw:'转变·机遇·因果',u:'命运之轮正在转动，好运即将到来。',r:'运气不佳，遭遇意外挫折。'},
+      {n:'正义',kw:'公平·真理·因果',u:'公正的结果即将出现，真相浮出水面。',r:'不公平待遇，逃避责任。'},
+      {n:'倒吊人',kw:'牺牲·换个角度·等待',u:'换个角度看问题，暂时停滞是为了更大突破。',r:'徒劳牺牲，固执己见不愿改变。'},
+      {n:'死神',kw:'结束·重生·蜕变',u:'旧的必须结束新的才能到来。放下过去迎接新生。',r:'抗拒改变，反复陷入旧模式。'},
+      {n:'节制',kw:'平衡·调和·耐心',u:'保持中庸之道，凡事适度。调和不同力量。',r:'失衡，过度放纵或过度节制。'},
+      {n:'恶魔',kw:'束缚·欲望·诱惑',u:'警惕被物质或欲望束缚。面对阴暗面才能自由。',r:'挣脱束缚，打破不良习惯。'},
+      {n:'高塔',kw:'崩塌·觉醒·突变',u:'突如其来的变化打破旧秩序。重建后会更强。',r:'勉强维持摇摇欲坠的局面。'},
+      {n:'星星',kw:'希望·治愈·灵感',u:'希望之光照亮前路，身心得到治愈。',r:'失去希望，感到迷茫沮丧。'},
+      {n:'月亮',kw:'幻象·恐惧·潜意识',u:'小心迷雾和幻象。相信直觉穿越黑暗。',r:'恐惧消散，真相渐渐浮现。'},
+      {n:'太阳',kw:'喜悦·成功·活力',u:'阳光普照一切明朗。成功和喜悦来到身边。',r:'暂时阴霾遮挡阳光，但太阳总会再升。'},
+      {n:'审判',kw:'觉醒·重生·召唤',u:'聆听内心召唤，做出重要觉醒。重新开始。',r:'逃避内心召唤，拒绝改变。'},
+      {n:'世界',kw:'圆满·完成·整合',u:'一个阶段圆满结束。庆祝和感恩的时刻。',r:'接近完成但尚有缺憾，延迟的成功。'}
     ];
-
-    const suits = [
-      { name: '权杖', en: 'Wands', element: '火', color: '#e74c3c', meaning: '行动、创造、事业、激情' },
-      { name: '圣杯', en: 'Cups', element: '水', color: '#3498db', meaning: '情感、直觉、关系、灵性' },
-      { name: '宝剑', en: 'Swords', element: '风', color: '#f1c40f', meaning: '思想、决断、挑战、真理' },
-      { name: '星币', en: 'Pentacles', element: '土', color: '#2ecc71', meaning: '物质、财富、稳定、健康' }
-    ];
-
-    const courtNames = ['侍从', '骑士', '皇后', '国王'];
-    const numNames = ['王牌', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-
-    this.cards = [];
-
-    // 大阿卡纳 (0-21)
-    majorArcana.forEach((card, i) => {
-      this.cards.push({
-        id: i,
-        type: 'major',
-        name: card.name,
-        nameEn: card.en,
-        number: i,
-        keywords: card.keywords,
-        upright: card.desc,
-        reversed: card.rev,
-        suit: null,
-        color: '#c9a96e'
-      });
-    });
-
-    // 小阿卡纳 (22-77)
-    let id = 22;
-    suits.forEach(suit => {
-      // 数字牌 (Ace-10)
-      numNames.forEach((name, i) => {
-        const num = i + 1;
-        this.cards.push({
-          id: id++,
-          type: 'minor',
-          name: `${suit.name}${name}`,
-          nameEn: `${name} of ${suit.en}`,
-          number: num,
-          suit: suit.name,
-          suitElement: suit.element,
-          keywords: `${suit.meaning}`,
-          upright: `${suit.name}${name}正位：${this._getMinorMeaning(suit.name, num, true)}`,
-          reversed: `${suit.name}${name}逆位：${this._getMinorMeaning(suit.name, num, false)}`,
-          color: suit.color
-        });
-      });
-
-      // 宫廷牌
-      courtNames.forEach((name, i) => {
-        this.cards.push({
-          id: id++,
-          type: 'court',
-          name: `${suit.name}${name}`,
-          nameEn: `${name} of ${suit.en}`,
-          number: 11 + i,
-          suit: suit.name,
-          suitElement: suit.element,
-          keywords: `人物·${suit.meaning}`,
-          upright: `${suit.name}${name}正位：${this._getCourtMeaning(suit.name, name, true)}`,
-          reversed: `${suit.name}${name}逆位：${this._getCourtMeaning(suit.name, name, false)}`,
-          color: suit.color
-        });
-      });
-    });
+    const suits=['权杖','圣杯','宝剑','星币'];
+    const nums=['王牌','二','三','四','五','六','七','八','九','十','侍从','骑士','皇后','国王'];
+    this.cards=[];
+    major.forEach((c,i)=>{this.cards.push({id:i,type:'major',name:c.n,keywords:c.kw,upright:c.u,reversed:c.r,suit:null,color:'#8b6f3a'});});
+    let id=22;
+    suits.forEach(s=>{nums.forEach((n,i)=>{this.cards.push({id:id++,type:i<10?'minor':'court',name:s+n,keywords:s,number:i+1,suit:s,upright:s+n+'正位：蕴含着'+s+'的能量。',reversed:s+n+'逆位：'+s+'的能量受阻。',color:s==='权杖'?'#a0522d':s==='圣杯'?'#3a6b8c':s==='宝剑'?'#7a7a3a':s==='星币'?'#4a7a3a'});});});
   },
 
-  _getMinorMeaning(suit, num, upright) {
-    const meanings = {
-      '权杖': {
-        1: ['新的创意或事业机会出现，充满激情与活力，是行动的最佳时机。', '计划延迟，缺乏方向和动力，机会可能从手中溜走。'],
-        5: ['竞争激烈但充满活力，通过努力可以脱颖而出。', '冲突升级，陷入无谓的争斗，消耗精力。'],
-        10: ['责任重大但收获也丰厚，事业达到新的高度。', '负担过重，难以承受压力，需要学会分担。']
-      },
-      '圣杯': {
-        1: ['新的感情或创意灵感涌现，内心充满爱与喜悦。', '情感空虚或压抑，无法表达真实的感受。'],
-        5: ['感到失落和遗憾，但将注意力转向仍然拥有的美好。', '沉浸在悲伤中无法自拔，看不到希望。'],
-        10: ['家庭和睦，情感圆满，内心充满幸福感。', '家庭矛盾激化，情感破裂，失去归属感。']
-      },
-      '宝剑': {
-        1: ['思维清晰，真理显现，做出明智的决策。', '思维混乱，信息过载，做出错误判断。'],
-        5: ['在竞争中取得优势，但胜利可能带来孤独。', '失败和屈辱，被他人超越，需要反思策略。'],
-        10: ['最坏的情况已经过去，黎明前的黑暗，即将迎来转机。', '彻底崩溃，但这也是重生的开始。']
-      },
-      '星币': {
-        1: ['新的财富机会出现，物质生活即将改善。', '错失良机，投资失误，财务出现漏洞。'],
-        5: ['财务困难，感到被排斥或孤立。', '走出困境，找到解决问题的方法。'],
-        10: ['物质丰盛，家庭富足，遗产或长期投资的回报。', '家庭财务纠纷，财富流失，需要重新规划。']
-      }
-    };
-
-    const suitMeanings = meanings[suit] || {};
-    if (suitMeanings[num]) return suitMeanings[num][upright ? 0 : 1];
-
-    // 通用含义
-    const general = {
-      true: `${suit}能量正向流动，${suit === '权杖' ? '行动力强' : suit === '圣杯' ? '情感丰富' : suit === '宝剑' ? '思维敏捷' : '财运亨通'}。`,
-      false: `${suit}能量受阻，${suit === '权杖' ? '行动迟缓' : suit === '圣杯' ? '情感压抑' : suit === '宝剑' ? '思维混乱' : '财运不济'}。`
-    };
-    return general[upright];
-  },
-
-  _getCourtMeaning(suit, court, upright) {
-    const traits = {
-      '侍从': ['新的学习机会到来，充满好奇心和热情。', '学习动力不足，容易分心，需要更专注。'],
-      '骑士': ['行动力强，追求目标，但在过程中可能过于急躁。', '冲动导致失误，或者行动被拖延。'],
-      '皇后': ['成熟稳重的女性形象，善于照顾他人，创造温馨的环境。', '过度保护或依赖，失去自我。'],
-      '国王': ['成熟稳重的男性形象，有权威和领导力，能够掌控大局。', '滥用权力，独断专行，或缺乏领导力。']
-    };
-    return traits[court][upright ? 0 : 1];
-  },
-
-  /** 开始洗牌 */
+  /** 入口：开始洗牌 */
   shuffle() {
     hideEl('tarotStep1');
     showEl('tarotStep2');
+    this.drawnCount=0;
+    this.selectedCards=[];
+    this.shuffledDeck=shuffle(this.cards);
+    document.getElementById('cardDeck').innerHTML='';
+    document.getElementById('tarotReading').innerHTML='';
+    // 清理旧slot
+    for(let i=0;i<3;i++){const s=document.getElementById('slot'+i);s.classList.add('empty');s.classList.remove('revealed');s.innerHTML='?';}
 
-    const deck = document.getElementById('cardDeck');
-    deck.innerHTML = '';
-    const shuffled = shuffle(this.cards);
+    this._animateShuffle();
+  },
 
-    // === 洗牌动画 ===
-    const animCards = [];
-    const animCount = 15;
+  /** 洗牌动画：8张牌中央交错翻飞 */
+  _animateShuffle() {
+    const deck=document.getElementById('cardDeck');
+    deck.innerHTML='';
+    deck.style.position='relative';
+    deck.style.minHeight='200px';
+    deck.style.display='flex';
+    deck.style.alignItems='center';
+    deck.style.justifyContent='center';
 
-    for (let i = 0; i < animCount; i++) {
-      const card = document.createElement('div');
-      card.className = 'mini-card shuffling';
-      card.textContent = '🃏';
-      card.style.position = 'absolute';
-      card.style.left = '50%';
-      card.style.top = '50%';
-      card.style.marginLeft = '-32px';
-      card.style.marginTop = '-49px';
-      card.style.opacity = '0';
-      card.style.transition = `all ${0.3 + Math.random() * 0.4}s ease-out`;
-      card.style.pointerEvents = 'none';
+    // "正在洗牌"文字
+    const txt=document.createElement('div');
+    txt.className='shuffle-text';
+    txt.textContent='正在洗牌...';
+    txt.style.cssText='position:absolute;z-index:10;font-size:1.2rem;color:#8b6f3a;animation:shufflePulse 0.6s ease-in-out infinite;pointer-events:none;font-family:KaiTi,STKaiti,serif;';
+    deck.appendChild(txt);
+
+    // 8张牌
+    const animCards=[];
+    for(let i=0;i<8;i++){
+      const card=document.createElement('div');
+      card.className='shuffle-card';
+      card.textContent='🃏';
+      card.style.cssText=`position:absolute;width:80px;height:120px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:all 0.15s ease;`;
       deck.appendChild(card);
-      animCards.push(card);
+      animCards.push({el:card,x:0,y:0,rot:0});
     }
 
-    // 洗牌飞动
-    let frame = 0;
-    const shuffleInterval = setInterval(() => {
-      animCards.forEach((card, i) => {
-        const x = (Math.random() - 0.5) * 220;
-        const y = (Math.random() - 0.5) * 160;
-        const rot = (Math.random() - 0.5) * 180;
-        card.style.opacity = '0.9';
-        card.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+    // 翻飞动画
+    let frame=0;
+    const maxFrames=14; // 2.2s / 0.15s ≈ 14帧
+    const shuffleTimer=setInterval(()=>{
+      animCards.forEach((c,i)=>{
+        const progress=frame/maxFrames;
+        const x=(Math.sin(progress*Math.PI*6+i*0.8)*60)*(1-progress*0.5);
+        const y=(Math.cos(progress*Math.PI*5+i*1.1)*40-Math.abs(x)*0.3)*(1-progress*0.5);
+        const rot=(Math.sin(progress*Math.PI*8+i)*45)*(1-progress*0.5);
+        const scale=1-Math.abs(Math.sin(progress*Math.PI*3+i))*0.3;
+        c.el.style.transform=`translate(${x}px,${y}px) rotate(${rot}deg) scale(${scale})`;
+        c.el.style.opacity=1-progress*0.3;
+        c.el.style.zIndex=Math.abs(y)<20?5:1;
       });
       frame++;
-      if (frame >= 8) {
-        clearInterval(shuffleInterval);
-        // 收拢
-        animCards.forEach((card, i) => {
-          card.style.transition = 'all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
-          card.style.transform = `rotate(${(i - 7) * 3}deg) translateY(${Math.abs(i - 7) * 3}px)`;
-          card.style.opacity = '0.85';
+      if(frame>=maxFrames){
+        clearInterval(shuffleTimer);
+        // 牌堆淡出
+        animCards.forEach(c=>{c.el.style.transition='all 0.4s ease';c.el.style.opacity='0';c.el.style.transform='scale(0.5)';});
+        txt.style.transition='all 0.4s ease';txt.style.opacity='0';
+        setTimeout(()=>{
+          deck.innerHTML='';
+          this._showArcCards();
+        },450);
+      }
+    },157);
+  },
+
+  /** 弧牌展开：78张从中心飞入 */
+  _showArcCards() {
+    const deck=document.getElementById('cardDeck');
+    deck.style.minHeight='320px';
+    deck.style.position='relative';
+    deck.style.overflowX='auto';
+    deck.style.overflowY='hidden';
+    deck.style.display='flex';
+    deck.style.alignItems='center';
+    deck.style.padding='80px 30px 40px';
+    deck.style.gap='0';
+    deck.style.justifyContent='flex-start';
+    deck.style.cursor='grab';
+    deck.style.scrollBehavior='smooth';
+    deck.style.webkitOverflowScrolling='touch';
+
+    // 提示文字
+    const hint=document.createElement('div');
+    hint.style.cssText='position:absolute;top:15px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:1rem;font-family:KaiTi,STKaiti,serif;z-index:10;pointer-events:none;';
+    hint.textContent='← 滑动浏览牌堆，点击选择 3 张牌 →';
+    deck.appendChild(hint);
+
+    const arcCards=[];
+    this.shuffledDeck.forEach((cardData,i)=>{
+      const card=document.createElement('div');
+      card.className='arc-card';
+      card.textContent='🃏';
+      card.title=cardData.name;
+      card.dataset.idx=i;
+      // 初始位置：中心
+      card.style.cssText=`flex-shrink:0;width:90px;height:135px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);margin:0 -8px;transform:translateY(40px) scale(0.3);opacity:0;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:1;position:relative;`;
+      // bounce飞入
+      const delay=i*0.015;
+      card.style.transitionDelay=`${delay}s`;
+      deck.appendChild(card);
+
+      // hover放大
+      card.addEventListener('mouseenter',()=>{card.style.transform='translateY(-15px) scale(1.08)';card.style.zIndex='10';card.style.boxShadow='0 12px 32px rgba(0,0,0,0.35)';});
+      card.addEventListener('mouseleave',()=>{if(!card.classList.contains('selected')){card.style.transform='translateY(0) scale(1)';card.style.zIndex='1';card.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)';}});
+
+      card.addEventListener('click',()=>this._selectArcCard(card,cardData,i));
+
+      arcCards.push({el:card,data:cardData});
+    });
+
+    // 飞入
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        arcCards.forEach((c,i)=>{
+          c.el.style.transform='translateY(0) scale(1)';
+          c.el.style.opacity='1';
         });
+      });
+    });
 
-        // 渲染可选牌
-        setTimeout(() => {
-          animCards.forEach(c => c.remove());
-          for (let i = 0; i < Math.min(22, shuffled.length); i++) {
-            const cardEl = document.createElement('div');
-            cardEl.className = 'mini-card';
-            cardEl.style.transform = `rotate(${(i - 11) * 3}deg) translateY(${Math.abs(i - 11) * 2}px)`;
-            cardEl.style.animation = 'fadeIn 0.3s ease forwards';
-            cardEl.textContent = '🃏';
-            cardEl.title = '点击选牌';
-            cardEl.addEventListener('click', () => this.drawCard(shuffled[i]));
-            deck.appendChild(cardEl);
-          }
-        }, 400);
-      }
-    }, 150);
+    this._arcCards=arcCards;
   },
 
-  /** 抽一张牌 */
-  drawCard(card) {
-    if (this.drawnCount >= 3) return;
+  /** 选择弧牌 */
+  _selectArcCard(cardEl,cardData,idx) {
+    if(this.drawnCount>=3)return;
+    if(cardEl.classList.contains('selected'))return;
 
-    const slot = document.getElementById('slot' + this.drawnCount);
-    const isReversed = Math.random() < 0.5;
+    cardEl.classList.add('selected');
+    cardEl.style.transform='translateY(-20px) scale(1.1)';
+    cardEl.style.zIndex='20';
+    cardEl.style.boxShadow='0 12px 32px rgba(140,110,60,0.5)';
+    cardEl.style.borderColor='#c9a96e';
+    cardEl.style.borderWidth='3px';
+    cardEl.textContent=cardData.name.substring(0,2);
 
-    card.isReversed = isReversed;
-    this.selectedCards[this.drawnCount] = card;
+    const isReversed=Math.random()<0.5;
+    cardData.isReversed=isReversed;
+    this.selectedCards[this.drawnCount]=cardData;
 
-    // 翻牌动画
-    slot.classList.add('flipping');
-    setTimeout(() => {
-      slot.classList.remove('empty', 'flipping');
-      slot.classList.add('revealed');
-      slot.innerHTML = `
-        <div class="tarot-card-inner ${isReversed ? 'reversed' : ''}">
-          <div class="tarot-card-front" style="border-color:${card.color}">
-            <div class="card-type-badge ${card.type}">${card.type === 'major' ? '大阿卡纳' : card.type === 'court' ? '宫廷牌' : '小阿卡纳'}</div>
-            <div class="card-name">${card.name}</div>
-            <div class="card-num">${card.type === 'major' ? (['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'][card.number]) : card.number}</div>
-            <div class="card-keywords">${card.keywords}</div>
-            <div class="card-suit" style="color:${card.color}">${card.suit || '大阿卡纳'}</div>
-          </div>
-        </div>
-      `;
-      this.drawnCount++;
+    const slotId='slot'+this.drawnCount;
+    const slot=document.getElementById(slotId);
+    slot.classList.remove('empty');
+    slot.classList.add('revealed');
+    slot.innerHTML=`<div class="tarot-card-inner${isReversed?' reversed':''}"><div class="tarot-card-front" style="border-color:${cardData.color||'#8b6f3a'}"><div class="card-type-badge ${cardData.type}">${cardData.type==='major'?'大阿卡纳':cardData.type==='court'?'宫廷牌':'小阿卡纳'}</div><div class="card-name">${cardData.name}</div><div class="card-keywords">${cardData.keywords}</div></div></div>`;
+    this.drawnCount++;
 
-      // 三张都抽完时展示解读
-      if (this.drawnCount >= 3) {
-        setTimeout(() => this.showReading(), 800);
-      }
-    }, 600);
+    if(this.drawnCount>=3){
+      setTimeout(()=>this.showReading(),600);
+    }
   },
 
-  /** 展示完整解读 */
+  /** 展示解读 */
   showReading() {
     hideEl('tarotStep2');
     showEl('tarotStep3');
-
-    const reading = document.getElementById('tarotReading');
-    const positions = ['过去', '现在', '未来'];
-
-    let html = '<div class="reading-cards">';
-    this.selectedCards.forEach((card, i) => {
-      html += `
-        <div class="reading-card" style="border-color:${card.color}">
-          <div class="reading-card-header">
-            <span class="position-badge">${positions[i]}</span>
-            <span class="reversed-badge ${card.isReversed ? 'is-reversed' : 'is-upright'}">${card.isReversed ? '逆位' : '正位'}</span>
-          </div>
-          <h3>${card.name}</h3>
-          <p class="reading-desc">${card.isReversed ? (card.reversed || card.upright + '（逆位含义）') : card.upright}</p>
-          <small>${card.keywords}</small>
-        </div>
-      `;
+    const reading=document.getElementById('tarotReading');
+    const positions=['过去','现在','未来'];
+    let html='<div class="reading-cards">';
+    this.selectedCards.forEach((card,i)=>{
+      html+=`<div class="reading-card" style="border-color:${card.color||'#8b6f3a'}"><div class="reading-card-header"><span class="position-badge">${positions[i]}</span><span class="reversed-badge ${card.isReversed?'is-reversed':'is-upright'}">${card.isReversed?'逆位':'正位'}</span></div><h3>${card.name}</h3><p class="reading-desc">${card.isReversed?(card.reversed||card.upright):card.upright}</p><small>${card.keywords}</small></div>`;
     });
-    html += '</div>';
-
-    // 综合解读
-    html += '<div class="reading-summary"><h4>🔮 综合解读</h4><p>';
-    html += this._getSummary(this.selectedCards);
-    html += '</p></div>';
-
-    reading.innerHTML = html;
+    html+='</div>';
+    const revCount=this.selectedCards.filter(c=>c.isReversed).length;
+    html+=`<div class="reading-summary"><h4>🔮 综合解读</h4><p>${revCount===0?'三张牌皆为正位，能量流畅。过去奠定了良好基础，现在状态积极，未来前景光明。':revCount===1?'一张逆位，在特定阶段需多加留意。整体运势尚可，调整心态即可化解。':revCount===2?'两张逆位，可能正处于转折期。挑战是成长的必经之路。':'三张皆逆位，能量较为阻滞。但逆位提醒我们停下来反思、修正方向。沉淀之后必有更好的出发。'}</p></div>`;
+    reading.innerHTML=html;
   },
 
-  _getSummary(cards) {
-    const reversedCount = cards.filter(c => c.isReversed).length;
-    let summary = '';
-
-    if (reversedCount === 0) {
-      summary = '三张牌皆为正位，能量流畅。过去打下了良好基础，现在状态积极，未来前景光明。整体运势上扬，建议顺势而为，把握机遇。';
-    } else if (reversedCount === 1) {
-      summary = `一张牌为逆位，提示在「${cards.findIndex(c => c.isReversed) === 0 ? '过去' : cards.findIndex(c => c.isReversed) === 1 ? '现在' : '未来'}」阶段需要多加留意。整体运势尚可，注意调整心态和行动方式即可化解。`;
-    } else if (reversedCount === 2) {
-      summary = '两张牌为逆位，当前可能正处于转折期。过去的经验需要重新审视，当下的挑战需要勇气面对。但请相信，这是成长的必经之路。';
-    } else {
-      summary = '三张牌皆为逆位，暗示当前能量较为阻滞。但这并非坏事——逆位提醒我们需要停下来反思、修正方向。沉淀之后，必有更好的出发。';
-    }
-
-    return summary;
-  },
-
-  /** 重置 */
   reset() {
-    this.selectedCards = [];
-    this.drawnCount = 0;
-    for (let i = 0; i < 3; i++) {
-      const slot = document.getElementById('slot' + i);
-      slot.classList.add('empty');
-      slot.classList.remove('revealed', 'flipping');
-      slot.innerHTML = '?';
-    }
-    hideEl('tarotStep2');
-    hideEl('tarotStep3');
-    showEl('tarotStep1');
+    this.selectedCards=[];this.drawnCount=0;
+    for(let i=0;i<3;i++){const s=document.getElementById('slot'+i);s.classList.add('empty');s.classList.remove('revealed');s.innerHTML='?';}
+    hideEl('tarotStep2');hideEl('tarotStep3');showEl('tarotStep1');
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  TarotModule.init();
-});
+document.addEventListener('DOMContentLoaded',()=>{TarotModule.init()});
