@@ -453,10 +453,10 @@ body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+  will-change: auto;
 }
-.arc-card:active {
-  cursor: grabbing;
-}
+.arc-card:active { cursor: grabbing; }
+#arcTrack { will-change: transform; }
 
 /* Mini cards (deck) */
 .card-deck {

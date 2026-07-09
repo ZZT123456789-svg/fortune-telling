@@ -114,62 +114,81 @@ const TarotModule = {
     },157);
   },
 
-  /** 弧牌展开：78张从中心飞入 */
+  /** 弧牌展开：78张预计算角度，GPU加速滑动 */
   _showArcCards() {
     const deck=document.getElementById('cardDeck');
-    deck.style.minHeight='320px';
-    deck.style.position='relative';
-    deck.style.overflowX='auto';
-    deck.style.overflowY='hidden';
-    deck.style.display='flex';
-    deck.style.alignItems='center';
-    deck.style.padding='80px 30px 40px';
-    deck.style.gap='0';
-    deck.style.justifyContent='flex-start';
-    deck.style.cursor='grab';
-    deck.style.scrollBehavior='smooth';
-    deck.style.webkitOverflowScrolling='touch';
+    deck.style.cssText='position:relative;height:200px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x;';
+    deck.innerHTML='';
 
-    // 提示文字
+    // 提示
     const hint=document.createElement('div');
-    hint.style.cssText='position:absolute;top:15px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:1rem;font-family:KaiTi,STKaiti,serif;z-index:10;pointer-events:none;';
-    hint.textContent='← 滑动浏览牌堆，点击选择 3 张牌 →';
+    hint.style.cssText='position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:0.85rem;font-family:KaiTi,STKaiti,serif;z-index:20;pointer-events:none;';
+    hint.textContent='← 滑动浏览 · 点击选牌 →';
     deck.appendChild(hint);
+
+    // GPU加速容器
+    const track=document.createElement('div');
+    track.id='arcTrack';
+    track.style.cssText='position:absolute;left:50%;top:50%;transform:translateX(0);will-change:transform;height:110px;margin-top:-55px;';
+    deck.appendChild(track);
+
+    const cardW=36; // 牌宽36px
+    const overlap=0.55; // 55%重叠
+    const step=cardW*(1-overlap); // ~16px间距
+    const totalW=78*step;
+    const cx=totalW/2;
 
     const arcCards=[];
     this.shuffledDeck.forEach((cardData,i)=>{
       const card=document.createElement('div');
       card.className='arc-card';
-      card.textContent='🃏';
       card.title=cardData.name;
       card.dataset.idx=i;
-      // 初始位置：中心
-      card.style.cssText=`flex-shrink:0;width:90px;height:135px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);margin:0 -8px;transform:translateY(40px) scale(0.3);opacity:0;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:1;position:relative;`;
-      // bounce飞入
-      const delay=i*0.015;
-      card.style.transitionDelay=`${delay}s`;
-      deck.appendChild(card);
+      const x=i*step;
+      // 预计算弧度角度（渲染时固定，不随滑动变化）
+      const w=totalW;
+      const mid=w/2;
+      const arcAngle=(x-mid)/w*Math.PI*0.35; // ±约31度弧
+      const ty=Math.abs(x-mid)/w*35; // 弧高
+      card.style.cssText=`position:absolute;left:${x}px;top:0;width:${cardW}px;height:48px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);transform:translateY(${ty}px) rotate(${arcAngle}rad);opacity:0;transition:opacity 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:${10-Math.abs(x-mid)/w*8|0};color:#5c4a28;font-family:KaiTi,STKaiti,serif;`;
+      card.textContent=cardData.name.substring(0,2)||'🃏';
+      card.style.transitionDelay=`${i*0.012}s`;
+      track.appendChild(card);
 
-      // hover放大
-      card.addEventListener('mouseenter',()=>{card.style.transform='translateY(-15px) scale(1.08)';card.style.zIndex='10';card.style.boxShadow='0 12px 32px rgba(0,0,0,0.35)';});
-      card.addEventListener('mouseleave',()=>{if(!card.classList.contains('selected')){card.style.transform='translateY(0) scale(1)';card.style.zIndex='1';card.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)';}});
+      card.addEventListener('click',(e)=>{e.stopPropagation();this._selectArcCard(card,cardData,i);});
+      card.addEventListener('mouseenter',()=>{if(!card.classList.contains('selected')){card.style.transform=`translateY(${ty-10}px) rotate(${arcAngle}rad) scale(1.25)`;card.style.zIndex='30';card.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)';card.style.borderColor='#c9a96e';}});
+      card.addEventListener('mouseleave',()=>{if(!card.classList.contains('selected')){card.style.transform=`translateY(${ty}px) rotate(${arcAngle}rad)`;card.style.zIndex=`${10-Math.abs(x-mid)/w*8|0}`;card.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';card.style.borderColor='#8b6f3a';}});
 
-      card.addEventListener('click',()=>this._selectArcCard(card,cardData,i));
-
-      arcCards.push({el:card,data:cardData});
+      arcCards.push({el:card,data:cardData,x:x,ty:ty,angle:arcAngle});
     });
 
-    // 飞入
+    // 飞入动画
     requestAnimationFrame(()=>{
       requestAnimationFrame(()=>{
-        arcCards.forEach((c,i)=>{
-          c.el.style.transform='translateY(0) scale(1)';
-          c.el.style.opacity='1';
-        });
+        arcCards.forEach(c=>{c.el.style.opacity='1';});
       });
     });
 
+    // 滑动：只操作容器transform
+    let isDown=false,startX=0,curX=0;
+    const clampX=(v)=>Math.max(-totalW/2+50,Math.min(totalW/2-50,v));
+
+    const setTrackX=(v)=>{curX=clampX(v);track.style.transform=`translateX(${-curX}px)`;};
+
+    track.addEventListener('mousedown',e=>{isDown=true;startX=e.clientX+curX;track.style.cursor='grabbing';e.preventDefault();});
+    window.addEventListener('mousemove',e=>{if(!isDown)return;setTrackX(startX-e.clientX);});
+    window.addEventListener('mouseup',()=>{isDown=false;track.style.cursor='';});
+
+    track.addEventListener('touchstart',e=>{isDown=true;startX=e.touches[0].clientX+curX;}, {passive:false});
+    track.addEventListener('touchmove',e=>{if(!isDown)return;setTrackX(startX-e.touches[0].clientX);},{passive:false});
+    track.addEventListener('touchend',()=>{isDown=false;});
+
+    // 初始居中
+    setTrackX(0);
     this._arcCards=arcCards;
+    this._trackEl=track;
+    this._clampX=clampX;
+    this._setTrackX=setTrackX;
   },
 
   /** 选择弧牌 */
@@ -178,27 +197,24 @@ const TarotModule = {
     if(cardEl.classList.contains('selected'))return;
 
     cardEl.classList.add('selected');
-    cardEl.style.transform='translateY(-20px) scale(1.1)';
-    cardEl.style.zIndex='20';
-    cardEl.style.boxShadow='0 12px 32px rgba(140,110,60,0.5)';
+    cardEl.style.transform=cardEl.style.transform.replace(/scale\([^)]+\)/,'')+' scale(1.35)';
+    cardEl.style.zIndex='50';
+    cardEl.style.boxShadow='0 8px 28px rgba(140,110,60,0.5)';
     cardEl.style.borderColor='#c9a96e';
-    cardEl.style.borderWidth='3px';
+    cardEl.style.borderWidth='2px';
+    cardEl.style.background='linear-gradient(135deg,#fffdf5,#f5edd8)';
     cardEl.textContent=cardData.name.substring(0,2);
 
     const isReversed=Math.random()<0.5;
     cardData.isReversed=isReversed;
     this.selectedCards[this.drawnCount]=cardData;
 
-    const slotId='slot'+this.drawnCount;
-    const slot=document.getElementById(slotId);
-    slot.classList.remove('empty');
-    slot.classList.add('revealed');
-    slot.innerHTML=`<div class="tarot-card-inner${isReversed?' reversed':''}"><div class="tarot-card-front" style="border-color:${cardData.color||'#8b6f3a'}"><div class="card-type-badge ${cardData.type}">${cardData.type==='major'?'大阿卡纳':cardData.type==='court'?'宫廷牌':'小阿卡纳'}</div><div class="card-name">${cardData.name}</div><div class="card-keywords">${cardData.keywords}</div></div></div>`;
+    const slot=document.getElementById('slot'+this.drawnCount);
+    slot.classList.remove('empty');slot.classList.add('revealed');
+    slot.innerHTML=`<div class="tarot-card-inner${isReversed?' reversed':''}"><div class="tarot-card-front" style="border-color:${cardData.color||'#8b6f3a'}"><div class="card-type-badge ${cardData.type}">${cardData.type==='major'?'大':cardData.type==='court'?'宫廷':'小'}</div><div class="card-name">${cardData.name}</div><div class="card-keywords">${cardData.keywords}</div></div></div>`;
     this.drawnCount++;
 
-    if(this.drawnCount>=3){
-      setTimeout(()=>this.showReading(),600);
-    }
+    if(this.drawnCount>=3){setTimeout(()=>this.showReading(),600);}
   },
 
   /** 展示解读 */
