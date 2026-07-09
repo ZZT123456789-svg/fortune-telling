@@ -1,20 +1,16 @@
 /**
- * 每日运势签模块
- * 签筒摇晃 → 抽签 → 展示签文
+ * 每日运势签模块 - ES5
  */
-
-const DailyModule = {
-  // 100 支签的数据
+var DailyModule = {
   sticks: [],
 
-  init() {
+  init: function() {
     this.generateSticks();
     this.checkTodayDrawn();
   },
 
-  /** 生成 100 支签数据 */
-  generateSticks() {
-    const levels = [
+  generateSticks: function() {
+    var levels = [
       { name: '上上签', color: '#ffd700', weight: 5, emoji: '🏆' },
       { name: '上签', color: '#ff8c00', weight: 20, emoji: '✨' },
       { name: '中签', color: '#00ced1', weight: 40, emoji: '🎯' },
@@ -22,8 +18,7 @@ const DailyModule = {
       { name: '下签', color: '#888', weight: 15, emoji: '🌧️' }
     ];
 
-    // 签文诗句库
-    const poems = [
+    var poems = [
       { title: '钟离成道', poem: '天开地辟作良缘，\n日吉时良万物全。\n若得此签非小可，\n公行忠正帝王宣。', summary: '大吉之兆，万事求谋皆顺利。' },
       { title: '苏秦得志', poem: '鹏程万里任翱翔，\n云外飞鸿志气昂。\n他日功名成就后，\n锦衣归里好风光。', summary: '志向高远，终将功成名就。' },
       { title: '董永遇仙', poem: '姻缘本是前生定，\n月老红绳一线牵。\n莫问前程多坎坷，\n春风送暖入心田。', summary: '美好姻缘将至，宜耐心等待。' },
@@ -46,7 +41,7 @@ const DailyModule = {
       { title: '精卫填海', poem: '沧海茫茫志不移，\n微木衔来誓要齐。\n世人莫笑心太傻，\n恒心可把泰山移。', summary: '矢志不渝，铁杵磨针。' }
     ];
 
-    const interpretations = [
+    var interpretations = [
       { career: '事业运上升，宜积极争取机会，贵人运旺。', love: '桃花运佳，单身者有望遇到心仪对象。', wealth: '正财运稳中有升，投资需谨慎。', health: '精力充沛，保持运动习惯。', study: '学业进步显著，考试运佳。' },
       { career: '稳扎稳打，勿急于求成，厚积薄发。', love: '感情需耐心经营，细水长流。', wealth: '财运平稳，宜储蓄不宜投机。', health: '注意劳逸结合，避免过度疲劳。', study: '循序渐进，打好基础是关键。' },
       { career: '面临选择，三思而后行，听取长辈意见。', love: '缘分未到，先完善自己。', wealth: '破财之象，避免大额消费。', health: '注意肠胃问题，饮食清淡。', study: '注意力不集中，需调整状态。' },
@@ -54,12 +49,13 @@ const DailyModule = {
       { career: '挑战与机遇并存，勇敢面对。', love: '感情出现波折，冷静沟通。', wealth: '财运起伏大，守住底线。', health: '压力山大，适当放松。', study: '坚持不懈，突破瓶颈。' }
     ];
 
-    let id = 1;
+    var id = 1;
     this.sticks = [];
-    for (const level of levels) {
-      for (let i = 0; i < level.weight; i++) {
-        const poem = poems[(id - 1) % poems.length];
-        const interp = interpretations[(id - 1) % interpretations.length];
+    for (var li = 0; li < levels.length; li++) {
+      var level = levels[li];
+      for (var i = 0; i < level.weight; i++) {
+        var poem = poems[(id - 1) % poems.length];
+        var interp = interpretations[(id - 1) % interpretations.length];
         this.sticks.push({
           id: id,
           level: level.name,
@@ -77,114 +73,96 @@ const DailyModule = {
         id++;
       }
     }
-    // 确保恰好 100 支
     while (this.sticks.length > 100) this.sticks.pop();
     while (this.sticks.length < 100) {
-      this.sticks.push({ ...this.sticks[this.sticks.length % 20], id: this.sticks.length + 1 });
+      var idx = this.sticks.length % 20;
+      this.sticks.push(Object.assign({}, this.sticks[idx], { id: this.sticks.length + 1 }));
     }
   },
 
-  /** 检查今天是否已抽过签 */
-  checkTodayDrawn() {
-    const lastDraw = localStorage.getItem('dailyFortuneDate');
-    const today = todayStr();
+  checkTodayDrawn: function() {
+    var lastDraw = localStorage.getItem('dailyFortuneDate');
+    var today = todayStr();
     if (lastDraw === today) {
-      const saved = JSON.parse(localStorage.getItem('dailyFortuneResult') || 'null');
+      var saved = JSON.parse(localStorage.getItem('dailyFortuneResult') || 'null');
       if (saved) {
         this.showSavedResult(saved);
-        document.getElementById('shakeBtn').textContent = '✅ 今日已抽签';
-        document.getElementById('shakeBtn').disabled = true;
-        document.getElementById('shakeBtn').style.opacity = '0.6';
+        var btn = document.getElementById('shakeBtn');
+        btn.textContent = '✅ 今日已抽签';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
       }
     }
   },
 
-  /** 摇签 */
-  shake() {
-    const today = todayStr();
-    if (localStorage.getItem('dailyFortuneDate') === today) {
-      return; // 今天已抽过
-    }
+  shake: function() {
+    var today = todayStr();
+    if (localStorage.getItem('dailyFortuneDate') === today) return;
 
-    const holder = document.getElementById('stickHolder');
-    const shakeBtn = document.getElementById('shakeBtn');
-
-    // 摇晃动画
+    var holder = document.getElementById('stickHolder');
+    var shakeBtn = document.getElementById('shakeBtn');
     holder.classList.add('shaking');
     shakeBtn.disabled = true;
     shakeBtn.textContent = '🎋 摇晃中...';
 
-    setTimeout(() => {
+    var self = this;
+    setTimeout(function() {
       holder.classList.remove('shaking');
-      const stick = randomPick(this.sticks);
-      this.showResult(stick);
-
-      // 保存到 localStorage
+      var stick = randomPick(self.sticks);
+      self.showResult(stick);
       localStorage.setItem('dailyFortuneDate', today);
       localStorage.setItem('dailyFortuneResult', JSON.stringify(stick));
-
       shakeBtn.textContent = '✅ 今日已抽签';
       shakeBtn.style.opacity = '0.6';
     }, 2000);
   },
 
-  /** 展示结果 */
-  showResult(stick) {
+  showResult: function(stick) {
     hideEl('stickHolder');
     hideEl('shakeBtn');
     showEl('stickResult');
-    const descEl = document.querySelector('#module-daily .module-desc');
+    var descEl = document.querySelector('#module-daily .module-desc');
     if (descEl) descEl.style.display = 'none';
 
-    document.getElementById('stickLevel').innerHTML = `
-      <span class="level-badge" style="background:${stick.levelColor}20;color:${stick.levelColor};border:2px solid ${stick.levelColor}">
-        ${stick.levelEmoji} ${stick.level}
-      </span>
-    `;
+    document.getElementById('stickLevel').innerHTML =
+      '<span class="level-badge" style="background:' + stick.levelColor + '20;color:' + stick.levelColor + ';border:2px solid ' + stick.levelColor + '">' +
+      stick.levelEmoji + ' ' + stick.level + '</span>';
 
-    document.getElementById('stickPoem').innerHTML = `
-      <h3 class="stick-title">📜 ${stick.title}</h3>
-      <pre class="stick-poem-text">${stick.poem}</pre>
-      <p class="stick-summary">${stick.summary}</p>
-    `;
+    document.getElementById('stickPoem').innerHTML =
+      '<h3 class="stick-title">📜 ' + stick.title + '</h3>' +
+      '<pre class="stick-poem-text">' + stick.poem + '</pre>' +
+      '<p class="stick-summary">' + stick.summary + '</p>';
 
-    document.getElementById('stickInterpretation').innerHTML = `
-      <div class="interp-grid">
-        <div class="interp-item"><span class="interp-icon">💼</span><strong>事业：</strong>${stick.career}</div>
-        <div class="interp-item"><span class="interp-icon">💕</span><strong>感情：</strong>${stick.love}</div>
-        <div class="interp-item"><span class="interp-icon">💰</span><strong>财运：</strong>${stick.wealth}</div>
-        <div class="interp-item"><span class="interp-icon">🏥</span><strong>健康：</strong>${stick.health}</div>
-        <div class="interp-item"><span class="interp-icon">📚</span><strong>学业：</strong>${stick.study}</div>
-      </div>
-    `;
+    document.getElementById('stickInterpretation').innerHTML =
+      '<div class="interp-grid">' +
+      '<div class="interp-item"><span class="interp-icon">💼</span><strong>事业：</strong>' + stick.career + '</div>' +
+      '<div class="interp-item"><span class="interp-icon">💕</span><strong>感情：</strong>' + stick.love + '</div>' +
+      '<div class="interp-item"><span class="interp-icon">💰</span><strong>财运：</strong>' + stick.wealth + '</div>' +
+      '<div class="interp-item"><span class="interp-icon">🏥</span><strong>健康：</strong>' + stick.health + '</div>' +
+      '<div class="interp-item"><span class="interp-icon">📚</span><strong>学业：</strong>' + stick.study + '</div>' +
+      '</div>';
 
     var dirs = ['东方','南方','西方','北方','东南方','东北方','西南方','西北方'];
     var fruits = ['苹果','橙子','葡萄','草莓','香蕉','桃子','西瓜','猕猴桃','火龙果','芒果','樱桃','蓝莓'];
-    document.getElementById('stickExtras').innerHTML = `
-      <div class="lucky-extras">
-        <span class="lucky-item">🎨 幸运色：<b>${randomPick(['金色','红色','紫色','蓝色','绿色','白色'])}</b></span>
-        <span class="lucky-item">🔢 幸运数字：<b>${randomInt(1, 99)}</b></span>
-        <span class="lucky-item">🧭 幸运方向：<b>${randomPick(dirs)}</b></span>
-        <span class="lucky-item">🍎 幸运水果：<b>${randomPick(fruits)}</b></span>
-        <span class="lucky-item">📅 宜：<b>${randomPick(['出行','会友','签约','学习','投资','表白','求职'])}</b></span>
-        <span class="lucky-item">⚠️ 忌：<b>${randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累'])}</b></span>
-      </div>
-    `;
+    document.getElementById('stickExtras').innerHTML =
+      '<div class="lucky-extras">' +
+      '<span class="lucky-item">🎨 幸运色：<b>' + randomPick(['金色','红色','紫色','蓝色','绿色','白色']) + '</b></span>' +
+      '<span class="lucky-item">🔢 幸运数字：<b>' + randomInt(1, 99) + '</b></span>' +
+      '<span class="lucky-item">🧭 幸运方向：<b>' + randomPick(dirs) + '</b></span>' +
+      '<span class="lucky-item">🍎 幸运水果：<b>' + randomPick(fruits) + '</b></span>' +
+      '<span class="lucky-item">📅 宜：<b>' + randomPick(['出行','会友','签约','学习','投资','表白','求职']) + '</b></span>' +
+      '<span class="lucky-item">⚠️ 忌：<b>' + randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累']) + '</b></span>' +
+      '</div>';
   },
 
-  /** 展示已保存的结果 */
-  showSavedResult(stick) {
+  showSavedResult: function(stick) {
     document.getElementById('shakeBtn').style.display = 'none';
     this.showResult(stick);
   },
 
-  /** 重新抽签（明日再来） */
-  reshake() {
+  reshake: function() {
     alert('今日已抽过签，请明日再来！🔮\n（每日限抽一次，让运势沉淀）');
   }
 };
 
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-  DailyModule.init();
-});
+document.addEventListener('DOMContentLoaded', function() { DailyModule.init(); });
