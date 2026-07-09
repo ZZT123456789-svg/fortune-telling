@@ -1,17 +1,16 @@
 /**
  * 塔罗牌占卜模块 - 弧牌滑动抽牌
- * 洗牌动画 → 弧牌展开 → 滑动选牌 → 3张解读
  */
-const TarotModule = {
+var TarotModule = {
   cards: [],
   selectedCards: [],
   drawnCount: 0,
   shuffledDeck: [],
 
-  init() { this.generateCards(); },
+  init: function() { this.generateCards(); },
 
-  generateCards() {
-    const major = [
+  generateCards: function() {
+    var major = [
       {n:'愚者',kw:'开始·冒险·天真',u:'新的旅程即将开启，带着纯真的心踏上未知之路。',r:'冲动鲁莽，计划不周，可能有逃避现实的倾向。'},
       {n:'魔术师',kw:'创造·技能·自信',u:'你拥有实现目标所需的一切资源。专注意念，创造奇迹。',r:'能力被浪费或滥用，可能出现欺骗或操纵。'},
       {n:'女祭司',kw:'直觉·智慧·神秘',u:'相信你的直觉和内在智慧。静待时机，答案会自然浮现。',r:'忽视直觉，过度理性，隐藏的秘密可能被揭露。'},
@@ -35,209 +34,247 @@ const TarotModule = {
       {n:'审判',kw:'觉醒·重生·召唤',u:'聆听内心召唤，做出重要觉醒。重新开始。',r:'逃避内心召唤，拒绝改变。'},
       {n:'世界',kw:'圆满·完成·整合',u:'一个阶段圆满结束。庆祝和感恩的时刻。',r:'接近完成但尚有缺憾，延迟的成功。'}
     ];
-    const suits=['权杖','圣杯','宝剑','星币'];
-    const nums=['王牌','二','三','四','五','六','七','八','九','十','侍从','骑士','皇后','国王'];
-    this.cards=[];
-    major.forEach((c,i)=>{this.cards.push({id:i,type:'major',name:c.n,keywords:c.kw,upright:c.u,reversed:c.r,suit:null,color:'#8b6f3a'});});
-    let id=22;
-    suits.forEach(s=>{nums.forEach((n,i)=>{this.cards.push({id:id++,type:i<10?'minor':'court',name:s+n,keywords:s,number:i+1,suit:s,upright:s+n+'正位：蕴含着'+s+'的能量。',reversed:s+n+'逆位：'+s+'的能量受阻。',color:s==='权杖'?'#a0522d':s==='圣杯'?'#3a6b8c':s==='宝剑'?'#7a7a3a':s==='星币'?'#4a7a3a'});});});
+    var suits = ['权杖','圣杯','宝剑','星币'];
+    var nums = ['王牌','二','三','四','五','六','七','八','九','十','侍从','骑士','皇后','国王'];
+    this.cards = [];
+    var self = this;
+    major.forEach(function(c,i){
+      self.cards.push({id:i,type:'major',name:c.n,keywords:c.kw,upright:c.u,reversed:c.r,suit:null,color:'#8b6f3a'});
+    });
+    var id = 22;
+    suits.forEach(function(s){
+      nums.forEach(function(n,i){
+        var type = i < 10 ? 'minor' : 'court';
+        self.cards.push({id:id++,type:type,name:s+n,keywords:s,number:i+1,suit:s,
+          upright:s+n+'正位：蕴含着'+s+'的能量。',
+          reversed:s+n+'逆位：'+s+'的能量受阻。',
+          color:s==='权杖'?'#a0522d':s==='圣杯'?'#3a6b8c':s==='宝剑'?'#7a7a3a':'#4a7a3a'
+        });
+      });
+    });
   },
 
-  /** 入口：开始洗牌 */
-  shuffle() {
+  shuffle: function() {
     hideEl('tarotStep1');
     showEl('tarotStep2');
-    this.drawnCount=0;
-    this.selectedCards=[];
-    this.shuffledDeck=shuffle(this.cards);
-    document.getElementById('cardDeck').innerHTML='';
-    document.getElementById('tarotReading').innerHTML='';
-    // 清理旧slot
-    for(let i=0;i<3;i++){const s=document.getElementById('slot'+i);s.classList.add('empty');s.classList.remove('revealed');s.innerHTML='?';}
-
+    this.drawnCount = 0;
+    this.selectedCards = [];
+    this.shuffledDeck = shuffle(this.cards);
+    document.getElementById('cardDeck').innerHTML = '';
+    document.getElementById('tarotReading').innerHTML = '';
+    for (var i = 0; i < 3; i++) {
+      var s = document.getElementById('slot'+i);
+      s.classList.add('empty'); s.classList.remove('revealed'); s.innerHTML = '?';
+    }
     this._animateShuffle();
   },
 
-  /** 洗牌动画：8张牌中央交错翻飞 */
-  _animateShuffle() {
-    const deck=document.getElementById('cardDeck');
-    deck.innerHTML='';
-    deck.style.position='relative';
-    deck.style.minHeight='200px';
-    deck.style.display='flex';
-    deck.style.alignItems='center';
-    deck.style.justifyContent='center';
+  _animateShuffle: function() {
+    var deck = document.getElementById('cardDeck');
+    deck.innerHTML = '';
+    deck.style.cssText = 'position:relative;min-height:200px;display:flex;align-items:center;justify-content:center;';
 
-    // "正在洗牌"文字
-    const txt=document.createElement('div');
-    txt.className='shuffle-text';
-    txt.textContent='正在洗牌...';
-    txt.style.cssText='position:absolute;z-index:10;font-size:1.2rem;color:#8b6f3a;animation:shufflePulse 0.6s ease-in-out infinite;pointer-events:none;font-family:KaiTi,STKaiti,serif;';
+    var txt = document.createElement('div');
+    txt.style.cssText = 'position:absolute;z-index:10;font-size:1.2rem;color:#8b6f3a;animation:shufflePulse 0.6s ease-in-out infinite;pointer-events:none;font-family:KaiTi,STKaiti,serif;';
+    txt.textContent = '正在洗牌...';
     deck.appendChild(txt);
 
-    // 8张牌
-    const animCards=[];
-    for(let i=0;i<8;i++){
-      const card=document.createElement('div');
-      card.className='shuffle-card';
-      card.textContent='🃏';
-      card.style.cssText=`position:absolute;width:80px;height:120px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:all 0.15s ease;`;
+    var animCards = [];
+    for (var i = 0; i < 8; i++) {
+      var card = document.createElement('div');
+      card.textContent = '🃏';
+      card.style.cssText = 'position:absolute;width:80px;height:120px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:all 0.15s ease;';
       deck.appendChild(card);
-      animCards.push({el:card,x:0,y:0,rot:0});
+      animCards.push({el:card});
     }
 
-    // 翻飞动画
-    let frame=0;
-    const maxFrames=14; // 2.2s / 0.15s ≈ 14帧
-    const shuffleTimer=setInterval(()=>{
-      animCards.forEach((c,i)=>{
-        const progress=frame/maxFrames;
-        const x=(Math.sin(progress*Math.PI*6+i*0.8)*60)*(1-progress*0.5);
-        const y=(Math.cos(progress*Math.PI*5+i*1.1)*40-Math.abs(x)*0.3)*(1-progress*0.5);
-        const rot=(Math.sin(progress*Math.PI*8+i)*45)*(1-progress*0.5);
-        const scale=1-Math.abs(Math.sin(progress*Math.PI*3+i))*0.3;
-        c.el.style.transform=`translate(${x}px,${y}px) rotate(${rot}deg) scale(${scale})`;
-        c.el.style.opacity=1-progress*0.3;
-        c.el.style.zIndex=Math.abs(y)<20?5:1;
+    var frame = 0;
+    var maxFrames = 14;
+    var self = this;
+    var shuffleTimer = setInterval(function(){
+      animCards.forEach(function(c,i){
+        var progress = frame / maxFrames;
+        var x = Math.sin(progress*Math.PI*6+i*0.8) * 60 * (1-progress*0.5);
+        var y = Math.cos(progress*Math.PI*5+i*1.1) * 40 * (1-progress*0.5) - Math.abs(x)*0.3;
+        var rot = Math.sin(progress*Math.PI*8+i) * 45 * (1-progress*0.5);
+        var scale = 1 - Math.abs(Math.sin(progress*Math.PI*3+i)) * 0.3;
+        c.el.style.transform = 'translate('+x+'px,'+y+'px) rotate('+rot+'deg) scale('+scale+')';
+        c.el.style.opacity = 1 - progress*0.3;
+        c.el.style.zIndex = Math.abs(y) < 20 ? 5 : 1;
       });
       frame++;
-      if(frame>=maxFrames){
+      if (frame >= maxFrames) {
         clearInterval(shuffleTimer);
-        // 牌堆淡出
-        animCards.forEach(c=>{c.el.style.transition='all 0.4s ease';c.el.style.opacity='0';c.el.style.transform='scale(0.5)';});
-        txt.style.transition='all 0.4s ease';txt.style.opacity='0';
-        setTimeout(()=>{
-          deck.innerHTML='';
-          this._showArcCards();
-        },450);
+        animCards.forEach(function(c){
+          c.el.style.transition = 'all 0.4s ease';
+          c.el.style.opacity = '0';
+          c.el.style.transform = 'scale(0.5)';
+        });
+        txt.style.transition = 'all 0.4s ease';
+        txt.style.opacity = '0';
+        setTimeout(function(){
+          deck.innerHTML = '';
+          self._showArcCards();
+        }, 450);
       }
-    },157);
+    }, 157);
   },
 
-  /** 弧牌展开：78张预计算角度，GPU加速滑动 */
-  _showArcCards() {
-    const deck=document.getElementById('cardDeck');
-    deck.style.cssText='position:relative;height:200px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x;';
-    deck.innerHTML='';
+  _showArcCards: function() {
+    var deck = document.getElementById('cardDeck');
+    deck.style.cssText = 'position:relative;height:200px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x;';
+    deck.innerHTML = '';
 
-    // 提示
-    const hint=document.createElement('div');
-    hint.style.cssText='position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:0.85rem;font-family:KaiTi,STKaiti,serif;z-index:20;pointer-events:none;';
-    hint.textContent='← 滑动浏览 · 点击选牌 →';
+    var hint = document.createElement('div');
+    hint.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:0.85rem;font-family:KaiTi,STKaiti,serif;z-index:20;pointer-events:none;';
+    hint.textContent = '← 滑动浏览 · 点击选牌 →';
     deck.appendChild(hint);
 
-    // GPU加速容器
-    const track=document.createElement('div');
-    track.id='arcTrack';
-    track.style.cssText='position:absolute;left:50%;top:50%;transform:translateX(0);will-change:transform;height:110px;margin-top:-55px;';
+    var track = document.createElement('div');
+    track.id = 'arcTrack';
+    track.style.cssText = 'position:absolute;left:50%;top:50%;transform:translateX(0);will-change:transform;height:110px;margin-top:-55px;';
     deck.appendChild(track);
 
-    const cardW=36; // 牌宽36px
-    const overlap=0.55; // 55%重叠
-    const step=cardW*(1-overlap); // ~16px间距
-    const totalW=78*step;
-    const cx=totalW/2;
+    var cardW = 36;
+    var overlap = 0.55;
+    var step = cardW * (1 - overlap);
+    var totalW = 78 * step;
+    var mid = totalW / 2;
+    var self = this;
+    var arcCards = [];
 
-    const arcCards=[];
-    this.shuffledDeck.forEach((cardData,i)=>{
-      const card=document.createElement('div');
-      card.className='arc-card';
-      card.title=cardData.name;
-      card.dataset.idx=i;
-      const x=i*step;
-      // 预计算弧度角度（渲染时固定，不随滑动变化）
-      const w=totalW;
-      const mid=w/2;
-      const arcAngle=(x-mid)/w*Math.PI*0.35; // ±约31度弧
-      const ty=Math.abs(x-mid)/w*35; // 弧高
-      card.style.cssText=`position:absolute;left:${x}px;top:0;width:${cardW}px;height:48px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);transform:translateY(${ty}px) rotate(${arcAngle}rad);opacity:0;transition:opacity 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:${10-Math.abs(x-mid)/w*8|0};color:#5c4a28;font-family:KaiTi,STKaiti,serif;`;
-      card.textContent=cardData.name.substring(0,2)||'🃏';
-      card.style.transitionDelay=`${i*0.012}s`;
+    this.shuffledDeck.forEach(function(cardData, i){
+      var card = document.createElement('div');
+      card.className = 'arc-card';
+      card.title = cardData.name;
+      card.dataset.idx = i;
+      var x = i * step;
+      var arcAngle = (x - mid) / totalW * Math.PI * 0.35;
+      var ty = Math.abs(x - mid) / totalW * 35;
+      card.style.cssText = 'position:absolute;left:'+x+'px;top:0;width:'+cardW+'px;height:48px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);transform:translateY('+ty+'px) rotate('+arcAngle+'rad);opacity:0;transition:opacity 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:'+(10-Math.abs(x-mid)/totalW*8|0)+';color:#5c4a28;font-family:KaiTi,STKaiti,serif;';
+      card.textContent = cardData.name.substring(0,2) || '🃏';
+      card.style.transitionDelay = (i*0.012) + 's';
       track.appendChild(card);
 
-      card.addEventListener('click',(e)=>{e.stopPropagation();this._selectArcCard(card,cardData,i);});
-      card.addEventListener('mouseenter',()=>{if(!card.classList.contains('selected')){card.style.transform=`translateY(${ty-10}px) rotate(${arcAngle}rad) scale(1.25)`;card.style.zIndex='30';card.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)';card.style.borderColor='#c9a96e';}});
-      card.addEventListener('mouseleave',()=>{if(!card.classList.contains('selected')){card.style.transform=`translateY(${ty}px) rotate(${arcAngle}rad)`;card.style.zIndex=`${10-Math.abs(x-mid)/w*8|0}`;card.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';card.style.borderColor='#8b6f3a';}});
+      card.addEventListener('click', (function(cd, idx){
+        return function(e) { e.stopPropagation(); self._selectArcCard(card, cd, idx, ty, arcAngle); };
+      })(cardData, i));
 
-      arcCards.push({el:card,data:cardData,x:x,ty:ty,angle:arcAngle});
+      card.addEventListener('mouseenter', function(){
+        if (!card.classList.contains('selected')) {
+          card.style.transform = 'translateY('+(ty-10)+'px) rotate('+arcAngle+'rad) scale(1.25)';
+          card.style.zIndex = '30';
+          card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+          card.style.borderColor = '#c9a96e';
+        }
+      });
+      card.addEventListener('mouseleave', function(){
+        if (!card.classList.contains('selected')) {
+          card.style.transform = 'translateY('+ty+'px) rotate('+arcAngle+'rad)';
+          card.style.zIndex = ''+(10-Math.abs(x-mid)/totalW*8|0);
+          card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          card.style.borderColor = '#8b6f3a';
+        }
+      });
+
+      arcCards.push({el:card, data:cardData, x:x, ty:ty, angle:arcAngle});
     });
 
-    // 飞入动画
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        arcCards.forEach(c=>{c.el.style.opacity='1';});
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        arcCards.forEach(function(c){ c.el.style.opacity = '1'; });
       });
     });
 
-    // 滑动：只操作容器transform
-    let isDown=false,startX=0,curX=0;
-    const clampX=(v)=>Math.max(-totalW/2+50,Math.min(totalW/2-50,v));
+    // 滑动
+    var isDown = false, startX = 0, curX = 0;
+    var clampX = function(v){ return Math.max(-totalW/2+50, Math.min(totalW/2-50, v)); };
+    var setTrackX = function(v){ curX = clampX(v); track.style.transform = 'translateX('+(-curX)+'px)'; };
 
-    const setTrackX=(v)=>{curX=clampX(v);track.style.transform=`translateX(${-curX}px)`;};
+    track.addEventListener('mousedown', function(e){ isDown = true; startX = e.clientX + curX; track.style.cursor = 'grabbing'; e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ if (!isDown) return; setTrackX(startX - e.clientX); });
+    window.addEventListener('mouseup', function(){ isDown = false; track.style.cursor = ''; });
 
-    track.addEventListener('mousedown',e=>{isDown=true;startX=e.clientX+curX;track.style.cursor='grabbing';e.preventDefault();});
-    window.addEventListener('mousemove',e=>{if(!isDown)return;setTrackX(startX-e.clientX);});
-    window.addEventListener('mouseup',()=>{isDown=false;track.style.cursor='';});
+    track.addEventListener('touchstart', function(e){ isDown = true; startX = e.touches[0].clientX + curX; }, {passive:false});
+    track.addEventListener('touchmove', function(e){ if (!isDown) return; setTrackX(startX - e.touches[0].clientX); }, {passive:false});
+    track.addEventListener('touchend', function(){ isDown = false; });
 
-    track.addEventListener('touchstart',e=>{isDown=true;startX=e.touches[0].clientX+curX;}, {passive:false});
-    track.addEventListener('touchmove',e=>{if(!isDown)return;setTrackX(startX-e.touches[0].clientX);},{passive:false});
-    track.addEventListener('touchend',()=>{isDown=false;});
-
-    // 初始居中
     setTrackX(0);
-    this._arcCards=arcCards;
-    this._trackEl=track;
-    this._clampX=clampX;
-    this._setTrackX=setTrackX;
+    this._arcCards = arcCards;
+    this._trackEl = track;
   },
 
-  /** 选择弧牌 */
-  _selectArcCard(cardEl,cardData,idx) {
-    if(this.drawnCount>=3)return;
-    if(cardEl.classList.contains('selected'))return;
-
+  _selectArcCard: function(cardEl, cardData, idx, ty, arcAngle) {
+    if (this.drawnCount >= 3) return;
+    if (cardEl.classList.contains('selected')) return;
     cardEl.classList.add('selected');
-    cardEl.style.transform=cardEl.style.transform.replace(/scale\([^)]+\)/,'')+' scale(1.35)';
-    cardEl.style.zIndex='50';
-    cardEl.style.boxShadow='0 8px 28px rgba(140,110,60,0.5)';
-    cardEl.style.borderColor='#c9a96e';
-    cardEl.style.borderWidth='2px';
-    cardEl.style.background='linear-gradient(135deg,#fffdf5,#f5edd8)';
-    cardEl.textContent=cardData.name.substring(0,2);
+    cardEl.style.transform = 'translateY('+(ty-10)+'px) rotate('+arcAngle+'rad) scale(1.35)';
+    cardEl.style.zIndex = '50';
+    cardEl.style.boxShadow = '0 8px 28px rgba(140,110,60,0.5)';
+    cardEl.style.borderColor = '#c9a96e';
+    cardEl.style.borderWidth = '2px';
+    cardEl.style.background = 'linear-gradient(135deg,#fffdf5,#f5edd8)';
+    cardEl.textContent = cardData.name.substring(0,2);
 
-    const isReversed=Math.random()<0.5;
-    cardData.isReversed=isReversed;
-    this.selectedCards[this.drawnCount]=cardData;
+    var isReversed = Math.random() < 0.5;
+    cardData.isReversed = isReversed;
+    this.selectedCards[this.drawnCount] = cardData;
 
-    const slot=document.getElementById('slot'+this.drawnCount);
-    slot.classList.remove('empty');slot.classList.add('revealed');
-    slot.innerHTML=`<div class="tarot-card-inner${isReversed?' reversed':''}"><div class="tarot-card-front" style="border-color:${cardData.color||'#8b6f3a'}"><div class="card-type-badge ${cardData.type}">${cardData.type==='major'?'大':cardData.type==='court'?'宫廷':'小'}</div><div class="card-name">${cardData.name}</div><div class="card-keywords">${cardData.keywords}</div></div></div>`;
+    var slot = document.getElementById('slot'+this.drawnCount);
+    slot.classList.remove('empty'); slot.classList.add('revealed');
+    var inner = '<div class="tarot-card-inner' + (isReversed ? ' reversed' : '') + '">';
+    inner += '<div class="tarot-card-front" style="border-color:' + (cardData.color || '#8b6f3a') + '">';
+    inner += '<div class="card-type-badge ' + cardData.type + '">' + (cardData.type === 'major' ? '大' : cardData.type === 'court' ? '宫廷' : '小') + '</div>';
+    inner += '<div class="card-name">' + cardData.name + '</div>';
+    inner += '<div class="card-keywords">' + cardData.keywords + '</div>';
+    inner += '</div></div>';
+    slot.innerHTML = inner;
     this.drawnCount++;
 
-    if(this.drawnCount>=3){setTimeout(()=>this.showReading(),600);}
+    if (this.drawnCount >= 3) {
+      var self = this;
+      setTimeout(function(){ self.showReading(); }, 600);
+    }
   },
 
-  /** 展示解读 */
-  showReading() {
+  showReading: function() {
     hideEl('tarotStep2');
     showEl('tarotStep3');
-    const reading=document.getElementById('tarotReading');
-    const positions=['过去','现在','未来'];
-    let html='<div class="reading-cards">';
-    this.selectedCards.forEach((card,i)=>{
-      html+=`<div class="reading-card" style="border-color:${card.color||'#8b6f3a'}"><div class="reading-card-header"><span class="position-badge">${positions[i]}</span><span class="reversed-badge ${card.isReversed?'is-reversed':'is-upright'}">${card.isReversed?'逆位':'正位'}</span></div><h3>${card.name}</h3><p class="reading-desc">${card.isReversed?(card.reversed||card.upright):card.upright}</p><small>${card.keywords}</small></div>`;
+    var reading = document.getElementById('tarotReading');
+    var positions = ['过去','现在','未来'];
+    var html = '<div class="reading-cards">';
+    var self = this;
+    this.selectedCards.forEach(function(card, i){
+      var revTag = card.isReversed ? 'is-reversed' : 'is-upright';
+      var revLabel = card.isReversed ? '逆位' : '正位';
+      var desc = card.isReversed ? (card.reversed || card.upright) : card.upright;
+      html += '<div class="reading-card" style="border-color:' + (card.color || '#8b6f3a') + '">';
+      html += '<div class="reading-card-header"><span class="position-badge">' + positions[i] + '</span>';
+      html += '<span class="reversed-badge ' + revTag + '">' + revLabel + '</span></div>';
+      html += '<h3>' + card.name + '</h3>';
+      html += '<p class="reading-desc">' + desc + '</p>';
+      html += '<small>' + card.keywords + '</small></div>';
     });
-    html+='</div>';
-    const revCount=this.selectedCards.filter(c=>c.isReversed).length;
-    html+=`<div class="reading-summary"><h4>🔮 综合解读</h4><p>${revCount===0?'三张牌皆为正位，能量流畅。过去奠定了良好基础，现在状态积极，未来前景光明。':revCount===1?'一张逆位，在特定阶段需多加留意。整体运势尚可，调整心态即可化解。':revCount===2?'两张逆位，可能正处于转折期。挑战是成长的必经之路。':'三张皆逆位，能量较为阻滞。但逆位提醒我们停下来反思、修正方向。沉淀之后必有更好的出发。'}</p></div>`;
-    reading.innerHTML=html;
+    html += '</div>';
+    var revCount = this.selectedCards.filter(function(c){ return c.isReversed; }).length;
+    var summary;
+    if (revCount === 0) summary = '三张牌皆为正位，能量流畅。过去奠定了良好基础，现在状态积极，未来前景光明。';
+    else if (revCount === 1) summary = '一张逆位，在特定阶段需多加留意。整体运势尚可，调整心态即可化解。';
+    else if (revCount === 2) summary = '两张逆位，可能正处于转折期。挑战是成长的必经之路。';
+    else summary = '三张皆逆位，能量较为阻滞。但逆位提醒我们停下来反思、修正方向。沉淀之后必有更好的出发。';
+    html += '<div class="reading-summary"><h4>🔮 综合解读</h4><p>' + summary + '</p></div>';
+    reading.innerHTML = html;
   },
 
-  reset() {
-    this.selectedCards=[];this.drawnCount=0;
-    for(let i=0;i<3;i++){const s=document.getElementById('slot'+i);s.classList.add('empty');s.classList.remove('revealed');s.innerHTML='?';}
-    hideEl('tarotStep2');hideEl('tarotStep3');showEl('tarotStep1');
+  reset: function() {
+    this.selectedCards = [];
+    this.drawnCount = 0;
+    for (var i = 0; i < 3; i++) {
+      var s = document.getElementById('slot'+i);
+      s.classList.add('empty'); s.classList.remove('revealed'); s.innerHTML = '?';
+    }
+    hideEl('tarotStep2'); hideEl('tarotStep3'); showEl('tarotStep1');
   }
 };
 
-document.addEventListener('DOMContentLoaded',()=>{TarotModule.init()});
+document.addEventListener('DOMContentLoaded', function(){ TarotModule.init(); });
