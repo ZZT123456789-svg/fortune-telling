@@ -114,105 +114,62 @@ var TarotModule = {
         txt.style.opacity = '0';
         setTimeout(function(){
           deck.innerHTML = '';
-          self._showArcCards();
+          self._showCards();
         }, 450);
       }
     }, 157);
   },
 
-  _showArcCards: function() {
+  _showCards: function() {
     var deck = document.getElementById('cardDeck');
-    deck.style.cssText = 'position:relative;height:200px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:pan-x;';
+    deck.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:10px;max-height:400px;overflow-y:auto;';
     deck.innerHTML = '';
 
     var hint = document.createElement('div');
-    hint.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);color:#8b6f3a;font-size:0.85rem;font-family:KaiTi,STKaiti,serif;z-index:20;pointer-events:none;';
-    hint.textContent = '← 滑动浏览 · 点击选牌 →';
+    hint.style.cssText = 'width:100%;text-align:center;color:#8b6f3a;font-size:0.9rem;font-family:KaiTi,STKaiti,serif;margin-bottom:8px;';
+    hint.textContent = '请凭直觉点击选择 3 张牌';
     deck.appendChild(hint);
 
-    var track = document.createElement('div');
-    track.id = 'arcTrack';
-    track.style.cssText = 'position:absolute;left:50%;top:50%;transform:translateX(0);will-change:transform;height:110px;margin-top:-55px;';
-    deck.appendChild(track);
-
-    var cardW = 36;
-    var overlap = 0.55;
-    var step = cardW * (1 - overlap);
-    var totalW = 78 * step;
-    var mid = totalW / 2;
     var self = this;
-    var arcCards = [];
-
     this.shuffledDeck.forEach(function(cardData, i){
       var card = document.createElement('div');
-      card.className = 'arc-card';
+      card.className = 'mini-card bounce-in';
       card.title = cardData.name;
-      card.dataset.idx = i;
-      var x = i * step;
-      var arcAngle = (x - mid) / totalW * Math.PI * 0.35;
-      var ty = Math.abs(x - mid) / totalW * 35;
-      card.style.cssText = 'position:absolute;left:'+x+'px;top:0;width:'+cardW+'px;height:48px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:1.5px solid #8b6f3a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);transform:translateY('+ty+'px) rotate('+arcAngle+'rad);opacity:0;transition:opacity 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;z-index:'+(10-Math.abs(x-mid)/totalW*8|0)+';color:#5c4a28;font-family:KaiTi,STKaiti,serif;';
-      card.textContent = cardData.name.substring(0,2) || '🃏';
-      card.style.transitionDelay = (i*0.012) + 's';
-      track.appendChild(card);
-
-      card.addEventListener('click', (function(cd, idx){
-        return function(e) { e.stopPropagation(); self._selectArcCard(card, cd, idx, ty, arcAngle); };
-      })(cardData, i));
+      card.style.cssText = 'width:62px;height:94px;background:linear-gradient(135deg,#f5f0e8,#e8dcc8);border:2px solid #8b6f3a;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;transition:all 0.2s ease;color:#5c4a28;font-family:KaiTi,STKaiti,serif;opacity:0;animation:bounceIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;animation-delay:'+(i*0.008)+'s;user-select:none;';
+      card.textContent = '🃏';
 
       card.addEventListener('mouseenter', function(){
         if (!card.classList.contains('selected')) {
-          card.style.transform = 'translateY('+(ty-10)+'px) rotate('+arcAngle+'rad) scale(1.25)';
-          card.style.zIndex = '30';
-          card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+          card.style.transform = 'translateY(-6px) scale(1.06)';
+          card.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
           card.style.borderColor = '#c9a96e';
         }
       });
       card.addEventListener('mouseleave', function(){
         if (!card.classList.contains('selected')) {
-          card.style.transform = 'translateY('+ty+'px) rotate('+arcAngle+'rad)';
-          card.style.zIndex = ''+(10-Math.abs(x-mid)/totalW*8|0);
-          card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          card.style.transform = '';
+          card.style.boxShadow = '';
           card.style.borderColor = '#8b6f3a';
         }
       });
 
-      arcCards.push({el:card, data:cardData, x:x, ty:ty, angle:arcAngle});
-    });
-
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        arcCards.forEach(function(c){ c.el.style.opacity = '1'; });
+      card.addEventListener('click', function(){
+        self._selectCard(card, cardData);
       });
+
+      deck.appendChild(card);
     });
-
-    // 滑动
-    var isDown = false, startX = 0, curX = 0;
-    var clampX = function(v){ return Math.max(-totalW/2+50, Math.min(totalW/2-50, v)); };
-    var setTrackX = function(v){ curX = clampX(v); track.style.transform = 'translateX('+(-curX)+'px)'; };
-
-    track.addEventListener('mousedown', function(e){ isDown = true; startX = e.clientX + curX; track.style.cursor = 'grabbing'; e.preventDefault(); });
-    window.addEventListener('mousemove', function(e){ if (!isDown) return; setTrackX(startX - e.clientX); });
-    window.addEventListener('mouseup', function(){ isDown = false; track.style.cursor = ''; });
-
-    track.addEventListener('touchstart', function(e){ isDown = true; startX = e.touches[0].clientX + curX; }, {passive:false});
-    track.addEventListener('touchmove', function(e){ if (!isDown) return; setTrackX(startX - e.touches[0].clientX); }, {passive:false});
-    track.addEventListener('touchend', function(){ isDown = false; });
-
-    setTrackX(0);
-    this._arcCards = arcCards;
-    this._trackEl = track;
   },
 
-  _selectArcCard: function(cardEl, cardData, idx, ty, arcAngle) {
+  _selectCard: function(cardEl, cardData) {
     if (this.drawnCount >= 3) return;
     if (cardEl.classList.contains('selected')) return;
+
     cardEl.classList.add('selected');
-    cardEl.style.transform = 'translateY('+(ty-10)+'px) rotate('+arcAngle+'rad) scale(1.35)';
-    cardEl.style.zIndex = '50';
-    cardEl.style.boxShadow = '0 8px 28px rgba(140,110,60,0.5)';
+    cardEl.style.transform = 'translateY(-8px) scale(1.1)';
+    cardEl.style.boxShadow = '0 8px 24px rgba(140,110,60,0.45)';
     cardEl.style.borderColor = '#c9a96e';
-    cardEl.style.borderWidth = '2px';
+    cardEl.style.borderWidth = '3px';
     cardEl.style.background = 'linear-gradient(135deg,#fffdf5,#f5edd8)';
     cardEl.textContent = cardData.name.substring(0,2);
 
