@@ -357,8 +357,14 @@
           <button class="btn-primary btn-glow" onclick="LiuyaoModule.start()">🪙 开始摇卦</button>
         </div>
         <div id="liuyaoShaking" style="display:none;">
-          <div class="coin-anim" id="coinAnim">🪙</div>
-          <p>第 <span id="liuyaoRound">1</span> / 6 次摇卦</p>
+          <p style="text-align:center;color:var(--text-secondary);">第 <span id="liuyaoRound">1</span> / 6 次摇卦</p>
+          <!-- 三枚铜钱展示 -->
+          <div class="coins-display" id="coinsDisplay">
+            <div class="coin-img" id="coin1">🪙</div>
+            <div class="coin-img" id="coin2">🪙</div>
+            <div class="coin-img" id="coin3">🪙</div>
+          </div>
+          <div class="coin-result-text" id="coinResultText"></div>
           <button class="btn-primary" onclick="LiuyaoModule.shake()">🪙 摇第 <span id="liuyaoRoundBtn">1</span> 次</button>
           <div class="yao-display" id="yaoDisplay"></div>
         </div>

@@ -54,12 +54,19 @@ var LiuyaoModule = {
 
   shake: function() {
     var self = this;
-    var coin = document.getElementById('coinAnim');
-    coin.classList.add('shaking');
+    // 三枚铜钱抖动
+    for (var c = 1; c <= 3; c++) {
+      var coinEl = document.getElementById('coin' + c);
+      if (coinEl) coinEl.classList.add('shaking');
+    }
+    document.getElementById('coinResultText').textContent = '🪙 铜钱翻滚中...';
     setTimeout(function() {
-      coin.classList.remove('shaking');
+      for (var c = 1; c <= 3; c++) {
+        var coinEl = document.getElementById('coin' + c);
+        if (coinEl) coinEl.classList.remove('shaking');
+      }
       self._doShake();
-    }, 600);
+    }, 800);
   },
 
   _doShake: function() {
@@ -70,17 +77,33 @@ var LiuyaoModule = {
       Math.random() < 0.5 ? 3 : 2,
       Math.random() < 0.5 ? 3 : 2
     ];
-    var sum = coins[0] + coins[1] + coins[2];
-    var type, display;
-    if (sum === 6) { type = 'old_yin'; display = '⚋ ╳'; }
-    else if (sum === 7) { type = 'young_yang'; display = '⚊'; }
-    else if (sum === 8) { type = 'young_yin'; display = '⚋'; }
-    else { type = 'old_yang'; display = '⚊ ○'; }
 
-    this.yaoLines.push({type:type, display:display, sum:sum});
+    // Update coin images based on result
+    for (var c = 1; c <= 3; c++) {
+      var coinEl = document.getElementById('coin' + c);
+      if (coinEl) {
+        var isHead = coins[c-1] === 3;
+        coinEl.textContent = isHead ? '🟡' : '⚪';
+        coinEl.className = 'coin-img ' + (isHead ? 'heads' : 'tails');
+      }
+    }
+
+    var sum = coins[0] + coins[1] + coins[2];
+    var headsCount = coins.filter(function(x){return x===3;}).length;
+    var tailsCount = 3 - headsCount;
+    document.getElementById('coinResultText').textContent =
+      '正面(🟡)×' + headsCount + '  反面(⚪)×' + tailsCount + '  合计：' + sum;
+
+    var type, display;
+    if (sum === 6) { type = 'old_yin'; display = '<span class="yao-line-yin"><span></span><span></span></span><span class="yao-line-marker">╳ 老阴</span>'; }
+    else if (sum === 7) { type = 'young_yang'; display = '<span class="yao-line-yang"></span><span class="yao-line-marker">— 少阳</span>'; }
+    else if (sum === 8) { type = 'young_yin'; display = '<span class="yao-line-yin"><span></span><span></span></span><span class="yao-line-marker">少阴</span>'; }
+    else { type = 'old_yang'; display = '<span class="yao-line-yang"></span><span class="yao-line-marker">○ 老阳</span>'; }
+
+    this.yaoLines.push({type:type, display:display, sum:sum, coins:coins.slice()});
     this.currentRound++;
 
-    // Display current yao lines
+    // Display current yao lines with visual bars
     var html = '';
     for (var i = this.yaoLines.length - 1; i >= 0; i--) {
       html += '<div class="yao-line">第' + (i+1) + '爻：' + this.yaoLines[i].display + '</div>';
@@ -92,6 +115,21 @@ var LiuyaoModule = {
     } else {
       this._updateRound();
     }
+  },
+
+  _reset: function() {
+    this.currentRound = 0;
+    this.yaoLines = [];
+    document.getElementById('liuyaoStart').style.display = 'block';
+    document.getElementById('liuyaoShaking').style.display = 'none';
+    document.getElementById('liuyaoResult').style.display = 'none';
+    document.getElementById('yaoDisplay').innerHTML = '';
+    // Reset coin images
+    for (var c = 1; c <= 3; c++) {
+      var coinEl = document.getElementById('coin' + c);
+      if (coinEl) { coinEl.textContent = '🪙'; coinEl.className = 'coin-img'; }
+    }
+    document.getElementById('coinResultText').textContent = '';
   },
 
   _updateRound: function() {
@@ -148,15 +186,21 @@ var LiuyaoModule = {
     var advice = advices[hexIdx % advices.length];
 
     var yaoDisplayFull = '';
+    var labels = ['初爻','二爻','三爻','四爻','五爻','上爻'];
     for (var y = 5; y >= 0; y--) {
-      var label = '';
-      if (y === 5) label = '上爻';
-      else if (y === 4) label = '五爻';
-      else if (y === 3) label = '四爻';
-      else if (y === 2) label = '三爻';
-      else if (y === 1) label = '二爻';
-      else label = '初爻';
-      yaoDisplayFull += '<div style="font-size:1.2rem;padding:0.1rem 0;">' + label + '：' + this.yaoLines[y].display + '</div>';
+      var lineType = this.yaoLines[y].type;
+      var lineHtml = '';
+      if (lineType === 'young_yang' || lineType === 'old_yang') {
+        lineHtml = '<span class="yao-line-yang"></span>';
+      } else {
+        lineHtml = '<span class="yao-line-yin"><span></span><span></span></span>';
+      }
+      var marker = '';
+      if (lineType === 'old_yin') marker = ' <span style="color:var(--red);font-size:0.7rem;">╳ 老阴</span>';
+      if (lineType === 'old_yang') marker = ' <span style="color:var(--red);font-size:0.7rem;">○ 老阳</span>';
+      yaoDisplayFull += '<div style="display:flex;align-items:center;gap:0.5rem;justify-content:center;padding:0.15rem 0;">' +
+        '<span style="font-size:0.8rem;color:var(--text-secondary);min-width:32px;">' + labels[y] + '</span>' +
+        lineHtml + marker + '</div>';
     }
 
     var resultEl = document.getElementById('liuyaoResult');

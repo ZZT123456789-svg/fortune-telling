@@ -1547,21 +1547,50 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   line-height: 1.5;
 }
 
-/* ========== COIN ANIMATION (六爻) ========== */
-.coin-anim {
-  font-size: 4rem;
-  text-align: center;
+/* ========== COIN DISPLAY (六爻) ========== */
+.coins-display {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
   padding: 1rem 0;
 }
-.coin-anim.shaking {
-  animation: coinShake 0.1s linear infinite;
+.coin-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0d080, #c9a040, #a07820);
+  border: 3px solid #8b6914;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  box-shadow: 0 4px 15px rgba(180,130,40,0.4), inset 0 2px 4px rgba(255,255,200,0.3);
+  transition: all 0.4s ease;
 }
-@keyframes coinShake {
+.coin-img.shaking {
+  animation: coinShakeImg 0.12s linear infinite;
+}
+@keyframes coinShakeImg {
   0% { transform: rotate(0deg) translateY(0); }
-  25% { transform: rotate(20deg) translateY(-5px); }
-  50% { transform: rotate(0deg) translateY(0); }
-  75% { transform: rotate(-20deg) translateY(-5px); }
+  25% { transform: rotate(30deg) translateY(-8px); }
+  50% { transform: rotate(-10deg) translateY(2px); }
+  75% { transform: rotate(-30deg) translateY(-8px); }
   100% { transform: rotate(0deg) translateY(0); }
+}
+.coin-img.heads {
+  background: linear-gradient(135deg, #ffe8a0, #f0c040, #c08020);
+  box-shadow: 0 4px 20px rgba(240,180,40,0.6), inset 0 2px 4px rgba(255,255,200,0.4);
+}
+.coin-img.tails {
+  background: linear-gradient(135deg, #d0c0a0, #a09070, #706040);
+  box-shadow: 0 4px 15px rgba(140,120,80,0.4), inset 0 2px 4px rgba(200,200,180,0.2);
+}
+.coin-result-text {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--gold);
+  min-height: 1.5rem;
+  padding: 0.3rem 0;
 }
 .yao-display {
   text-align: center;
@@ -1571,6 +1600,35 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   font-size: 1.3rem;
   padding: 0.15rem 0;
   font-family: "KaiTi", monospace;
+}
+/* SVG line styles */
+.yao-line-yang {
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 3px;
+  margin: 4px 0;
+}
+.yao-line-yin {
+  display: inline-flex;
+  gap: 12px;
+  margin: 4px 0;
+}
+.yao-line-yin span {
+  display: inline-block;
+  width: 30px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 3px;
+}
+.yao-line-old {
+  position: relative;
+}
+.yao-line-marker {
+  font-size: 0.7rem;
+  color: var(--red);
+  margin-left: 6px;
 }
 
 /* ========== DREAM QUICK TAGS ========== */
