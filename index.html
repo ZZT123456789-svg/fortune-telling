@@ -16,7 +16,7 @@
       document.getElementById('starCanvas').style.zIndex = '0';
       setTimeout(function() { el.remove(); }, 600);
     }
-    setTimeout(dismissSplash, 60000);
+    // 必须点击才能进入，不自动消失
   </script>
   <div class="splash-overlay" id="splashOverlay" onclick="dismissSplash()">
     <div class="ink-mountains">
