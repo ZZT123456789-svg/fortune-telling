@@ -43,8 +43,14 @@
     <div class="header-top-right">
       <button class="contact-btn" id="contactBtn" onclick="toggleContact()">📧 联系我们</button>
       <div class="contact-popup" id="contactPopup">
-        <div class="contact-item">💬 微信：DaoWen_Mystic</div>
-        <div class="contact-item">🐧 QQ：3487126509</div>
+        <div class="contact-item">
+          <span>💬 微信：DaoWen_Mystic</span>
+          <button class="copy-btn" onclick="copyContact('DaoWen_Mystic',this)">📋 复制</button>
+        </div>
+        <div class="contact-item">
+          <span>🐧 QQ：3237659951</span>
+          <button class="copy-btn" onclick="copyContact('3237659951',this)">📋 复制</button>
+        </div>
       </div>
     </div>
     <h1 class="site-title">道问</h1>

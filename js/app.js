@@ -423,6 +423,27 @@ function toggleContact(e) {
   if (popup) popup.classList.toggle('show');
   if (e) e.stopPropagation();
 }
+function copyContact(text, btn) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = '✅ 复制成功';
+      btn.style.color = '#3cb371';
+      setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1500);
+    });
+  } else {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    var orig = btn.textContent;
+    btn.textContent = '✅ 复制成功';
+    btn.style.color = '#3cb371';
+    setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  }
+}
 // 点击页面其他地方关闭
 document.addEventListener('click', function(e) {
   var popup = document.getElementById('contactPopup');
