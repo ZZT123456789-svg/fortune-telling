@@ -58,6 +58,12 @@
       <div class="tc-desc">真太阳时八字排盘，单人/双人模式，多维度命理分析。</div>
       <div class="tc-tag">四柱八字</div>
     </div>
+    <div class="tool-card" onclick="ZiweiModule.open()">
+      <div class="tc-icon">🔮</div>
+      <div class="tc-name">紫微斗数</div>
+      <div class="tc-desc">以命宫十二位观察人生结构。十四主星定格局。</div>
+      <div class="tc-tag">十二宫</div>
+    </div>
     <div class="tool-card" onclick="MeihuaModule.open()">
       <div class="tc-icon">🌸</div>
       <div class="tc-name">梅花易数</div>
@@ -279,6 +285,28 @@
         <button class="btn-primary" onclick="BaziModule.calculate()">☯️ 排盘测算</button>
       </div>
       <div class="result-container" id="baziResult" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 紫微斗数 模块 -->
+  <div class="tool-overlay" id="ziweiOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="ZiweiModule.close()">✕</button>
+      <h2 class="modal-title">🔮 紫微斗数</h2>
+      <p class="modal-desc">以命宫十二位观察人生结构，十四主星定格局</p>
+      <div class="form-row">
+        <div class="form-group"><label>性别</label><select id="ziweiGender"><option value="男">男</option><option value="女">女</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>出生年份</label><input type="number" id="ziweiYear" placeholder="1990" min="1900" max="2100"></div>
+        <div class="form-group"><label>出生月份</label><input type="number" id="ziweiMonth" placeholder="1-12" min="1" max="12"></div>
+        <div class="form-group"><label>出生日期</label><input type="number" id="ziweiDay" placeholder="1-31" min="1" max="31"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>出生小时</label><input type="number" id="ziweiHour" placeholder="0-23" min="0" max="23"></div>
+      </div>
+      <button class="btn-primary" onclick="ZiweiModule.calculate()">🔮 排盘</button>
+      <div class="result-container" id="ziweiResult" style="display:none;"></div>
     </div>
   </div>
 
@@ -613,6 +641,7 @@
   <script src="js/daily-fortune.js"></script>
   <script src="js/tarot.js"></script>
   <script src="js/mbti-zodiac.js"></script>
+  <script src="js/ziwei.js"></script>
   <script src="js/meihua-yishu.js"></script>
   <script src="js/liuyao.js"></script>
   <script src="js/xiaoliuren.js"></script>
