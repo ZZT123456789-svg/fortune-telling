@@ -417,6 +417,21 @@ function initAddressCascade(prefix) {
   });
 }
 
+// ============ 联系我们 ============
+function toggleContact(e) {
+  var popup = document.getElementById('contactPopup');
+  if (popup) popup.classList.toggle('show');
+  if (e) e.stopPropagation();
+}
+// 点击页面其他地方关闭
+document.addEventListener('click', function(e) {
+  var popup = document.getElementById('contactPopup');
+  var btn = document.getElementById('contactBtn');
+  if (popup && popup.classList.contains('show') && e.target !== btn && !btn.contains(e.target)) {
+    popup.classList.remove('show');
+  }
+});
+
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
   // 主应用 - 星空背景

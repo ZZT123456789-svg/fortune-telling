@@ -156,6 +156,46 @@ body {
   text-align: center;
   padding: 2.2rem 1rem 1.2rem;
 }
+.header-top-right {
+  position: absolute;
+  top: 0.8rem;
+  right: 1rem;
+  z-index: 3;
+}
+.contact-btn {
+  padding: 0.4rem 0.8rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all var(--transition);
+}
+.contact-btn:hover { border-color: var(--gold); color: var(--gold); }
+.contact-popup {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.4rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1rem;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  min-width: 200px;
+  z-index: 100;
+}
+.contact-popup.show { display: block; }
+.contact-item {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.contact-item:last-child { border-bottom: none; }
 .site-title {
   font-family: var(--font-display);
   font-size: clamp(1.8rem, 5vw, 2.6rem);
