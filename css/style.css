@@ -1782,13 +1782,29 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   padding: 1.2rem 1.4rem;
   text-align: center;
 }
-.disclaimer-box h4 {
+.disclaimer-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
   color: var(--text-muted);
   font-size: 0.9rem;
-  margin-bottom: 0.6rem;
   letter-spacing: 0.08em;
+  padding: 0.3rem 0;
+  user-select: none;
 }
-.disclaimer-box p {
+.disclaimer-toggle:hover { color: var(--gold); }
+.disclaimer-toggle.open .toggle-arrow { transform: rotate(90deg); }
+.toggle-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.25s ease;
+}
+.disclaimer-content {
+  display: none;
+  margin-top: 0.4rem;
+}
+.disclaimer-content.show { display: block; }
+.disclaimer-content p {
   color: var(--text-muted);
   font-size: 0.76rem;
   line-height: 1.7;
