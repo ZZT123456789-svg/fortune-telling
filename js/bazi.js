@@ -365,6 +365,7 @@ var BaziModule = {
     var lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength);
     var nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements);
     var detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength);
+    var classics = this._getClassicsAnalysis(r, bodyStrength, favorableElements);
     var pattern = this._getPattern(r, bodyStrength);
     var healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount);
     var cautions = this._getCautions(r, bodyStrength, r.wxCount);
@@ -436,6 +437,14 @@ var BaziModule = {
         '<p>' + pattern.levelDesc + '</p>' +
         pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('') +
       '</div>' +
+
+      // 六部古籍解析
+      '<div class="analysis-card"><h4>📜 《滴天髓》</h4><p style="line-height:1.8;">' + classics.diTianSui + '</p></div>' +
+      '<div class="analysis-card"><h4>📜 《子平真诠》</h4><p style="line-height:1.8;">' + classics.ziPing + '</p></div>' +
+      '<div class="analysis-card"><h4>📜 《穷通宝鉴》</h4><p style="line-height:1.8;">' + classics.qiongTong + '</p></div>' +
+      '<div class="analysis-card"><h4>📜 《三命通会》</h4><p style="line-height:1.8;">' + classics.sanMing + '</p></div>' +
+      '<div class="analysis-card"><h4>📜 《巾箱秘术》</h4><p style="line-height:1.8;">' + classics.jinXiang + '</p></div>' +
+      '<div class="analysis-card"><h4>📜 《盲派断命金口诀》</h4><p style="line-height:1.8;">' + classics.mangPai + '</p></div>' +
 
       // 五行分布
       '<div class="analysis-card"><h4>📊 五行分布</h4>' + wxBars + '</div>' +
@@ -769,6 +778,126 @@ var BaziModule = {
     });
 
     return html;
+  },
+
+  // ==== 六部古籍深度解析 ====
+  _getClassicsAnalysis: function(r, bodyStrength, favorableElements) {
+    var dm = r.dayMaster, element = r.dmElement;
+    var favElem = favorableElements.favorable.join('、');
+    var month = parseInt(document.getElementById('baziMonth1') ? document.getElementById('baziMonth1').value : '1');
+    if (isNaN(month)) month = 1;
+
+    var seasonMap = {12:'冬',1:'冬',2:'冬',3:'春',4:'春',5:'春',6:'夏',7:'夏',8:'夏',9:'秋',10:'秋',11:'秋'};
+    var season = seasonMap[month] || '四季';
+
+    // 日主在不同季节的调候参考
+    var tiaoHouMap = {
+      '甲':{春:'木旺，宜金修剪，配土培根。',夏:'火炎，急需水润，辅以金发水源。',秋:'金旺克木，需火制金护木，水润其根。',冬:'水冷木寒，急需火暖局，土培根。'},
+      '乙':{春:'藤萝繁茂，喜癸水滋润，丙火照暖。',夏:'火旺，急需水润，忌烈火焚木。',秋:'金锐克木，丙火制金，癸水润根。',冬:'寒木向阳，丙火为尊，土培根基。'},
+      '丙':{春:'回春之火，壬水辅映，光辉灿烂。',夏:'火炎土燥，急需壬水解炎，庚金发源。',秋:'金多火晦，需甲木生火，忌土重晦光。',冬:'水旺火微，急需甲木生扶，戊土制水。'},
+      '丁':{春:'灯烛之火，庚甲引丁，甲木为薪。',夏:'火旺需调节，壬癸水解炎燥。',秋:'金多火弱，甲木为救，忌土晦光。',冬:'水旺火熄，甲木为尊，庚金劈甲引丁。'},
+      '戊':{春:'土虚，丙火暖局，甲木疏土。',夏:'火炎土燥，急需壬癸水润局。',秋:'金多土虚，丙火生土，忌水泛滥。',冬:'水冷土冻，丙火暖局为急。'},
+      '己':{春:'田园之土，丙火暖之，甲木疏之。',夏:'火炎土燥，急需癸水润泽。',秋:'金多土泄，丙火生扶，忌水湿重。',冬:'冻土难耕，丙火为先，甲木次之。'},
+      '庚':{春:'金在木乡，需戊土生金，甲木引丁。',夏:'火旺金熔，急需壬癸水淬炼。',秋:'金正当令，丁火锻炼，甲木引丁。',冬:'水冷金寒，丙火暖局，戊土制水。'},
+      '辛':{春:'珠玉之金，壬水淘洗，甲木生火暖局。',夏:'火旺熔金，急需壬癸水护之。',秋:'金得令旺，壬水洗之，丙火温之。',冬:'金寒水冷，丙火暖局为先。'},
+      '壬':{春:'春水滔天，戊土堤防，庚金发源。',夏:'水涸，急需庚金发源，癸水助之。',秋:'金生水旺，戊土堤防，甲木泄水。',冬:'水旺极寒，丙火暖局，戊土制水。'},
+      '癸':{春:'雨露之水，庚金发源，辛金助之。',夏:'水涸，急需庚辛金发源。',秋:'金多水浊，丙火调节，甲木泄之。',冬:'水冷，丙火暖局，戊土制水。'}
+    };
+
+    // 滴天髓风格
+    var diTianSui = '';
+    var diTianMap = {
+      '甲':'甲木参天，脱胎要火。春不容金，秋不容土。火炽乘龙，水宕骑虎。地润天和，植立千古。',
+      '乙':'乙木虽柔，刲羊解牛。怀丁抱丙，跨凤乘猴。虚湿之地，骑马亦忧。藤萝系甲，可春可秋。',
+      '丙':'丙火猛烈，欺霜侮雪。能煅庚金，逢辛反怯。土众成慈，水猖显节。虎马犬乡，甲来焚灭。',
+      '丁':'丁火柔中，内性昭融。抱乙而孝，合壬而忠。旺而不烈，衰而不穷。如有嫡母，可秋可冬。',
+      '戊':'戊土固重，既中且正。静翕动辟，万物司命。水润物生，火燥物病。若在艮坤，怕冲宜静。',
+      '己':'己土卑湿，中正蓄藏。不愁木盛，不畏水狂。火少火晦，金多金光。若要物旺，宜助宜帮。',
+      '庚':'庚金带煞，刚健为最。得水而清，得火而锐。土润则生，土干则脆。能赢甲兄，输于乙妹。',
+      '辛':'辛金软弱，温润而清。畏土之多，乐水之盈。能扶社稷，能救生灵。热则喜母，寒则喜丁。',
+      '壬':'壬水通河，能泄金气。刚中之德，周流不滞。通根透癸，冲天奔地。化则有情，从则相济。',
+      '癸':'癸水至弱，达于天津。得龙而运，功化斯神。不愁火土，不论庚辛。合戊见火，化象斯真。'
+    };
+    diTianSui = diTianMap[dm] || '';
+    diTianSui += ' 调候要诀：' + (tiaoHouMap[dm] ? tiaoHouMap[dm][season] : '') + ' 喜用神为' + favElem + '。';
+
+    // 子平真诠风格
+    var ziPing = '';
+    var shengWoMap = {甲:'癸',乙:'壬',丙:'甲',丁:'乙',戊:'丙',己:'丁',庚:'戊',辛:'己',壬:'庚',癸:'辛'};
+    var sameMap = {甲:'甲',乙:'乙',丙:'丙',丁:'丁',戊:'戊',己:'己',庚:'庚',辛:'辛',壬:'壬',癸:'癸'};
+
+    ziPing += '以日主' + dm + '立极，月令为纲。';
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      ziPing += '身强则需克泄耗以求平衡，喜财官食伤。格局以' + element + '为体，需制化得宜方成佳格。';
+    } else {
+      ziPing += '身弱则需印比帮扶，喜印绶比劫。格局以' + element + '为体，需生扶得力方能任事。';
+    }
+    ziPing += ' 十神配合：日主' + dm + '，印星' + (shengWoMap[dm]||'') + '为扶身之本，比劫' + (sameMap[dm]||'') + '为助身之力。凡看命先看月令提纲，次看日主盛衰，再看财官印食之配合。';
+
+    // 穷通宝鉴风格
+    var qiongTong = '';
+    qiongTong = '《穷通宝鉴》以调候为第一要义。日主' + dm + '生于' + season + '季，' + (tiaoHouMap[dm] ? tiaoHouMap[dm][season] : '需结合全局判断。') + ' ';
+    qiongTong += season === '夏' ? '夏日炎炎，调候以水为尊，金为水源。' : '';
+    qiongTong += season === '冬' ? '冬月天寒地冻，调候以火为先，木为火源。' : '';
+    qiongTong += season === '春' ? '春月木旺，调候看是否需要金来修剪或水来滋润。' : '';
+    qiongTong += season === '秋' ? '秋月金旺，调候看是否需要火来暖局或水来泄金。' : '';
+    qiongTong += ' 取用之法：先观月令气候，次察日主强弱，再看五行流通。调候为急，格局次之。';
+
+    // 三命通会风格
+    var sanMing = '';
+    var naYinIdx = (r.yearP.ganIdx * 6 + r.yearP.zhiIdx) % 30;
+    var naYin = this.naYin[naYinIdx] || '';
+    sanMing += '纳音' + naYin + '之命。' + r.yearP.gan + r.yearP.zhi + '年生人，年柱为根，月柱为苗，日柱为花，时柱为果。';
+    sanMing += ' 日主' + dm + '坐' + r.dayP.zhi + '，' + (r.dayP.zhi === '子' || r.dayP.zhi === '午' || r.dayP.zhi === '卯' || r.dayP.zhi === '酉' ? '日坐桃花/将星，' : '');
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      sanMing += '身强能任财官，格局有成。终身看大运流年配合，吉凶互见。';
+    } else {
+      sanMing += '身弱需借运而行，运好则发，运过则收。一生起伏与行运密切相关。';
+    }
+
+    // 巾箱秘术风格
+    var jinXiang = '';
+    var jinXiangTips = {
+      '甲':'甲逢庚克貌如花，乙见辛伤志气佳。甲木为青龙之象，逢春得令，贵气自生。',
+      '乙':'乙木花草性柔嘉，丙癸相随福禄加。乙木见丙为花开，见癸为雨露滋润。',
+      '丙':'丙火太阳照万家，壬水辅映最堪夸。丙火需壬水为反光之镜，方显灿烂。',
+      '丁':'丁火灯烛夜生花，甲木为薪焰不斜。丁火需甲木为燃料，火不灭则福不熄。',
+      '戊':'戊土厚重载山河，甲疏丙暖万物和。戊土需甲木疏松，丙火暖局。',
+      '己':'己土田园细作多，丙暖癸润岁丰颇。己土细腻，丙火为阳光，癸水为雨露。',
+      '庚':'庚金刚健带煞多，丁火锻炼剑新磨。庚金需丁火锻炼，方成利器。',
+      '辛':'辛金珠玉光华多，壬水洗之耀星河。辛金需壬水淘洗，光芒四射。',
+      '壬':'壬水江河万里波，戊土堤防不可过。壬水需戊土为堤，有约束方成江河。',
+      '癸':'癸水至柔润万物，丙火照之春意度。癸水需丙火温暖，阴阳调和万物生。'
+    };
+    jinXiang = (jinXiangTips[dm] || '') + ' 秘术口诀：看命先看日主根气，次看财官向背，再看大运顺逆。' + element + '命之人，以' + favElem + '为命钥。';
+
+    // 盲派断命金口诀风格
+    var mangPai = '';
+    var mangPaiKouJue = {
+      '甲':'甲木生人最正直，心高气傲有担当。少年多动少安静，中年之后福禄长。',
+      '乙':'乙木生人性格柔，多情多义善交游。一生安逸多福气，只是心软被人谋。',
+      '丙':'丙火生人性气高，光明磊落领风骚。一生热闹不寂寞，只怕水多把火消。',
+      '丁':'丁火生人心眼明，细处看穿不说清。与人为善多忍耐，老来福报自然成。',
+      '戊':'戊土生人重信诚，埋头苦干不贪名。早年辛苦多劳碌，大器晚成享太平。',
+      '己':'己土生人和气多，善解人意好商磋。一生平稳少风浪，知足常乐乐呵呵。',
+      '庚':'庚金生人最刚强，是非分明不隐藏。大刀阔斧向前闯，莫因直率把人伤。',
+      '辛':'辛金生人自清高，眼光挑剔品位高。一生追求完美事，只是知己世间少。',
+      '壬':'壬水生人最聪明，脑筋灵活百事通。见风使舵本领大，只是有时难定性。',
+      '癸':'癸水生人性情深，外表平静内乾坤。直觉灵敏悟性好，心灵手巧妙入神。'
+    };
+
+    mangPai = (mangPaiKouJue[dm] || '') + ' 盲派铁口：' + r.yearP.gan + r.yearP.zhi + '年' + this.shengXiao[r.yearP.zhiIdx] + '生，';
+    mangPai += bodyStrength.level.indexOf('强') !== -1 ? '命中带强根，出门在外贵人扶。' : '命中根气稍弱，宜寻大树好乘凉。';
+    mangPai += ' 喜' + favElem + '，忌反背。早中晚年看大运，三步运程定乾坤。';
+
+    return {
+      diTianSui: diTianSui,
+      ziPing: ziPing,
+      qiongTong: qiongTong,
+      sanMing: sanMing,
+      jinXiang: jinXiang,
+      mangPai: mangPai
+    };
   },
 
   // ==== 八字格局分析 ====
