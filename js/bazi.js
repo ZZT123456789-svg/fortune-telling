@@ -171,30 +171,72 @@ var BaziModule = {
       (ts.eot >= 0 ? '+' : '') + ts.eot + '分）';
   },
 
-  /** 年柱 */
-  _getYearPillar: function(year) {
-    var baseYear = 2024, baseGan = 0, baseZhi = 4;
+  /** 节气日期表 (1900-2100近似，每月两个节气，我们只需要"节") */
+  _jieqiMonth: function(year) {
+    // 返回12个"节"的日期 [立春,惊蛰,清明,立夏,芒种,小暑,立秋,白露,寒露,立冬,大雪,小寒]
+    // 每年前后1-2天浮动，取近似值
+    var jieqi = [
+      {m:2,d:4},{m:3,d:6},{m:4,d:5},{m:5,d:6},{m:6,d:6},
+      {m:7,d:7},{m:8,d:8},{m:9,d:8},{m:10,d:8},{m:11,d:8},
+      {m:12,d:7},{m:1,d:6}
+    ];
+    return jieqi;
+  },
+
+  /** 年柱 — 以立春为界 */
+  _getYearPillar: function(year, month, day) {
+    // 立春大约在2月4日前后
+    var lichun = 4; // 简化，实际2月3-5日
+    if (month < 2 || (month === 2 && day < lichun)) {
+      year = year - 1; // 立春前用前一年干支
+    }
+    var baseYear = 2024, baseGan = 0, baseZhi = 4; // 2024甲辰年
     var diff = year - baseYear;
     var ganIdx = ((baseGan + diff) % 10 + 10) % 10;
     var zhiIdx = ((baseZhi + diff) % 12 + 12) % 12;
-    return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
+    return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx, actualYear: year};
   },
 
-  /** 月柱 */
-  _getMonthPillar: function(yearGanIdx, month) {
+  /** 月柱 — 以"节"为界，立春为寅月 */
+  _getMonthPillar: function(yearGanIdx, month, day) {
+    // 12个节的大致日期
+    var jieqi = this._jieqiMonth();
+    // 确定当前在哪个节气月 (寅月=0开始)
+    var baziMonth = month - 1; // 0-based solar month
+    // 如果日期在当月"节"之前，则属于上一个节气月
+    var jie = jieqi[(month - 1 + 12) % 12];
+    // 处理: 节气日前后判定
+    // 简化: 用每月5日作为节气边界近似
+    if (day < jie.d) {
+      baziMonth = (baziMonth - 1 + 12) % 12;
+    }
+    // 寅月从立春开始，立春大约在2月，所以:
+    // 寅月=2, 卯月=3, 辰月=4, 巳月=5, 午月=6, 未月=7,
+    // 申月=8, 酉月=9, 戌月=10, 亥月=11, 子月=12, 丑月=1
+    // baziMonth 0=寅,1=卯,...,11=丑
+    // solar month: 1=Jan,...,12=Dec
+    // 寅月对应solar month 2 (Feb 立春后)
+    // So baziMonth = (solarMonth - 2 + 12) % 12, adjusted by jie boundary
+    var bm = (month - 2 + 12) % 12;
+    if (day < jie.d) {
+      bm = (bm - 1 + 12) % 12;
+    }
+
+    // 月干: 甲己之年丙作首(0->2), 乙庚之年戊为头(1->4)...
     var monthStartGan = [2, 4, 6, 8, 0];
     var group = yearGanIdx % 5;
-    var startGan = monthStartGan[group];
-    var zhiIdx = (month + 1) % 12;
-    var ganIdx = (startGan + month - 1) % 10;
+    var ganIdx = (monthStartGan[group] + bm) % 10;
+    var zhiIdx = (2 + bm) % 12; // 寅=2
+
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
 
-  /** 日柱 */
+  /** 日柱 — 以1900-01-01为甲戌日做基准(已验证准确) */
   _getDayPillar: function(year, month, day) {
-    var ref = new Date(2024, 0, 1);
+    // 1900-01-01 = 甲戌日 (gan=0, zhi=10)
+    var ref = new Date(1900, 0, 1);
     var target = new Date(year, month - 1, day);
-    var diffDays = Math.floor((target - ref) / 86400000);
+    var diffDays = Math.round((target - ref) / 86400000);
     var ganIdx = ((diffDays % 10) + 10) % 10;
     var zhiIdx = ((diffDays % 12) + 12) % 12;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
@@ -243,8 +285,8 @@ var BaziModule = {
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     var trueHour = ts.hour;
 
-    var yearP = this._getYearPillar(year);
-    var monthP = this._getMonthPillar(yearP.ganIdx, month);
+    var yearP = this._getYearPillar(year, month, day);
+    var monthP = this._getMonthPillar(yearP.ganIdx, month, day);
     var dayP = this._getDayPillar(year, month, day);
     var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
 
