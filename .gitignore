@@ -12,3 +12,4 @@ desktop.ini
 # Temp files
 *.tmp
 *.log
+.vercel
