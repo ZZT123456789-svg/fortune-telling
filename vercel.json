@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "name": "daowen",
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "github": {
+    "enabled": true,
+    "autoJobCancelation": true
+  }
+}
