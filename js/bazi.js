@@ -397,7 +397,7 @@ var BaziModule = {
     var ctn = document.getElementById('baziResult');
     ctn.style.display = 'block';
 
-    // 运行全部分析
+    // ====== 按6步法运行全部分析 ======
     var bodyStrength = this._judgeBodyStrength(r);
     var favorableElements = this._getFavorableElements(r, bodyStrength);
     var careerAnalysis = this._getCareerAnalysis(r, bodyStrength);
@@ -406,24 +406,28 @@ var BaziModule = {
     var lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength);
     var nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements);
     var detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength);
-    var classics = this._getClassicsAnalysis(r, bodyStrength, favorableElements);
     var pattern = this._getPattern(r, bodyStrength);
     var healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount);
     var cautions = this._getCautions(r, bodyStrength, r.wxCount);
 
-    // 四柱表
-    var tableHtml = '<table class="pillar-table"><thead><tr><th>柱</th><th>天干</th><th>地支</th><th>五行</th></tr></thead><tbody>' +
-      this._buildPillarHtml('年柱', r.yearP) +
-      this._buildPillarHtml('月柱', r.monthP) +
-      '<tr style="background:rgba(201,169,110,0.1);">' +
-        '<td class="pillar-col">日柱<span class="day-master-label">(日主)</span></td>' +
-        '<td class="gan-char day-master">' + r.dayP.gan + '</td>' +
-        '<td class="zhi-char">' + r.dayP.zhi + '</td>' +
-        '<td style="font-size:0.78rem;">' + r.dmElement + '</td></tr>' +
-      this._buildPillarHtml('时柱', r.hourP) +
-      '</tbody></table>';
+    // 第3步：十神（七字对照日主）
+    var labels = ['年柱','月柱','日柱','时柱'];
+    var ganNames = [r.yearP.gan, r.monthP.gan, r.dayP.gan, r.hourP.gan];
+    var ssHtml = '';
+    labels.forEach(function(l, i) {
+      var ss = r.shiShen[i].ganSS;
+      if (i === 2) ss = '日主（本人）';
+      ssHtml += '<tr><td>' + l + '</td><td><b>' + ganNames[i] + '</b></td><td>' + (ss || '—') + '</td></tr>';
+    });
 
-    // 五行图
+    // 四柱信息汇总
+    var infoHtml =
+      '<p><b>八字：</b>' + r.yearP.gan + r.yearP.zhi + ' ' + r.monthP.gan + r.monthP.zhi + ' ' + r.dayP.gan + r.dayP.zhi + ' ' + r.hourP.gan + r.hourP.zhi + '</p>' +
+      '<p><b>日主：</b>' + r.dayMaster + '（五行属' + r.dmElement + '）&nbsp;&nbsp;<b>性别：</b>' + r.gender + '&nbsp;&nbsp;<b>生肖：</b>' + self.shengXiao[r.yearP.zhiIdx] + '&nbsp;&nbsp;<b>纳音：</b>' + r.naYin + '</p>' +
+      '<p><b>🌞 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
+        '（经度' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分 + 均时差' + (r.trueSolar.eot >= 0 ? '+' : '') + r.trueSolar.eot + '分）</p>';
+
+    // 五行条形图
     var wxMax = Math.max(1, r.wxCount['金'], r.wxCount['木'], r.wxCount['水'], r.wxCount['火'], r.wxCount['土']);
     var wxBars = '';
     var wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
@@ -434,70 +438,109 @@ var BaziModule = {
         '<span class="wx-count">' + r.wxCount[k] + '</span></div>';
     });
 
-    // 十神
-    var labels = ['年柱','月柱','日柱','时柱'];
-    var ssHtml = '';
-    labels.forEach(function(l, i) {
-      ssHtml += '<span style="padding:0 0.25rem;">' + l + ': <b>' + (r.shiShen[i].ganSS || '日主') + '</b></span>';
+    // 大运走势
+    var daYunHtml = '<div class="bazi-info-row">';
+    r.daYun.forEach(function(dy) {
+      daYunHtml += '<span style="padding:0 0.2rem;">' + dy.age + '岁:<b>' + dy.gan + dy.zhi + '</b></span>';
     });
+    daYunHtml += '</div>';
 
-    var dmAnalysis = this._getDayMasterAnalysis(r.dayMaster, r.dmElement, r.wxCount);
-    var favElemStr = favorableElements.favorable.join('、');
+    // 格局描述
+    var patternDesc = pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('');
 
     ctn.innerHTML =
-      '<div class="result-header">☯️ ' + r.name + ' 八字排盘</div>' +
-      '<div style="text-align:center;padding:0.3rem;color:var(--text-secondary);">' +
-        r.gender + ' · ' + r.yearP.gan + r.yearP.zhi + '年（' + self.shengXiao[r.yearP.zhiIdx] + '）· 纳音：' + r.naYin +
-      '</div>' +
-      '<div style="text-align:center;font-size:0.82rem;color:var(--gold);">' +
-        '🌞 真太阳时：' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
-        '（经度' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分 + 均时差' +
-        (r.trueSolar.eot >= 0 ? '+' : '') + r.trueSolar.eot + '分）</div>' +
-      tableHtml +
+      '<div class="result-header">☯️ ' + r.name + ' 八字命理全盘解析</div>' +
+      infoHtml +
 
-      // 身强弱
-      '<div class="analysis-card"><h4>⚖️ 身强弱判断</h4>' +
-        '<p style="text-align:center;font-size:1.3rem;font-weight:bold;color:var(--gold);">' + bodyStrength.level + '</p>' +
+      // ====== 第1步：统计五行，判定旺衰 ======
+      '<div class="analysis-card"><h4>📊 第一步：统计五行，判定日主旺衰</h4>' +
+        '<p><b>日主' + r.dayMaster + '（五行' + r.dmElement + '）</b>，生于<b>' + self.diZhi[r.monthP.zhiIdx] + '月</b>。</p>' +
+        '<p><b>五行统计：</b></p>' + wxBars +
+        '<p style="margin-top:0.5rem;"><b>判定依据：</b>' +
+          '月令' + self.diZhi[r.monthP.zhiIdx] + '月' +
+          (bodyStrength.support >= bodyStrength.control + 2 ? '生扶日主有力（得令），' :
+           bodyStrength.support >= bodyStrength.control ? '对日主有一定帮扶（得令），' :
+           '不帮日主（失令），') +
+          '全局帮扶' + bodyStrength.support + ' vs 克制' + bodyStrength.control + '。' +
+        '</p>' +
+        '<p style="text-align:center;font-size:1.3rem;font-weight:bold;color:var(--gold);">结论：<b>' + bodyStrength.level + '</b></p>' +
         '<p>' + bodyStrength.desc + '</p>' +
-        '<p style="font-size:0.85rem;color:var(--text-secondary);">💡 ' + bodyStrength.advice + '</p>' +
-        '<p style="font-size:0.8rem;color:var(--gold);">喜用神：' + favElemStr + '</p>' +
+        '<p style="font-size:0.85rem;color:var(--text-secondary);">💡 用神方向：' + bodyStrength.advice + '</p>' +
       '</div>' +
 
-      // 日主分析
-      '<div class="analysis-card"><h4>🎯 日主分析</h4><p>' + dmAnalysis + '</p></div>' +
-
-      // 事业分析
-      '<div class="analysis-card"><h4>💼 事业分析</h4><p>' + careerAnalysis + '</p>' +
-        '<p style="font-size:0.85rem;"><b>🧭 适合发展方位：</b>' + bestDir + '</p>' +
-        '<p style="font-size:0.85rem;"><b>🏭 适合行业方向：</b>' + industries + '</p>' +
+      // ====== 第2步：定调候用神 ======
+      '<div class="analysis-card"><h4>🌡️ 第二步：定调候用神（优先级最高）</h4>' +
+        '<p>《穷通宝鉴》云：先看季节冷暖，再论旺衰。调候为八字第一急务。</p>' +
+        '<p><b>日主' + r.dayMaster + '生于' +
+          (r.monthP.zhiIdx >= 2 && r.monthP.zhiIdx <= 4 ? '春季（木旺），' :
+           r.monthP.zhiIdx >= 5 && r.monthP.zhiIdx <= 7 ? '夏季（火旺），需优先用水润局、金发水源。' :
+           r.monthP.zhiIdx >= 8 && r.monthP.zhiIdx <= 10 ? '秋季（金旺），需优先用火暖局、木生火。' :
+           '冬季（水旺），需优先用火暖局、木生火。') +
+        '</b></p>' +
+        '<p><b>喜用神：</b>' + favorableElements.favorable.join('、') + '。' +
+        (favorableElements.favorable.length > 0 ?
+          '生活中多接触' + favorableElements.favorable.join('、') + '五行相关的事物可补益运势。' :
+          '需结合具体大运流年取用。') +
+        '</p>' +
       '</div>' +
 
-      // 格局分析
-      '<div class="analysis-card"><h4>🏛️ 八字格局</h4>' +
+      // ====== 第3步：排布十神 ======
+      '<div class="analysis-card"><h4>🔗 第三步：排布十神（以日主' + r.dayMaster + '为中心）</h4>' +
+        '<p style="font-size:0.85rem;color:var(--text-secondary);">十神口诀：生我者印星，我生者食伤，克我者官杀，我克者财星，同我者比劫。</p>' +
+        '<table style="width:100%;font-size:0.85rem;margin-top:0.4rem;">' +
+          '<tr><th>柱位</th><th>天干</th><th>十神</th></tr>' + ssHtml +
+        '</table>' +
+        '<p style="margin-top:0.4rem;font-size:0.85rem;">💡 所有人生事项全部由十神组合判断：<b>官杀=事业压力贵人、财星=钱财异性、食伤=才华口才、印星=学业长辈、比劫=朋友竞争</b>。</p>' +
+      '</div>' +
+
+      // ====== 第4步：定格局 ======
+      '<div class="analysis-card"><h4>🏛️ 第四步：定格局，看人生层次</h4>' +
         '<p style="text-align:center;font-size:1.1rem;color:var(--gold);font-weight:bold;">格局层次：' + pattern.level + '</p>' +
         '<p>' + pattern.levelDesc + '</p>' +
-        pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('') +
+        patternDesc +
       '</div>' +
 
-      // 六部古籍解析
-      '<div class="analysis-card"><h4>📜 《滴天髓》</h4><p style="line-height:1.8;">' + classics.diTianSui + '</p></div>' +
-      '<div class="analysis-card"><h4>📜 《子平真诠》</h4><p style="line-height:1.8;">' + classics.ziPing + '</p></div>' +
-      '<div class="analysis-card"><h4>📜 《穷通宝鉴》</h4><p style="line-height:1.8;">' + classics.qiongTong + '</p></div>' +
-      '<div class="analysis-card"><h4>📜 《三命通会》</h4><p style="line-height:1.8;">' + classics.sanMing + '</p></div>' +
-      '<div class="analysis-card"><h4>📜 《巾箱秘术》</h4><p style="line-height:1.8;">' + classics.jinXiang + '</p></div>' +
-      '<div class="analysis-card"><h4>📜 《盲派断命金口诀》</h4><p style="line-height:1.8;">' + classics.mangPai + '</p></div>' +
+      // ====== 第5步：大运流年 ======
+      '<div class="analysis-card"><h4>📅 第五步：大运走势（每步10年）</h4>' +
+        '<p style="font-size:0.85rem;color:var(--text-secondary);">大运干支与原局产生生克冲合刑害，决定十年整体吉凶。</p>' +
+        daYunHtml +
+        '<p style="font-size:0.82rem;color:var(--text-muted);">流年干支每年一变，与大运、原局互动，断当年具体事件。</p>' +
+      '</div>' +
 
-      // 五行分布
-      '<div class="analysis-card"><h4>📊 五行分布</h4>' + wxBars + '</div>' +
+      // 大运详细分析
+      '<div class="analysis-card"><h4>📅 每步大运详解</h4>' + detailedDaYun + '</div>' +
 
-      // 十神
-      '<div class="analysis-card"><h4>🔗 十神关系</h4><p>' + ssHtml + '</p></div>' +
+      // ====== 第6步：专项断事 ======
+      '<div class="analysis-card"><h4>🎯 第六步：专项断事</h4></div>' +
 
-      // 健康分析
-      '<div class="analysis-card"><h4>🏥 健康分析</h4>' + healthAnalysis + '</div>' +
+      // 事业
+      '<div class="analysis-card"><h5>💼 事业分析</h5><p>' + careerAnalysis + '</p>' +
+        '<p style="font-size:0.85rem;"><b>🧭 适合方位：</b>' + bestDir + '</p>' +
+        '<p style="font-size:0.85rem;"><b>🏭 适合行业：</b>' + industries + '</p>' +
+      '</div>' +
+
+      // 财运
+      '<div class="analysis-card"><h5>💰 财运</h5><p>' +
+        (bodyStrength.level.indexOf('强') !== -1 ?
+          '身强能任财星，财运基础较好，有存钱和投资能力。' :
+          '身弱不胜财，需待帮身大运方能得财。平时宜守不宜攻，理财以稳健为主。') +
+        (r.wxCount['金'] >= 2 || r.wxCount['水'] >= 2 ? ' 命局财星有根，中年走财运时收入明显提升。' : '') +
+        (r.wxCount[r.dmElement] >= 3 ? ' 比劫较旺，注意合伙投资风险，防止朋友借钱不还或利润被分走。' : '') +
+      '</p></div>' +
+
+      // 婚姻
+      '<div class="analysis-card"><h5>💕 婚姻</h5><p>' +
+        (r.gender === '男' ?
+          '男命以财星为妻，' + (r.wxCount['金'] >= 1 || r.wxCount['水'] >= 1 || r.wxCount['火'] >= 1 ? '命局有财星，正缘不缺席。' : '财星较弱，正缘来得稍晚，35岁前后机会更大。') :
+          '女命以官杀为夫，' + (r.wxCount['金'] >= 1 || r.wxCount['火'] >= 1 ? '命局官星有气，夫缘尚可。' : '官星偏弱，适合晚婚，先立业后成家更稳妥。')) +
+        (r.wxCount[r.dmElement] >= 3 ? ' 比劫旺感情中易遇竞争，需用心经营、保持信任。' : '') +
+      '</p></div>' +
+
+      // 健康
+      '<div class="analysis-card"><h5>🏥 健康</h5>' + healthAnalysis + '</div>' +
 
       // 注意事项
-      '<div class="analysis-card"><h4>⚠️ 注意事项</h4>' + cautions + '</div>' +
+      '<div class="analysis-card"><h5>⚠️ 注意事项与化解</h5>' + cautions + '</div>' +
 
       // 人生起伏
       '<div class="analysis-card"><h4>📈 人生起伏</h4><p style="line-height:1.8;">' + lifeTraj + '</p></div>' +
@@ -505,16 +548,12 @@ var BaziModule = {
       // 名字与八字
       '<div class="analysis-card"><h4>📛 名字与八字</h4>' + nameAnalysis + '</div>' +
 
-      // 大运详解
-      '<div class="analysis-card"><h4>📅 大运详细分析</h4>' + detailedDaYun + '</div>' +
-
       // 结尾赠言
       '<div style="text-align:center;padding:1.2rem 0.8rem;margin-top:0.5rem;background:rgba(201,169,110,0.06);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">' +
         '<p style="font-family:KaiTi,STKaiti,serif;font-size:1.2rem;color:var(--gold);letter-spacing:0.15em;">天行健，君子以自强不息</p>' +
         '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
       '</div>' +
-
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">仅供娱乐参考，八字命理博大精深</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
   },
 
