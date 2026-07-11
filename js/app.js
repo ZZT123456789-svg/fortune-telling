@@ -458,4 +458,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // 主应用 - 星空背景
   window.app = new AppController();
 });
-// Vercel CI/CD auto-deploy test
