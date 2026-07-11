@@ -189,9 +189,9 @@ var BaziModule = {
     if (month < 2 || (month === 2 && day < 4)) {
       year = year - 1;
     }
-    // 标准公式: (年-3)÷10余数=天干, (年-3)÷12余数=地支
-    var ganIdx = ((year - 3) % 10 + 10) % 10;
-    var zhiIdx = ((year - 3) % 12 + 12) % 12;
+    // 标准公式: (年-4)÷10余数=天干, (年-4)÷12余数=地支（1984甲子年基准）
+    var ganIdx = ((year - 4) % 10 + 10) % 10;
+    var zhiIdx = ((year - 4) % 12 + 12) % 12;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx, actualYear: year};
   },
 
