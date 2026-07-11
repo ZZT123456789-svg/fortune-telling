@@ -183,55 +183,36 @@ var BaziModule = {
     return jieqi;
   },
 
-  /** 年柱 — 以立春为界 */
+  /** 年柱 — 标准公式 (year-3)%10 和 (year-3)%12，以立春为界 */
   _getYearPillar: function(year, month, day) {
-    // 立春大约在2月4日前后
-    var lichun = 4; // 简化，实际2月3-5日
-    if (month < 2 || (month === 2 && day < lichun)) {
-      year = year - 1; // 立春前用前一年干支
+    // 立春在2月4日前后，立春前用上一年
+    if (month < 2 || (month === 2 && day < 4)) {
+      year = year - 1;
     }
-    var baseYear = 2024, baseGan = 0, baseZhi = 4; // 2024甲辰年
-    var diff = year - baseYear;
-    var ganIdx = ((baseGan + diff) % 10 + 10) % 10;
-    var zhiIdx = ((baseZhi + diff) % 12 + 12) % 12;
+    // 标准公式: (年-3)÷10余数=天干, (年-3)÷12余数=地支
+    var ganIdx = ((year - 3) % 10 + 10) % 10;
+    var zhiIdx = ((year - 3) % 12 + 12) % 12;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx, actualYear: year};
   },
 
-  /** 月柱 — 以"节"为界，立春为寅月 */
+  /** 月柱 — 月支按节气固定，月干按五虎遁口诀 */
   _getMonthPillar: function(yearGanIdx, month, day) {
-    // 12个节的大致日期
-    var jieqi = this._jieqiMonth();
-    // 确定当前在哪个节气月 (寅月=0开始)
-    var baziMonth = month - 1; // 0-based solar month
-    // 如果日期在当月"节"之前，则属于上一个节气月
-    var jie = jieqi[(month - 1 + 12) % 12];
-    // 处理: 节气日前后判定
-    // 简化: 用每月5日作为节气边界近似
-    if (day < jie.d) {
-      baziMonth = (baziMonth - 1 + 12) % 12;
-    }
-    // 寅月从立春开始，立春大约在2月，所以:
-    // 寅月=2, 卯月=3, 辰月=4, 巳月=5, 午月=6, 未月=7,
-    // 申月=8, 酉月=9, 戌月=10, 亥月=11, 子月=12, 丑月=1
-    // baziMonth 0=寅,1=卯,...,11=丑
-    // solar month: 1=Jan,...,12=Dec
-    // 寅月对应solar month 2 (Feb 立春后)
-    // So baziMonth = (solarMonth - 2 + 12) % 12, adjusted by jie boundary
-    var bm = (month - 2 + 12) % 12;
-    if (day < jie.d) {
-      bm = (bm - 1 + 12) % 12;
+    // 12节大致的日期（前后1-2天误差）
+    var jieDay = [4,6,5,6,6,7,8,8,8,8,7,6]; // 立春2月~小寒1月, index=0对应寅月
+    // 确定当前节气月 (寅=0)
+    var bm = (month - 2 + 12) % 12; // 公历月→节气月(近似): 2月→寅0
+    if (day < jieDay[bm]) {
+      bm = (bm - 1 + 12) % 12; // 在当月节之前,属上一个月
     }
 
-    // 月干: 甲己之年丙作首(0->2), 乙庚之年戊为头(1->4)...
+    // 五虎遁: 甲己之年丙作首(年干0→月干2), 乙庚戊为头(1→4), 丙辛庚起(2→6), 丁壬壬位(3→8), 戊癸甲寅(4→0)
     var monthStartGan = [2, 4, 6, 8, 0];
-    var group = yearGanIdx % 5;
-    var ganIdx = (monthStartGan[group] + bm) % 10;
+    var ganIdx = (monthStartGan[yearGanIdx % 5] + bm) % 10;
     var zhiIdx = (2 + bm) % 12; // 寅=2
-
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
 
-  /** 日柱 — 以1900-01-01为甲戌日做基准(已验证准确) */
+  /** 日柱 — 以1900-01-01=甲戌为基准，通用公式计算 */
   _getDayPillar: function(year, month, day) {
     // 1900-01-01 = 甲戌日 (gan=0, zhi=10)
     var ref = new Date(1900, 0, 1);
@@ -242,13 +223,12 @@ var BaziModule = {
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
 
-  /** 时柱 */
+  /** 时柱 — 23点后算次日子时，时干按五鼠遁口诀 */
   _getHourPillar: function(dayGanIdx, hour) {
+    // 五鼠遁: 甲己还加甲(日干0→时干0), 乙庚丙作初(1→2), 丙辛从戊起(2→4), 丁壬庚子居(3→6), 戊癸壬子发(4→8)
     var hourStartGan = [0, 2, 4, 6, 8];
-    var group = dayGanIdx % 5;
-    var startGan = hourStartGan[group];
-    var zhiIdx = Math.floor((hour + 1) / 2) % 12;
-    var ganIdx = (startGan + zhiIdx) % 10;
+    var zhiIdx = Math.floor(((hour + 1) % 24) / 2) % 12; // 子时=23-1→0, 丑时=1-3→1...
+    var ganIdx = (hourStartGan[dayGanIdx % 5] + zhiIdx) % 10;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
 
@@ -282,12 +262,31 @@ var BaziModule = {
   },
 
   _analyzeSingle: function(name, gender, year, month, day, hour, minute, prefix) {
+    // ⚠️ 23点后属于次日子时，日柱要算下一天
+    var calcDay = day;
+    var calcMonth = month;
+    var calcYear = year;
+    if (hour >= 23) {
+      var nextDate = new Date(year, month - 1, day + 1);
+      calcYear = nextDate.getFullYear();
+      calcMonth = nextDate.getMonth() + 1;
+      calcDay = nextDate.getDate();
+    }
+
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     var trueHour = ts.hour;
 
-    var yearP = this._getYearPillar(year, month, day);
-    var monthP = this._getMonthPillar(yearP.ganIdx, month, day);
-    var dayP = this._getDayPillar(year, month, day);
+    // 真太阳时也可能跨日
+    if (trueHour >= 23) {
+      var tsNext = new Date(calcYear, calcMonth - 1, calcDay + 1);
+      calcYear = tsNext.getFullYear();
+      calcMonth = tsNext.getMonth() + 1;
+      calcDay = tsNext.getDate();
+    }
+
+    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay);
+    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay);
+    var dayP = this._getDayPillar(calcYear, calcMonth, calcDay);
     var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
 
     var dayMaster = dayP.gan;
