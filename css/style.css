@@ -1767,6 +1767,10 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
 .true-solar-display b { color: var(--gold); }
 .ts-note { font-size: 0.72rem; color: var(--text-muted); }
 
+/* ========== ZIWEI SVG ========== */
+#ziweiResult { overflow-x: auto; }
+#ziweiResult svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
 /* ========== DISCLAIMER ========== */
 .disclaimer-section {
   position: relative;

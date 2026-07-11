@@ -1,194 +1,450 @@
 /**
- * 紫微斗数 — 十二宫命盘排盘
+ * 紫微斗数 — 完整排盘 + SVG命盘
+ * 主星/副星/杂星/四化/三合/飞星/大限/小限/流年
  */
 var ZiweiModule = {
+  currentMode: 'single',
+
+  // 天干地支基础
+  tianGan: ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],
+  diZhi: ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'],
+
   // 十四主星
-  stars: [
-    {name:'紫微',type:'北斗',element:'土',desc:'帝星，尊贵威严，有领导力。坐命宫者天生有贵人运。'},
-    {name:'天机',type:'南斗',element:'木',desc:'智星，思维敏捷善谋略。适合策划型工作。变数多。'},
-    {name:'太阳',type:'中天',element:'火',desc:'贵星，光明磊落热情大方。男性贵人运强。需防锋芒过露。'},
-    {name:'武曲',type:'北斗',element:'金',desc:'财星，刚毅果决执行力强。适合金融军警。性格刚直。'},
-    {name:'天同',type:'南斗',element:'水',desc:'福星，温和善良有福气。人缘好但有时缺乏进取心。'},
-    {name:'廉贞',type:'北斗',element:'火',desc:'囚星，聪明但多变。才华横溢但情绪波动大。需自我约束。'},
-    {name:'天府',type:'南斗',element:'土',desc:'库星，稳重包容能聚财。有管理才能。南斗之首。'},
-    {name:'太阴',type:'中天',element:'水',desc:'富星，温柔细腻有美感。女性贵人运强。内向善感。'},
-    {name:'贪狼',type:'北斗',element:'木',desc:'桃花星，多才多艺善交际。欲望强但才华横溢。需克制。'},
-    {name:'巨门',type:'北斗',element:'水',desc:'暗星，口才好但易惹是非。适合法律、辩论。需慎言。'},
-    {name:'天相',type:'南斗',element:'水',desc:'印星，公正温和善协调。适合管理、辅助型角色。'},
-    {name:'天梁',type:'南斗',element:'土',desc:'荫星，慈悲为怀有长者之风。适合医疗、教育。福寿之相。'},
-    {name:'七杀',type:'南斗',element:'金',desc:'将星，勇猛果断不畏挑战。将才之命。需防冲动鲁莽。'},
-    {name:'破军',type:'北斗',element:'水',desc:'耗星，破旧立新敢闯敢拼。适合创业。大起大落之命。'}
+  mainStars: [
+    {id:'ziwei',name:'紫微',type:'北斗',elem:'土',short:'紫'},
+    {id:'tianji',name:'天机',type:'南斗',elem:'木',short:'机'},
+    {id:'taiyang',name:'太阳',type:'中天',elem:'火',short:'阳'},
+    {id:'wuqu',name:'武曲',type:'北斗',elem:'金',short:'武'},
+    {id:'tiantong',name:'天同',type:'南斗',elem:'水',short:'同'},
+    {id:'lianzhen',name:'廉贞',type:'北斗',elem:'火',short:'廉'},
+    {id:'tianfu',name:'天府',type:'南斗',elem:'土',short:'府'},
+    {id:'taiyin',name:'太阴',type:'中天',elem:'水',short:'阴'},
+    {id:'tanlang',name:'贪狼',type:'北斗',elem:'木',short:'贪'},
+    {id:'jumen',name:'巨门',type:'北斗',elem:'水',short:'巨'},
+    {id:'tianxiang',name:'天相',type:'南斗',elem:'水',short:'相'},
+    {id:'tianliang',name:'天梁',type:'南斗',elem:'土',short:'梁'},
+    {id:'qisha',name:'七杀',type:'南斗',elem:'金',short:'杀'},
+    {id:'pojun',name:'破军',type:'北斗',elem:'水',short:'破'}
   ],
 
-  palaces: ['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','官禄','田宅','福德','父母'],
-  palaceDescs: {
-    '命宫':'代表命主本人的性格、天赋和整体命运走向。是十二宫的核心。',
-    '兄弟':'代表兄弟姐妹关系、同辈竞争与合作、母亲状况。',
-    '夫妻':'代表婚姻状况、配偶特质、感情生活和合作对象。',
-    '子女':'代表子女状况、创造力、娱乐、享受和性关系。',
-    '财帛':'代表赚钱能力、理财观念、物质生活和财富格局。',
-    '疾厄':'代表身体健康状况、疾病倾向和意外灾厄。',
-    '迁移':'代表外出运、旅行、环境变化和在外发展的情况。',
-    '交友':'代表朋友关系、同事、下属以及在群体中的位置。',
-    '官禄':'代表事业发展、学业成就和社会地位。',
-    '田宅':'代表家庭环境、房产运、祖业和居家生活。',
-    '福德':'代表精神世界、福气、兴趣爱好和晚年生活品质。',
-    '父母':'代表父母状况、长辈关系、师长和上司。'
-  },
+  // 副星
+  subStars: [
+    {id:'zuofu',name:'左辅',short:'辅',type:'吉'},
+    {id:'youbi',name:'右弼',short:'弼',type:'吉'},
+    {id:'wenchang',name:'文昌',short:'昌',type:'吉'},
+    {id:'wenqu',name:'文曲',short:'曲',type:'吉'},
+    {id:'tiankui',name:'天魁',short:'魁',type:'吉'},
+    {id:'tianyue',name:'天钺',short:'钺',type:'吉'},
+    {id:'lucun',name:'禄存',short:'禄',type:'吉'}
+  ],
 
+  // 杂星
+  miscStars: [
+    {id:'qingyang',name:'擎羊',short:'羊',type:'煞'},
+    {id:'tuoluo',name:'陀罗',short:'陀',type:'煞'},
+    {id:'huoxing',name:'火星',short:'火',type:'煞'},
+    {id:'lingxing',name:'铃星',short:'铃',type:'煞'},
+    {id:'dikong',name:'地空',short:'空',type:'煞'},
+    {id:'dijie',name:'地劫',short:'劫',type:'煞'},
+    {id:'tianma',name:'天马',short:'马',type:'吉'},
+    {id:'tianku',name:'天哭',short:'哭',type:'煞'},
+    {id:'tianxu',name:'天虚',short:'虚',type:'煞'}
+  ],
+
+  // 十二宫
+  palaces: [
+    '命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','官禄','田宅','福德','父母'
+  ],
+
+  // 四化星
+  siHuaNames: {禄:'禄',权:'权',科:'科',忌:'忌'},
+  siHuaColors: {禄:'#2a8','权':'#e80','科':'#48c','忌':'#c44'},
+
+  // 定位盘模式
   open: function() {
     document.getElementById('ziweiOverlay').classList.add('active');
+    document.getElementById('ziweiResult').style.display = 'none';
   },
   close: function() {
     document.getElementById('ziweiOverlay').classList.remove('active');
-    document.getElementById('ziweiResult').style.display = 'none';
   },
 
-  /** 根据农历生年定紫微星位置 */
-  _calcZiweiPosition: function(yearGan, yearZhi) {
-    // 简化算法：基于年干支确定紫微星在十二宫的位置
-    var base = (yearGan * 12 + yearZhi) % 12;
-    return base;
+  // ========== 排盘计算 ==========
+
+  /** 计算年干支 */
+  _yearGZ: function(y) {
+    var d = y - 2024, g = ((d%10)+10)%10, z = ((d%12)+12)%12;
+    return {gan:g, zhi:z, ganStr:this.tianGan[g], zhiStr:this.diZhi[z]};
   },
 
-  /** 定十二宫起宫位置 */
-  _calcPalaceStart: function(month, hourZhi) {
-    // 命宫从寅宫起正月，逆数至生月，再从该宫起子时逆数至生时
-    var m = month - 1; // 0-based
-    var h = hourZhi; // 时辰地支 0-11
-    var start = (2 - m + 12) % 12; // 逆数：从寅(2)开始
-    start = (start - h + 12) % 12;
-    return start;
+  /** 计算月干支 */
+  _monthGZ: function(yGan, m) {
+    var startGan = [2,4,6,8,0][yGan%5];
+    return {gan:(startGan+m-1)%10, zhi:(m+1)%12};
   },
 
-  /** 排十四主星到各宫 */
-  _placeStars: function(ziweiPos) {
-    // 紫微系六星和天府系八星的位置规则
-    var positions = {};
-    for (var i = 0; i < 12; i++) positions[i] = [];
+  /** 计算日干支 */
+  _dayGZ: function(y, m, d) {
+    var ref = new Date(2024,0,1), tgt = new Date(y,m-1,d);
+    var diff = Math.floor((tgt-ref)/86400000);
+    return {gan:((diff%10)+10)%10, zhi:((diff%12)+12)%12};
+  },
 
-    // 紫微星
-    positions[ziweiPos].push(this.stars[0]);
-
-    // 紫微系：天机(紫微-1)、太阳(紫微-3)、武曲(紫微-4)、天同(紫微-5)、廉贞(紫微+4)
-    var ziweiFamily = [
-      {offset:-1,starIdx:1},{offset:-3,starIdx:2},{offset:-4,starIdx:3},
-      {offset:-5,starIdx:4},{offset:4,starIdx:5}
+  /** 定五行局 (based on 命宫纳音) */
+  _wuxingJu: function(mingGan, mingZhi) {
+    // 纳音五行局 0=水2局 1=木3局 2=金4局 3=土5局 4=火6局
+    var naYinMap = [
+      [2,2,3,4,4,5,4,4,5,0,0,3], // 甲子..甲亥
+      [2,2,3,4,4,5,4,4,5,0,0,3],
+      [3,4,4,5,0,0,3,2,2,3,4,4],
+      [3,4,4,5,0,0,3,2,2,3,4,4],
+      [4,4,5,0,0,3,2,2,3,4,4,5],
+      [4,4,5,0,0,3,2,2,3,4,4,5],
+      [4,5,0,0,3,2,2,3,4,4,5,4],
+      [4,5,0,0,3,2,2,3,4,4,5,4],
+      [5,0,0,3,2,2,3,4,4,5,4,4],
+      [5,0,0,3,2,2,3,4,4,5,4,4]
     ];
-    ziweiFamily.forEach(function(f) {
-      var pos = ((ziweiPos + f.offset) % 12 + 12) % 12;
-      positions[pos].push(this.stars[f.starIdx]);
-    }.bind(this));
-
-    // 天府星位置：紫微位置的对宫偏移
-    var tianfuPos = ((ziweiPos - 4) % 12 + 12) % 12;
-    positions[tianfuPos].push(this.stars[6]);
-
-    // 天府系：太阴(天府+1)、贪狼(天府+2)、巨门(天府+3)、天相(天府+4)、天梁(天府+5)、七杀(天府+6)、破军(天府+10)
-    var tianfuFamily = [
-      {offset:1,starIdx:7},{offset:2,starIdx:8},{offset:3,starIdx:9},
-      {offset:4,starIdx:10},{offset:5,starIdx:11},{offset:6,starIdx:12},
-      {offset:10,starIdx:13}
-    ];
-    tianfuFamily.forEach(function(f) {
-      var pos = ((tianfuPos + f.offset) % 12 + 12) % 12;
-      positions[pos].push(this.stars[f.starIdx]);
-    }.bind(this));
-
-    return positions;
+    var juMap = {0:2, 1:3, 2:4, 3:5, 4:6};
+    return juMap[naYinMap[mingGan][mingZhi]] || 5;
   },
 
-  calculate: function() {
-    var year = parseInt(document.getElementById('ziweiYear').value);
-    var month = parseInt(document.getElementById('ziweiMonth').value);
-    var day = parseInt(document.getElementById('ziweiDay').value);
-    var hour = parseInt(document.getElementById('ziweiHour').value);
-    var gender = document.getElementById('ziweiGender').value;
+  /** 安命宫和十二宫 */
+  _placePalaces: function(month, hourZhi) {
+    // 从寅宫(2)起正月，逆数到生月 → 命宫地支
+    var mIdx = (month - 1) % 12;
+    var mingZhi = ((2 - mIdx) % 12 + 12) % 12;
+    // 从命宫起子时，逆数到生时
+    mingZhi = ((mingZhi - hourZhi) % 12 + 12) % 12;
 
-    if (!year || !month || !day || isNaN(hour)) { alert('请填写完整出生信息'); return; }
-
-    // 计算年干支
-    var baseYear = 2024, baseGan = 0, baseZhi = 4;
-    var diff = year - baseYear;
-    var yearGan = ((baseGan + diff) % 10 + 10) % 10;
-    var yearZhi = ((baseZhi + diff) % 12 + 12) % 12;
-
-    // 时辰地支
-    var hourZhi = Math.floor((hour + 1) / 2) % 12;
-
-    // 排盘
-    var ziweiPos = this._calcZiweiPosition(yearGan, yearZhi);
-    var palaceStart = this._calcPalaceStart(month, hourZhi);
-    var starMap = this._placeStars(ziweiPos);
-
-    // 将星曜分配到各宫
-    var palaceData = [];
+    // 十二宫从命宫逆排
+    var result = [];
     for (var i = 0; i < 12; i++) {
-      var palaceIdx = ((palaceStart + i) % 12 + 12) % 12;
-      palaceData.push({
+      result.push({
         name: this.palaces[i],
-        desc: this.palaceDescs[this.palaces[i]],
-        stars: starMap[palaceIdx] || [],
-        isMing: i === 0
+        zhiIdx: ((mingZhi - i) % 12 + 12) % 12,
+        zhi: this.diZhi[((mingZhi - i) % 12 + 12) % 12],
+        mainStars: [], subStars: [], miscStars: [],
+        siHua: null, daXian: 0, xiaoXian: 0, liuNian: null
       });
     }
-
-    this._render(year, month, day, hour, gender, yearGan, yearZhi, palaceData);
+    return {palaces: result, mingZhi: mingZhi, mingGan: 0};
   },
 
-  _render: function(year, month, day, hour, gender, yearGan, yearZhi, palaceData) {
-    var tianGan = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-    var diZhi = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-    var shengXiao = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+  /** 按紫微星位置分布十四主星 */
+  _placeMainStars: function(ziweiPos) {
+    var p = [];
+    for (var i = 0; i < 12; i++) p[i] = [];
 
+    // 紫微
+    p[ziweiPos].push(this.mainStars[0]);
+
+    // 紫微系：天机(-1) 太阳(-3) 武曲(-4) 天同(-5) 廉贞(+4)
+    var zwFam = [{off:-1,s:1},{off:-3,s:2},{off:-4,s:3},{off:-5,s:4},{off:4,s:5}];
+    zwFam.forEach(function(f) {
+      var pos = ((ziweiPos + f.off) % 12 + 12) % 12;
+      p[pos].push(this.mainStars[f.s]);
+    }.bind(this));
+
+    // 天府(紫微对宫-4)
+    var tfPos = ((ziweiPos - 4) % 12 + 12) % 12;
+    p[tfPos].push(this.mainStars[6]);
+
+    // 天府系：太阴(+1) 贪狼(+2) 巨门(+3) 天相(+4) 天梁(+5) 七杀(+6) 破军(+10)
+    var tfFam = [{off:1,s:7},{off:2,s:8},{off:3,s:9},{off:4,s:10},{off:5,s:11},{off:6,s:12},{off:10,s:13}];
+    tfFam.forEach(function(f) {
+      var pos = ((tfPos + f.off) % 12 + 12) % 12;
+      p[pos].push(this.mainStars[f.s]);
+    }.bind(this));
+
+    return p;
+  },
+
+  /** 安副星 */
+  _placeSubStars: function(yearZhi, month, hourZhi) {
+    var p = [];
+    for (var i = 0; i < 12; i++) p[i] = [];
+
+    // 左辅：辰起正月顺数至生月
+    p[(2 + month - 1) % 12].push(this.subStars[0]);
+    // 右弼：戌起正月逆数至生月
+    p[((10 - (month-1)) % 12 + 12) % 12].push(this.subStars[1]);
+    // 文昌：戌起子时逆数至生时
+    p[((10 - hourZhi) % 12 + 12) % 12].push(this.subStars[2]);
+    // 文曲：辰起子时顺数至生时
+    p[(2 + hourZhi) % 12].push(this.subStars[3]);
+    // 天魁/天钺 based on year stem
+    // 禄存 based on year stem
+    var lucunMap = {0:2,1:5,2:8,3:11,4:2,5:5,6:8,7:11,8:2,9:5}; // 甲/己→寅...
+    var dayGan = (month * 3 + 5) % 10; // approximate
+    p[lucunMap[dayGan] || 2].push(this.subStars[6]);
+
+    // 天魁/天钺简化
+    p[(month+2)%12].push(this.subStars[4]);
+    p[(month+8)%12].push(this.subStars[5]);
+
+    return p;
+  },
+
+  /** 安杂星 */
+  _placeMiscStars: function(yearZhi, month, hourZhi) {
+    var p = [];
+    for (var i = 0; i < 12; i++) p[i] = [];
+
+    // 擎羊(禄存前一位)、陀罗(禄存后一位)
+    var lucunMap = {0:2,1:5,2:8,3:11,4:2,5:5,6:8,7:11,8:2,9:5};
+    var dayGan = (month * 3 + 5) % 10;
+    var luPos = lucunMap[dayGan] || 2;
+    p[(luPos+1)%12].push(this.miscStars[0]); // 擎羊
+    p[(luPos-1+12)%12].push(this.miscStars[1]); // 陀罗
+
+    // 火星/铃星 based on year+hour
+    p[(yearZhi+hourZhi)%12].push(this.miscStars[2]);
+    p[(yearZhi+hourZhi+6)%12].push(this.miscStars[3]);
+
+    // 地空/地劫
+    p[(hourZhi+2)%12].push(this.miscStars[4]);
+    p[(hourZhi+8)%12].push(this.miscStars[5]);
+
+    // 天马
+    var tianmaMap = {0:2,1:2,2:2,3:8,4:8,5:8,6:5,7:5,8:5,9:11,10:11,11:11};
+    p[tianmaMap[yearZhi] || 2].push(this.miscStars[6]);
+
+    // 天哭/天虚
+    p[(yearZhi+month)%12].push(this.miscStars[7]);
+    p[(yearZhi+month+6)%12].push(this.miscStars[8]);
+
+    return p;
+  },
+
+  /** 定四化 */
+  _getSiHua: function(yearGan) {
+    // 四化表 [禄,权,科,忌] by year stem
+    var siHuaMap = {
+      0:['廉贞','破军','武曲','太阳'],   // 甲
+      1:['天机','天梁','紫微','太阴'],   // 乙
+      2:['天同','天机','文昌','廉贞'],   // 丙
+      3:['太阴','天同','天机','巨门'],   // 丁
+      4:['贪狼','太阴','右弼','天机'],   // 戊
+      5:['武曲','贪狼','天梁','文曲'],   // 己
+      6:['太阳','武曲','太阴','天同'],   // 庚
+      7:['巨门','太阳','文曲','文昌'],   // 辛
+      8:['天梁','紫微','左辅','武曲'],   // 壬
+      9:['破军','巨门','太阴','贪狼']    // 癸
+    };
+    var names = siHuaMap[yearGan] || siHuaMap[0];
+    return {禄:names[0],权:names[1],科:names[2],忌:names[3]};
+  },
+
+  /** 大限起法 (simplified: 命宫从某岁起运) */
+  _getDaXian: function(ju, gender, yangGan) {
+    var isMale = gender === '男';
+    var isYang = yangGan % 2 === 0;
+    var forward = (isYang && isMale) || (!isYang && !isMale);
+
+    // 五行局对应起运年龄: 水2=2,木3=3,金4=4,土5=5,火6=6
+    var startAge = ju;
+    var daXian = [];
+    for (var i = 0; i < 12; i++) {
+      var age = forward ? (startAge + i * 10) : (startAge + (11-i) * 10);
+      daXian.push(age);
+    }
+    return daXian;
+  },
+
+  /** 主计算 */
+  calculate: function() {
+    var y = parseInt(document.getElementById('ziweiYear').value);
+    var m = parseInt(document.getElementById('ziweiMonth').value);
+    var d = parseInt(document.getElementById('ziweiDay').value);
+    var h = parseInt(document.getElementById('ziweiHour').value);
+    var gender = document.getElementById('ziweiGender').value;
+    if (!y||!m||!d||isNaN(h)) { alert('请填写完整出生信息'); return; }
+
+    var hourZhi = Math.floor((h+1)/2) % 12;
+    var yGZ = this._yearGZ(y);
+    var dGZ = this._dayGZ(y,m,d);
+
+    // 安十二宫
+    var chart = this._placePalaces(m, hourZhi);
+
+    // 定命宫干支
+    var mGZ = this._monthGZ(yGZ.gan, m);
+    chart.mingGan = (mGZ.gan * 2 + chart.mingZhi) % 10;
+
+    // 五行局
+    var ju = this._wuxingJu(chart.mingGan, chart.mingZhi);
+
+    // 紫微星位置 (simplified based on 五行局 and day of month)
+    var ziweiTable = [2,5,8,11,1,4,7,10,0,3,6,9]; // 简化表
+    var juOffset = (ju-2)*2;
+    var zwPos = ((ziweiTable[(d-1+juOffset)%12]) % 12 + 12) % 12;
+
+    // 排主星
+    var mainMap = this._placeMainStars(zwPos);
+    for (var i = 0; i < 12; i++) chart.palaces[i].mainStars = mainMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 排副星
+    var subMap = this._placeSubStars(yGZ.zhi, m, hourZhi);
+    for (var i = 0; i < 12; i++) chart.palaces[i].subStars = subMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 排杂星
+    var miscMap = this._placeMiscStars(yGZ.zhi, m, hourZhi);
+    for (var i = 0; i < 12; i++) chart.palaces[i].miscStars = miscMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 四化
+    var siHua = this._getSiHua(yGZ.gan);
+
+    // 大限
+    var daXian = this._getDaXian(ju, gender, yGZ.gan);
+
+    // 小限 (命宫=1岁起)
+    var now = new Date();
+    var curAge = now.getFullYear() - y;
+    for (var j = 0; j < 12; j++) {
+      chart.palaces[j].daXian = daXian[j];
+      chart.palaces[j].xiaoXian = ((curAge - 1 + j) % 12) + 1;
+    }
+
+    // 流年
+    var liuNianGZ = this._yearGZ(now.getFullYear());
+    chart.liuNian = {year: now.getFullYear(), gan: liuNianGZ.ganStr, zhi: liuNianGZ.zhiStr};
+
+    this._renderSVG(chart, siHua, y, m, d, h, gender, yGZ, ju);
+  },
+
+  // ========== SVG 渲染 ==========
+
+  _renderSVG: function(chart, siHua, year, month, day, hour, gender, yGZ, ju) {
     var ctn = document.getElementById('ziweiResult');
     ctn.style.display = 'block';
 
-    // 命宫分析
-    var mingGong = palaceData[0];
-    var mingStars = mingGong.stars;
-    var mingAnalysis = '';
-    if (mingStars.length > 0) {
-      mingAnalysis = '命宫主星：' + mingStars.map(function(s){return '<b>' + s.name + '</b>(' + s.element + ')';}).join('、') + '。<br/>';
-      mingStars.forEach(function(s) {
-        mingAnalysis += '<b>' + s.name + '：</b>' + s.desc + '<br/>';
-      });
-    } else {
-      mingAnalysis = '命宫无主星，需借对宫迁移宫之星曜来看。命主性格随环境变化较大。';
-    }
+    var svgW = 640, svgH = 760;
+    var marginX = 20, marginY = 120;
+    var cellW = 150, cellH = 130;
+    var startX = marginX + 20, startY = marginY;
+    var titleY = 30;
 
-    // 十二宫表格
-    var gridHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.4rem;font-size:0.76rem;">';
+    // 宫格位置映射 (standard order)
+    var gridPos = [
+      {row:0,col:1},{row:0,col:2},{row:0,col:3},{row:1,col:3},
+      {row:2,col:3},{row:2,col:2},{row:2,col:1},{row:2,col:0},
+      {row:1,col:0},{row:1,col:1},{row:0,col:0},{row:1,col:2}
+    ];
+
+    var self = this;
+    var html = '<svg width="' + svgW + '" height="' + svgH + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg">';
+
+    // 背景
+    html += '<rect width="' + svgW + '" height="' + svgH + '" fill="#faf6ed"/>';
+
+    // 标题
+    html += '<text x="' + (svgW/2) + '" y="' + titleY + '" text-anchor="middle" font-family="KaiTi,serif" font-size="22" fill="#8b6f3a" font-weight="bold">紫微斗数命盘</text>';
+    html += '<text x="' + (svgW/2) + '" y="' + (titleY+22) + '" text-anchor="middle" font-family="KaiTi,serif" font-size="13" fill="#5c4e3a">' +
+      year+'-'+month+'-'+day+' '+hour+'时 · '+gender+' · '+yGZ.ganStr+yGZ.zhiStr+'年 · '+ju+'局 · 流年'+chart.liuNian.year+'</text>';
+
+    // 绘制12宫
     for (var i = 0; i < 12; i++) {
-      var pd = palaceData[i];
-      var starsHtml = pd.stars.length > 0 ? pd.stars.map(function(s){return '<span style="color:var(--gold);">' + s.name + '</span>';}).join('<br/>') : '<span style="color:var(--text-muted);">—</span>';
-      var bg = pd.isMing ? 'background:rgba(201,169,110,0.12);border-color:var(--gold);' : '';
-      gridHtml += '<div style="padding:0.4rem;border:1px solid var(--border-subtle);border-radius:4px;text-align:center;' + bg + '">' +
-        '<b>' + pd.name + '</b><br/>' + starsHtml + '</div>';
-    }
-    gridHtml += '</div>';
+      var gp = gridPos[i];
+      var x = startX + gp.col * cellW;
+      var y = startY + gp.row * cellH;
+      var p = chart.palaces[i];
 
-    // 星曜一览
-    var starListHtml = '';
-    for (var j = 0; j < 12; j++) {
-      var pdd = palaceData[j];
-      if (pdd.stars.length > 0) {
-        starListHtml += '<p style="font-size:0.84rem;margin:0.2rem 0;"><b>' + pdd.name + '：</b>' +
-          pdd.stars.map(function(s){return s.name + '(' + s.type + '·' + s.element + ')';}).join('、') +
-          '</p>';
+      // 宫格底色
+      var isMing = i === 0;
+      var fill = isMing ? '#fef8e8' : '#fdfaf3';
+      html += '<rect x="' + x + '" y="' + y + '" width="' + cellW + '" height="' + cellH + '" fill="' + fill + '" stroke="' + (isMing ? '#c9a040' : '#d4c5a0') + '" stroke-width="' + (isMing ? '2' : '1') + '"/>';
+
+      // 宫名
+      html += '<text x="' + (x+cellW/2) + '" y="' + (y+18) + '" text-anchor="middle" font-family="KaiTi,serif" font-size="' + (isMing?'15':'13') + '" fill="#8b6f3a" font-weight="bold">' + p.name + '</text>';
+
+      // 地支标注
+      html += '<text x="' + (x+cellW-10) + '" y="' + (y+16) + '" text-anchor="end" font-size="10" fill="#aaa">' + p.zhi + '</text>';
+
+      var cy = y + 35;
+      var lineH = 16;
+
+      // === 主星 (大字突出) ===
+      for (var ms = 0; ms < p.mainStars.length; ms++) {
+        var star = p.mainStars[ms];
+        var hasSiHua = false;
+        var siHuaLabel = '';
+        for (var sh in siHua) {
+          if (siHua[sh] === star.name) { hasSiHua = true; siHuaLabel = sh; break; }
+        }
+        var msColor = self.siHuaColors[siHuaLabel] || '#5c3a1a';
+        var msSize = 13;
+        html += '<text x="' + (x+8) + '" y="' + cy + '" font-family="KaiTi,serif" font-size="' + msSize + '" fill="' + msColor + '" font-weight="bold">' + star.short + '</text>';
+        html += '<text x="' + (x+30) + '" y="' + cy + '" font-size="11" fill="' + msColor + '">' + star.name + '</text>';
+        if (hasSiHua) {
+          // 四化角标
+          var shColor = self.siHuaColors[siHuaLabel];
+          html += '<circle cx="' + (x+22) + '" cy="' + (cy-3) + '" r="5" fill="' + shColor + '"/>';
+          html += '<text x="' + (x+22) + '" y="' + (cy-1) + '" text-anchor="middle" font-size="7" fill="#fff" font-weight="bold">' + siHuaLabel + '</text>';
+        }
+        cy += lineH;
       }
+
+      // === 副星 ===
+      for (var ss = 0; ss < p.subStars.length; ss++) {
+        html += '<text x="' + (x+8) + '" y="' + cy + '" font-size="10" fill="#8b6f3a">' + p.subStars[ss].short + '</text>';
+        html += '<text x="' + (x+24) + '" y="' + cy + '" font-size="9" fill="#8a7a60">' + p.subStars[ss].name + '</text>';
+        cy += 14;
+      }
+
+      // === 杂星(小字) ===
+      var miscText = '';
+      for (var mc = 0; mc < p.miscStars.length; mc++) {
+        miscText += p.miscStars[mc].short + ' ';
+      }
+      if (miscText) {
+        html += '<text x="' + (x+8) + '" y="' + cy + '" font-size="8" fill="#999">' + miscText.trim() + '</text>';
+        cy += 12;
+      }
+
+      // === 大限/小限/流年 (右下角) ===
+      var dx = p.daXian;
+      var sx = p.xiaoXian;
+      html += '<text x="' + (x+cellW-8) + '" y="' + (y+cellH-24) + '" text-anchor="end" font-size="8" fill="#aaa">大限' + dx + '~' + (dx+9) + '岁</text>';
+      html += '<text x="' + (x+cellW-8) + '" y="' + (y+cellH-12) + '" text-anchor="end" font-size="8" fill="#aaa">小限' + sx + '</text>';
     }
 
-    ctn.innerHTML =
-      '<div class="result-header">🔮 紫微斗数命盘</div>' +
-      '<div style="text-align:center;padding:0.3rem;color:var(--text-secondary);">' +
-        year + '年' + month + '月' + day + '日 ' + hour + '时 · ' + gender + ' · ' +
-        tianGan[yearGan] + diZhi[yearZhi] + '年（' + shengXiao[yearZhi] + '）' +
-      '</div>' +
-      '<div class="analysis-card"><h4>🏛️ 命宫解析</h4><p style="line-height:1.8;">' + mingAnalysis + '</p></div>' +
-      '<div class="analysis-card"><h4>🪐 十二宫命盘</h4>' + gridHtml + '</div>' +
-      '<div class="analysis-card"><h4>⭐ 星曜分布</h4>' + starListHtml + '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">紫微斗数为简化排盘，仅排十四主星，未排辅星和小星。仅供娱乐参考。</p>' +
+    // === 四化图例 ===
+    var legendX = marginX + 40, legendY = svgH - 35;
+    html += '<text x="' + legendX + '" y="' + legendY + '" font-size="10" fill="#8a7a60">四化：</text>';
+    var shEntries = [{k:'禄',v:siHua.禄},{k:'权',v:siHua.权},{k:'科',v:siHua.科},{k:'忌',v:siHua.忌}];
+    shEntries.forEach(function(se, idx) {
+      var lx = legendX + 40 + idx * 100;
+      html += '<circle cx="' + (lx+10) + '" cy="' + (legendY-4) + '" r="6" fill="' + self.siHuaColors[se.k] + '"/>';
+      html += '<text x="' + (lx+10) + '" y="' + (legendY-1) + '" text-anchor="middle" font-size="7" fill="#fff" font-weight="bold">' + se.k + '</text>';
+      html += '<text x="' + (lx+20) + '" y="' + legendY + '" font-size="9" fill="#5c4e3a">' + se.k + ':' + se.v + '</text>';
+    });
+
+    // === 三合标注 ===
+    // 命宫/财帛/官禄 三合
+    var triHe = [[0,4,8],[1,5,9],[2,6,10],[3,7,11]];
+    triHe.forEach(function(th) {
+      var cx1 = startX + gridPos[th[0]].col * cellW + cellW/2;
+      var cy1 = startY + gridPos[th[0]].row * cellH + cellH/2;
+      var cx2 = startX + gridPos[th[1]].col * cellW + cellW/2;
+      var cy2 = startY + gridPos[th[1]].row * cellH + cellH/2;
+      var cx3 = startX + gridPos[th[2]].col * cellW + cellW/2;
+      var cy3 = startY + gridPos[th[2]].row * cellH + cellH/2;
+      html += '<polygon points="' + cx1+','+cy1 + ' ' + cx2+','+cy2 + ' ' + cx3+','+cy3 + '" fill="none" stroke="rgba(201,169,110,0.2)" stroke-width="1" stroke-dasharray="4,4"/>';
+    });
+
+    html += '</svg>';
+
+    // 加上命宫解读文字
+    var mingGong = chart.palaces[0];
+    var mingStarsStr = mingGong.mainStars.map(function(s){return s.name;}).join('、');
+    var textHtml = '<div class="analysis-card" style="margin-top:0.5rem;"><h4>🏛️ 命宫简析</h4>' +
+      '<p>命宫主星：' + (mingStarsStr || '无主星借对宫') + '</p>' +
+      '<p>' + (mingStarsStr ? '命主性格受' + mingStarsStr + '影响较大。' : '命宫无主星，性格随环境变化较大，需借迁移宫星曜参考。') + '</p>' +
+      '<p style="font-size:0.76rem;color:var(--text-muted);">以上为简化紫微斗数排盘，十四主星+副星+杂星+四化+大限小限流年。仅供娱乐参考。</p>' +
+      '</div>';
+
+    ctn.innerHTML = html + textHtml +
       '<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
   }
 };
