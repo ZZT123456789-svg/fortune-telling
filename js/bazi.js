@@ -262,26 +262,19 @@ var BaziModule = {
   },
 
   _analyzeSingle: function(name, gender, year, month, day, hour, minute, prefix) {
-    // ⚠️ 23点后属于次日子时，日柱要算下一天
+    // 先算真太阳时
+    var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
+    var trueHour = ts.hour;
+
+    // ⚠️ 子时换日规则：真太阳时>=23点，日柱（及年柱月柱）算次日
     var calcDay = day;
     var calcMonth = month;
     var calcYear = year;
-    if (hour >= 23) {
+    if (trueHour >= 23) {
       var nextDate = new Date(year, month - 1, day + 1);
       calcYear = nextDate.getFullYear();
       calcMonth = nextDate.getMonth() + 1;
       calcDay = nextDate.getDate();
-    }
-
-    var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
-    var trueHour = ts.hour;
-
-    // 真太阳时也可能跨日
-    if (trueHour >= 23) {
-      var tsNext = new Date(calcYear, calcMonth - 1, calcDay + 1);
-      calcYear = tsNext.getFullYear();
-      calcMonth = tsNext.getMonth() + 1;
-      calcDay = tsNext.getDate();
     }
 
     var yearP = this._getYearPillar(calcYear, calcMonth, calcDay);
