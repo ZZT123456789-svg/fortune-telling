@@ -185,6 +185,46 @@
     </div>
   </div>
 
+  <!-- ====== 付费墙弹窗 ====== -->
+  <div class="tool-overlay" id="paywallShopOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="Paywall.closeShop()">✕</button>
+      <h2 class="modal-title">🎫 购买解读次数</h2>
+      <p class="modal-desc">所有解读功能通用，次数永久有效</p>
+      <div class="shop-grid">
+        <div class="shop-card" onclick="showBuyContact(3)">
+          <div class="sc-price">¥4.9</div>
+          <div class="sc-count">3次解读</div>
+          <div class="sc-unit">≈¥1.63/次</div>
+        </div>
+        <div class="shop-card best" onclick="showBuyContact(10)">
+          <div class="sc-price">¥9.9</div>
+          <div class="sc-count">10次解读</div>
+          <div class="sc-unit">≈¥0.99/次</div>
+        </div>
+        <div class="shop-card" onclick="showBuyContact(20)">
+          <div class="sc-price">¥19.9</div>
+          <div class="sc-count">20次解读</div>
+          <div class="sc-unit">≈¥0.50/次</div>
+        </div>
+      </div>
+      <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;">💬 微信：ZZT-2004-12 &nbsp;|&nbsp; 🐧 QQ：3237659951</p>
+      <p style="text-align:center;color:var(--text-muted);font-size:0.76rem;">已有兑换码？<a href="javascript:Paywall.openRedeem();Paywall.closeShop();" style="color:var(--gold);">点此兑换</a></p>
+    </div>
+  </div>
+
+  <div class="tool-overlay" id="paywallRedeemOverlay">
+    <div class="tool-modal">
+      <button class="modal-close" onclick="Paywall.closeRedeem()">✕</button>
+      <h2 class="modal-title">🎫 兑换码</h2>
+      <p class="modal-desc">输入兑换码获取解读次数</p>
+      <input type="text" id="redeemCodeInput" class="form-input full" placeholder="输入兑换码，如 DAOWEN-A3K7" style="text-align:center;font-size:1.1rem;text-transform:uppercase;">
+      <button class="btn-primary" onclick="Paywall.doRedeem()">✅ 兑换</button>
+      <div id="redeemResult" style="text-align:center;padding:0.5rem;"></div>
+      <p style="text-align:center;color:var(--text-muted);font-size:0.76rem;margin-top:0.5rem;">余额：<b id="pwTopBalance">0</b> 次</p>
+    </div>
+  </div>
+
   <!-- ====== 免责声明 ====== -->
   <div class="disclaimer-section">
     <div class="disclaimer-box" style="margin-bottom:0.8rem;border-color:var(--gold);background:rgba(201,169,110,0.05);">
@@ -664,6 +704,7 @@
   </div>
 
   <!-- ====== JS 引用 ====== -->
+  <script src="js/paywall.js"></script>
   <script src="js/lunar.js"></script>
   <script src="js/china-address.js"></script>
   <script src="js/bazi.js"></script>

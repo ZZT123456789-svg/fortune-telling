@@ -275,6 +275,56 @@ var ZiweiModule = {
     // 五行局
     var ju = this._wuxingJu(chart.mingGan, chart.mingZhi);
 
+    // 紫微星位置
+    var ziweiTable = [2,5,8,11,1,4,7,10,0,3,6,9];
+    var juOffset = (ju-2)*2;
+    var zwPos = ((ziweiTable[(d-1+juOffset)%12]) % 12 + 12) % 12;
+
+    // 排主星
+    var mainMap = this._placeMainStars(zwPos);
+    for (var i = 0; i < 12; i++) chart.palaces[i].mainStars = mainMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 排副星
+    var subMap = this._placeSubStars(yGZ.zhi, m, hourZhi);
+    for (var i = 0; i < 12; i++) chart.palaces[i].subStars = subMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 排杂星
+    var miscMap = this._placeMiscStars(yGZ.zhi, m, hourZhi);
+    for (var i = 0; i < 12; i++) chart.palaces[i].miscStars = miscMap[(chart.palaces[i].zhiIdx)] || [];
+
+    // 四化
+    var siHua = this._getSiHua(yGZ.gan);
+
+    // 大限
+    var daXian = this._getDaXian(ju, gender, yGZ.gan);
+
+    // 小限
+    var now = new Date();
+    var curAge = now.getFullYear() - y;
+    for (var j = 0; j < 12; j++) {
+      chart.palaces[j].daXian = daXian[j];
+      chart.palaces[j].xiaoXian = ((curAge - 1 + j) % 12) + 1;
+    }
+
+    // 流年
+    var liuNianGZ = this._yearGZ(now.getFullYear());
+    chart.liuNian = {year: now.getFullYear(), gan: liuNianGZ.ganStr, zhi: liuNianGZ.zhiStr};
+
+    var self = this;
+    Paywall.tryAccess('ziweiResult', function() {
+      self._renderSVG(chart, siHua, y, m, d, h, gender, yGZ, ju);
+    });
+
+    // 安十二宫
+    var chart = this._placePalaces(m, hourZhi);
+
+    // 定命宫干支
+    var mGZ = this._monthGZ(yGZ.gan, m);
+    chart.mingGan = (mGZ.gan * 2 + chart.mingZhi) % 10;
+
+    // 五行局
+    var ju = this._wuxingJu(chart.mingGan, chart.mingZhi);
+
     // 紫微星位置 (simplified based on 五行局 and day of month)
     var ziweiTable = [2,5,8,11,1,4,7,10,0,3,6,9]; // 简化表
     var juOffset = (ju-2)*2;

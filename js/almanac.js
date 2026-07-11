@@ -138,5 +138,6 @@ var AlmanacModule = {
       '<div style="font-size:0.8rem;color:var(--text-muted);padding:0.3rem;">📜 彭祖百忌：' + pengZuDay + ' ' + pengZuZhi + '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">⚠ 黄历数据为简化推算，仅供参考</p>' +
       '<button class="btn-secondary" onclick="AlmanacModule.close()">🔙 返回</button>';
+    Paywall.checkCover('almanacResult');
   }
 };

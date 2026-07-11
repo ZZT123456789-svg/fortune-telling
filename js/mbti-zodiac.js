@@ -226,6 +226,7 @@ const MbtiModule = {
         <p class="mbti-share-hint">📸 截图分享给你的朋友，看看他们是什么命理人格吧！</p>
       </div>
     `;
+    Paywall.checkCover('mbtiResultContent');
   },
 
   _getCompatibility(type, zodiac) {
@@ -250,6 +251,10 @@ const MbtiModule = {
     return '形成了独特的性格组合，既有理性的思考，又有星座赋予的独特魅力。';
   },
 
+  _applyPaywall: function() {
+    Paywall.checkCover('mbtiResultContent');
+  },
+
   _getElementAdvice(element) {
     const advices = {
       '金': '金属性的颜色（白色、金色）和饰品，有助于增强决断力。',
@@ -259,6 +264,10 @@ const MbtiModule = {
       '土': '黄色和棕色元素，多接触大地（如陶艺、园艺），有助于增强稳定感。'
     };
     return advices[element] || '平衡的五行元素，保持身心健康。';
+  },
+
+  _applyPaywall: function() {
+    Paywall.checkCover('mbtiResult');
   },
 
   reset() {

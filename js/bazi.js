@@ -356,7 +356,7 @@ var BaziModule = {
       var minute = parseInt(document.getElementById('baziMinute1').value) || 0;
       if (!year || !month || !day || isNaN(hour)) { alert('请填写完整的出生日期和时间'); return; }
       var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
-      this._renderSingle(result);
+      Paywall.tryAccess('baziResult', function() { BaziModule._renderSingle(result); });
     } else {
       var a = this._getDualPerson('A');
       var b = this._getDualPerson('B');

@@ -107,5 +107,6 @@ var NameModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">姓名分析为娱乐参考，一个好名字最重要的是你喜欢</p>' +
       '<button class="btn-secondary" onclick="NameModule.close()">🔙 返回</button>';
+    Paywall.checkCover('nameResult');
   }
 };

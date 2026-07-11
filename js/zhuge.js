@@ -107,5 +107,6 @@ var ZhugeModule = {
       '<div class="lot-poem">' + lot.poem + '</div>' +
       '<div class="lot-advice">' + lot.advice.replace(/\n/g,'<br/>') + '</div>' +
       '<button class="btn-secondary" onclick="ZhugeModule.close()">🔙 返回</button>';
+    Paywall.checkCover('zhugeResult');
   }
 };

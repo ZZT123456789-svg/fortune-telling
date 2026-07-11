@@ -94,5 +94,6 @@ var CeziModule = {
       '<div style="color:var(--text);padding:0.5rem;line-height:1.7;">' + categoryAdvice[category] + '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.76rem;">测字为趣味参考，请理性看待结果</p>' +
       '<button class="btn-secondary" onclick="CeziModule.close()">🔙 返回</button>';
+    Paywall.checkCover('ceziResult');
   }
 };

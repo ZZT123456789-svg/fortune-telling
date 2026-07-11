@@ -167,6 +167,7 @@ var PersonalityModule = {
 
     document.getElementById('psResultHeader').innerHTML = profile.title;
     document.getElementById('psResultContent').innerHTML = profile.content;
+    Paywall.checkCover('psResult');
   },
 
   _buildProfile: function(traitCount, topTraits) {
