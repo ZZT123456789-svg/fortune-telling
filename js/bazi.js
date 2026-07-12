@@ -3,6 +3,7 @@
  */
 var BaziModule = {
   currentMode: 'single',
+  _lastResult: null, // 缓存最后计算结果，用于兑换后刷新
 
   tianGan: ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],
   diZhi: ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'],
@@ -364,7 +365,8 @@ var BaziModule = {
       }
 
       var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
-      Paywall.tryAccess('baziResult', function() { BaziModule._renderSingle(result); });
+      this._lastResult = result;
+      this._renderSingle(result);
     } else {
       var a = this._getDualPerson('A');
       var b = this._getDualPerson('B');
@@ -557,10 +559,20 @@ var BaziModule = {
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
 
-    // 完整输出（排盘免费，解析付费）
-    ctn.innerHTML = freeHtml + paidHtml;
-    // 免费也扣减或显示付费提示
-    Paywall.checkCover('baziResult');
+    // 排盘免费，解析付费：有余额才渲染解析内容
+    if (Paywall.hasBalance()) {
+      Paywall.deduct();
+      ctn.innerHTML = freeHtml + paidHtml;
+    } else {
+      ctn.innerHTML = freeHtml +
+        '<div id="baziPaidPlaceholder" style="text-align:center;padding:1.5rem;margin:0.5rem 0;background:rgba(0,0,0,0.03);border-radius:var(--radius-md);border:1px dashed var(--border-subtle);">' +
+          '<p style="font-size:1.5rem;">🔒</p>' +
+          '<p style="color:var(--text-secondary);font-weight:bold;">完整命理解析（6步深度解读）</p>' +
+          '<p style="font-size:0.82rem;color:var(--text-muted);">包含：旺衰判定 · 调候用神 · 十神布局 · 格局层次 · 大运走势 · 事业财运婚姻健康专项断事</p>' +
+          '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.5rem 2rem;margin-top:0.5rem;">🎫 购买解读次数</button>' +
+          '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>' +
+        '</div>';
+    }
   },
 
   _renderDual: function(a, b, compat) {

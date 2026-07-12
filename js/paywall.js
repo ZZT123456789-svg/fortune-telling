@@ -104,6 +104,10 @@ var Paywall = {
       document.getElementById('redeemResult').innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ ' + result.msg + '</p><p style="color:var(--text-secondary);">当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
       input.value = '';
       this.refreshWalls();
+      // 刷新八字（如有缓存数据）
+      if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
+        BaziModule._renderSingle(BaziModule._lastResult);
+      }
     } else {
       document.getElementById('redeemResult').innerHTML = '<p style="color:#c44;">❌ ' + result.msg + '</p>';
     }
