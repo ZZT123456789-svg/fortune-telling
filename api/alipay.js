@@ -8,6 +8,7 @@
 
 const https = require('https');
 const querystring = require('querystring');
+const crypto = require('crypto');
 
 const PRICE_MAP = {
   '3':  { money: '4.90',  name: '道问-3次解读' },
@@ -29,10 +30,10 @@ module.exports = async function handler(req, res) {
 
     const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
 
-    // ZPay API 参数
+    // ZPay API 参数（不带 sign，先构建签名字符串）
+    var zpayKey = process.env.ZPAY_KEY;
     const params = {
       pid: process.env.ZPAY_PID,
-      key: process.env.ZPAY_KEY,
       type: 'alipay',
       out_trade_no: outTradeNo,
       notify_url: 'https://daowenai.icu/api/alipay-notify',
@@ -40,6 +41,12 @@ module.exports = async function handler(req, res) {
       name: plan.name,
       money: plan.money
     };
+
+    // ZPay MD5签名：key + 参数拼接
+    var signStr = 'pid=' + params.pid + '&type=' + params.type + '&out_trade_no=' + params.out_trade_no +
+      '&notify_url=' + params.notify_url + '&return_url=' + params.return_url +
+      '&name=' + params.name + '&money=' + params.money + zpayKey;
+    params.sign = crypto.createHash('md5').update(signStr).digest('hex');
 
     // 发送请求到 ZPay
     const postData = querystring.stringify(params);
