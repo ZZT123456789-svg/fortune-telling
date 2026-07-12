@@ -360,8 +360,8 @@ document.addEventListener('click', (e) => {
   if (isInteractive) {
     createRipple(e.clientX, e.clientY);
   }
-  // 点击覆盖层背景关闭
-  if (target.classList.contains('tool-overlay')) {
+  // 点击覆盖层背景关闭（排除paywall弹窗）
+  if (target.classList.contains('tool-overlay') && !target.id.includes('paywall')) {
     target.classList.remove('active');
   }
 });

@@ -123,7 +123,7 @@ var Paywall = {
 
   openShop: function() {
     var o = document.getElementById('paywallShopOverlay');
-    if (o) { o.style.zIndex = '9999'; o.classList.add('active'); }
+    if (o) { this._closeAllOthers(o); o.style.zIndex = '9999'; o.classList.add('active'); }
   },
   closeShop: function() {
     var o = document.getElementById('paywallShopOverlay');
@@ -131,13 +131,18 @@ var Paywall = {
   },
   openRedeem: function() {
     var o = document.getElementById('paywallRedeemOverlay');
-    if (o) { o.style.zIndex = '9999'; o.classList.add('active'); }
+    if (o) { this._closeAllOthers(o); o.style.zIndex = '9999'; o.classList.add('active'); }
     var b = document.getElementById('pwTopBalance'); if (b) b.textContent = this.getBalance();
   },
   closeRedeem: function() {
     var o = document.getElementById('paywallRedeemOverlay');
     if (o) { o.classList.remove('active'); o.style.zIndex = ''; }
     this.refreshWalls();
+  },
+  _closeAllOthers: function(except) {
+    document.querySelectorAll('.tool-overlay.active').forEach(function(el) {
+      if (el !== except) { el.classList.remove('active'); el.style.zIndex = ''; }
+    });
   },
 
   doRedeem: function() {
