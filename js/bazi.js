@@ -631,31 +631,42 @@ var BaziModule = {
     return {favorable: favorable, unfavorable: unfavorable};
   },
 
-  // ==== 事业分析 ====
+  // ==== 动态事业分析（基于实际十神+五行+旺衰） ====
   _getCareerAnalysis: function(r, bodyStrength) {
-    var dmChars = {
-      '甲':'领导型人才，适合做管理者、企业家、政府官员。优点是格局大、有远见，缺点是容易强势。',
-      '乙':'协调型人才，适合做HR、公关、艺术设计、咨询。优点是灵活适应，缺点是容易没原则。',
-      '丙':'影响型人才，适合做演讲者、主持人、销售、演员。优点是有感染力，缺点是容易浮躁。',
-      '丁':'钻研型人才，适合做研究、数据分析、财务、编程。优点是专注深入，缺点是容易孤僻。',
-      '戊':'稳健型人才，适合做房地产、建筑、金融、行政。优点是踏实可靠，缺点是容易保守。',
-      '己':'服务型人才，适合做教育、医疗、护理、社工。优点是温和包容，缺点是容易被动。',
-      '庚':'执行型人才，适合做法律、军警、工程师、外科医生。优点是果断利落，缺点是容易刚烈。',
-      '辛':'精致型人才，适合做珠宝鉴定、手工艺、会计、编辑。优点是精益求精，缺点是容易挑剔。',
-      '壬':'开拓型人才，适合做贸易、物流、外交、摄影。优点是灵活多变，缺点是容易散漫。',
-      '癸':'创意型人才，适合做文学、音乐、心理学、灵性导师。优点是直觉敏锐，缺点是容易消极。'
-    };
+    var dm = r.dmElement, parts = [];
+    var ps = [r.yearP, r.monthP, r.dayP, r.hourP];
+    var allGan = ps.map(function(p){return p.gan;}).join('');
 
-    var base = dmChars[r.dmElement] || '';
-    var extra = '';
-    if (bodyStrength.level.indexOf('强') !== -1) {
-      extra = '身强可扛大任，适合独立创业或担任核心领导，事业发展空间大。';
-    } else if (bodyStrength.level.indexOf('弱') !== -1) {
-      extra = '身弱适合团队合作，在大型组织或平台中获得支持，借力发展更佳。';
-    } else {
-      extra = '身量适中，既可以独立运作，也可以团队合作，事业灵活度较高。';
+    // 官杀分析
+    var hasZhengGuan = false, hasQiSha = false, hasCaiXing = false, hasShiShang = false, hasYinXing = false;
+    for (var i=0;i<ps.length;i++){
+      var ss = r.shiShen[i].ganSS || '';
+      if (ss.indexOf('正官')!==-1||ss.indexOf('七杀')!==-1){if(ss.indexOf('正官')!==-1)hasZhengGuan=true;if(ss.indexOf('七杀')!==-1)hasQiSha=true;}
+      if (ss.indexOf('正财')!==-1||ss.indexOf('偏财')!==-1) hasCaiXing=true;
+      if (ss.indexOf('食神')!==-1||ss.indexOf('伤官')!==-1) hasShiShang=true;
+      if (ss.indexOf('正印')!==-1||ss.indexOf('偏印')!==-1) hasYinXing=true;
     }
-    return base + ' ' + extra;
+
+    if (hasZhengGuan && hasQiSha) parts.push('命局官杀混杂，事业上压力与机遇并存，适合在竞争激烈、需要抗压能力的领域发展。需要学会在约束中寻找突破。');
+    else if (hasZhengGuan && !hasQiSha) parts.push('命局正官为用，适合体制内、大企业、教育、法律等稳定且需要规则的行业。正官入命主贵气，做事有条理。');
+    else if (!hasZhengGuan && hasQiSha) parts.push('命局七杀当权，适合创业、军警、技术攻坚等高挑战领域。七杀为将星，有魄力有执行力，但需注意劳逸结合。');
+    else parts.push('原局官杀不显，事业上更适合自由职业、技术路线或专业服务型工作，不受过多体制约束。');
+
+    if (hasCaiXing && hasShiShang) parts.push('食伤生财之局，才华能转化为收益。适合技术变现、内容创作、设计、销售等能将创意直接转化为收入的方向。');
+    else if (hasCaiXing && !hasShiShang) parts.push('命局财星有根但食伤不足，适合稳扎稳打的理财方式和稳定收入来源，不宜激进投资。');
+    else if (!hasCaiXing && hasShiShang) parts.push('食伤旺而财星弱，创意多但变现能力需加强。建议先积累口碑和专业壁垒，再考虑商业化。');
+
+    if (hasYinXing) parts.push('印星护身，适合教育、科研、文化传媒等需要知识积累和沉淀的领域。学历和证书对你的事业有加持作用。');
+    if (r.wxCount[dm]>=3) parts.push('比劫较旺，适合团队协作型工作，但合伙创业需谨慎选择伙伴，避免利益纠纷。');
+
+    if (bodyStrength.level.indexOf('强')!==-1) parts.push('身强能任财官，独立扛事能力强，适合做核心决策者。');
+    else if (bodyStrength.level.indexOf('弱')!==-1) parts.push('身弱适合借势发展，在成熟平台或大型组织中依托体系成功。');
+
+    // 日主特殊提示
+    var dmTips={甲:'格局开阔，有统御之才。',乙:'柔韧善变，适合协调型角色。',丙:'热情外放，适合台前工作。',丁:'心思细腻，适合精研型工作。',戊:'厚重踏实，适合需要稳定性的岗位。',己:'包容力强，适合服务和支持型角色。',庚:'刚毅果断，适合技术和执行力要求高的领域。',辛:'精致审美，适合品质和细节导向的工作。',壬:'灵活开阔，适合跨国、跨界和流动性强的工作。',癸:'直觉敏锐，适合创意和灵性相关领域。'};
+    parts.push(dmTips[r.dmElement]||'');
+
+    return parts.join('');
   },
 
   // ==== 适合方位 ====
@@ -695,51 +706,28 @@ var BaziModule = {
 
   // ==== 人生起伏分析 ====
   _getLifeTrajectory: function(r, daYun, bodyStrength) {
-    var trajectory = '';
-    // Analyze based on body strength and da yun
-    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var shengMap={木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var self=this;
+    function score(period){var s=0;period.forEach(function(p){var e=self.wuXingMap[p.gan];if(bodyStrength.level.indexOf('强')!==-1){if(e!==r.dmElement&&shengMap[r.dmElement]!==e)s++;}else{if(e===r.dmElement||shengMap[r.dmElement]===e)s++;}});return s;}
 
-    // Youth (0-30), Prime (30-60), Later (60+)
-    var youth = daYun.slice(0, 3);
-    var prime = daYun.slice(3, 6);
-    var later = daYun.slice(6, 8);
+    var y=score(daYun.slice(0,3)), p=score(daYun.slice(3,6)), l=score(daYun.slice(6,8));
+    var traj='';
 
-    var self = this;
-    function evalPeriod(pillars) {
-      var score = 0;
-      pillars.forEach(function(p) {
-        var elem = self.wuXingMap[p.gan];
-        if (bodyStrength.level.indexOf('强') !== -1) {
-          // For strong body, favorable are controlling elements
-          if (elem !== r.dmElement && shengMap[r.dmElement] !== elem) score += 1;
-        } else {
-          // For weak body, favorable are supporting elements
-          if (elem === r.dmElement || shengMap[r.dmElement] === elem) score += 1;
-        }
-      });
-      return score;
-    }
+    var youthPhrases={2:'早年运势顺畅，家庭和师长助力明显，学业有成，基础扎实。',1:'青年时期需自我奋斗，多尝试多积累，30岁前打好职业方向。',0:'早年多磨砺，但历经风雨方见彩虹。30岁后运势逐步上行。'};
+    var primePhrases={2:'壮年是人生黄金期，事业财运双丰收，应把握时机大展宏图。',1:'中年稳步上升，家庭事业两手抓，保持进取的同时也要注意平衡。',0:'壮年宜稳守，精打细算，以守为攻。不贪大不求快，步步为营。'};
+    var laterPhrases={2:'晚年福气深厚，子女有靠，可从事公益和兴趣爱好，安享天伦。',1:'晚年生活安稳，保持健康作息和乐观心态，知足常乐。',0:'晚年提前规划养老和健康，家庭和睦是最大的财富。'};
 
-    var yScore = evalPeriod(youth);
-    var pScore = evalPeriod(prime);
-    var lScore = evalPeriod(later);
+    traj+='<b>👦 青年(0-30)：</b>'+youthPhrases[y]||youthPhrases[1];
+    traj+='<br/><b>🏢 壮年(30-60)：</b>'+primePhrases[p]||primePhrases[1];
+    traj+='<br/><b>🧘 晚年(60+)：</b>'+laterPhrases[l]||laterPhrases[1];
 
-    trajectory += '<b>👦 青年时期（0-30岁）：</b>';
-    if (yScore >= 2) trajectory += '运势较顺，早年得家庭和师长助力，学业有成。打好基础是关键。';
-    else if (yScore >= 1) trajectory += '运势平稳，需自己努力打拼。青年时期多尝试不同方向，积累经验。';
-    else trajectory += '早年可能较多波折，但这些都是宝贵的成长经历。30岁后运势逐步好转。';
+    // 大运趋势描述
+    var allScore=y+p+l;
+    if (allScore>=5) traj+='<br/><b>总体：</b>一生运势呈上升趋势，中晚年优于早年，属于厚积薄发型。';
+    else if (allScore>=3) traj+='<br/><b>总体：</b>运势波动正常，关键节点的选择比努力更重要。';
+    else traj+='<br/><b>总体：</b>需借运而行，选对行业和方向事半功倍。大运来时抓紧，大运去时守成。';
 
-    trajectory += '<br/><b>🏢 壮年时期（30-60岁）：</b>';
-    if (pScore >= 2) trajectory += '此阶段是人生黄金期，事业有成，财运亨通。应把握时机大力开拓。';
-    else if (pScore >= 1) trajectory += '中年运势稳定向上，稳步发展事业和家庭。注意平衡工作与生活。';
-    else trajectory += '壮年需注意规划和风险管理，以稳为主不宜冒进，守成也是智慧。';
-
-    trajectory += '<br/><b>🧘 晚年时期（60岁以后）：</b>';
-    if (lScore >= 2) trajectory += '晚年运势佳，子女有靠，幸福安康。适合从事公益和兴趣事业。';
-    else if (lScore >= 1) trajectory += '晚年生活平静，有稳定的生活来源。注意身体健康，保持乐观心态。';
-    else trajectory += '晚年需提前做好养老规划，注意健康和财务安排。家庭和睦是幸福的基石。';
-
-    return trajectory;
+    return traj;
   },
 
   // ==== 姓名与八字关系 ====
@@ -795,48 +783,38 @@ var BaziModule = {
 
   // ==== 详细大运分析 ====
   _getDetailedDaYun: function(r, daYun, bodyStrength) {
-    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
-    var self = this;
-    var html = '';
+    var self=this, shengMap={木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var keMap={木:'土',火:'金',土:'水',金:'木',水:'火'};
+    var dm=r.dmElement, html='';
 
-    var industryByElement = {
-      '木':'教育、出版、文化、园林、医疗、环保',
-      '火':'互联网、影视、餐饮、能源、美容、广告',
-      '土':'房地产、建筑、矿业、农业、物流、金融',
-      '金':'金融、法律、制造、汽车、珠宝、军警',
-      '水':'贸易、物流、旅游、渔业、清洁能源、数据'
-    };
+    var stageNames=['童年筑基','少年求学','青年立业','壮年腾飞','中年鼎盛','知命守成','花甲转型','古稀安享'];
+    var favorableInd=['教育、文化、医疗','互联网、能源、传媒','地产、建筑、农业','金融、制造、法律','贸易、物流、旅游','科技、设计、咨询','公益、教育、顾问','养生、文化、传承'];
 
     daYun.forEach(function(dy, idx) {
-      var elem = self.wuXingMap[dy.gan];
-      var isFavorable = false;
-      if (bodyStrength.level.indexOf('强') !== -1) {
-        if (elem !== r.dmElement && shengMap[r.dmElement] !== elem) isFavorable = true;
-      } else {
-        if (elem === r.dmElement || shengMap[r.dmElement] === elem) isFavorable = true;
-      }
+      var elem=self.wuXingMap[dy.gan], isFav=false;
+      if (bodyStrength.level.indexOf('强')!==-1){if(elem!==dm&&shengMap[dm]!==elem)isFav=true;}
+      else{if(elem===dm||shengMap[dm]===elem)isFav=true;}
 
-      var icon = isFavorable ? '✅' : '⚠️';
-      var label = isFavorable ? '有利' : '需注意';
-      var role = '';
-      var advice = '';
+      // 元素互动描述
+      var inter='';
+      if (shengMap[dm]===elem) inter='印星大运，生扶日主，利学业、贵人、房产和长辈助力。';
+      else if (shengMap[dm]&&self.wuXingMap[shengMap[dm]]===elem) inter=''; // 间接
+      else if (elem===dm) inter='比劫大运，同辈助力，适合合作、团队和拓展人脉。但需注意竞争和破财。';
+      else if (keMap[dm]===elem) inter='财星大运，财运上升期，适合投资、经营和开拓收入来源。';
+      else if (shengMap[elem]===dm) inter='食伤大运，才华展现期，适合创新、表达和技术提升。注意口舌是非。';
+      else inter='官杀大运，事业压力和机遇并存，适合争取职位晋升。注意健康和工作强度。';
 
-      if (idx === 0) { role = '奠定人生基础阶段。'; advice = '学习力强，适合打好学业和技能基础。'; }
-      else if (idx === 1) { role = '确立人生方向。'; advice = '选对行业比努力更重要，找到适合的发展方向。'; }
-      else if (idx === 2) { role = '事业起步期。'; advice = '积累经验和人脉，不必急于求成。适合' + (industryByElement[elem] || '综合发展') + '。'; }
-      else if (idx === 3) { role = '事业上升期。'; advice = '事业进入快车道，抓住机遇大胆尝试。注意理财规划。'; }
-      else if (idx === 4) { role = '事业高峰期。'; advice = '此阶段收获最大，名利双收。但要注意健康和家庭平衡。'; }
-      else if (idx === 5) { role = '事业稳定期。'; advice = '巩固已有成果，培养接班人。开始规划退休生活。'; }
-      else if (idx === 6) { role = '人生转型期。'; advice = '从事业转向兴趣爱好，享受生活。发挥余热回馈社会。'; }
-      else { role = '安享晚年期。'; advice = '以健康为重，家庭和睦是最大的财富。传承智慧和经验。'; }
+      var icon=isFav?'✅':'⚠️', label=isFav?'吉':'平';
+      var advice='';
+      if (isFav) advice='此运有利，建议积极把握。适合'+favorableInd[idx]+'方向。';
+      else advice='此运需稳扎稳打，不宜冒进。重点在积累和准备，等待下一波好运。';
 
-      html += '<div style="padding:0.4rem 0;border-bottom:1px solid var(--border-subtle);">' +
-        '<b>' + icon + ' ' + dy.age + '岁 ' + dy.gan + dy.zhi + '（' + elem + '） ' + label + '</b>' +
-        '<br/><span style="font-size:0.82rem;color:var(--text-secondary);">作用：' + role + '</span>' +
-        '<br/><span style="font-size:0.82rem;color:var(--text);">建议：' + advice + '</span>' +
+      html+='<div style="padding:0.4rem 0;border-bottom:1px solid var(--border-subtle);">'+
+        '<b>'+icon+' '+dy.age+'岁 '+dy.gan+dy.zhi+'（'+elem+'）'+label+' — '+stageNames[idx]+'</b>'+
+        '<br/><span style="font-size:0.82rem;color:var(--gold-pale);">'+inter+'</span>'+
+        '<br/><span style="font-size:0.82rem;color:var(--text);">💡 '+advice+'</span>'+
         '</div>';
     });
-
     return html;
   },
 
@@ -1025,48 +1003,27 @@ var BaziModule = {
     return {patterns: patterns, level: level, levelDesc: levelDesc};
   },
 
-  // ==== 健康分析 ====
+  // ==== 动态健康分析 ====
   _getHealthAnalysis: function(r, bodyStrength, wxCount) {
-    var dm = r.dmElement;
-    var healthHtml = '';
+    var h = [];
+    var map={木:{o:'肝胆',t:'避免熬夜和过量饮酒。多吃绿色蔬菜，春季需格外关注。'},火:{o:'心脏、血液循环',t:'保持情绪稳定，避免过度激动。多吃红色食物，夏季注意防暑。'},土:{o:'脾胃消化',t:'饮食规律，避免暴饮暴食。黄色食物（小米、南瓜）养胃。'},金:{o:'肺和呼吸道',t:'避免吸烟和空气污染。白色食物（银耳、百合）润肺，秋季防燥。'},水:{o:'肾脏和泌尿系统',t:'保持充足饮水，黑色食物（黑豆、芝麻）补肾。冬季保暖。'}};
+    h.push('<p><b>先天关注：</b>日主'+r.dmElement+'，'+map[r.dmElement].o+'系统是先天需要重点关注的。'+map[r.dmElement].t+'</p>');
 
-    // 五行对应身体
-    var healthMap = {
-      '木':{organ:'肝胆',sense:'眼睛',tips:'注意肝胆保养，避免熬夜和过量饮酒。多吃绿色蔬菜，适当运动舒展筋骨。春季需格外关注。'},
-      '火':{organ:'心脏、小肠',sense:'舌',tips:'注意心脑血管健康，保持情绪稳定。避免过度激动和劳累。多吃红色食物，夏季注意防暑。'},
-      '土':{organ:'脾胃',sense:'口',tips:'注意消化系统健康，饮食规律，避免暴饮暴食。黄色食物（如小米、南瓜）有益脾胃。长夏需养护。'},
-      '金':{organ:'肺、大肠',sense:'鼻',tips:'注意呼吸系统健康，避免吸烟和空气污染。白色食物（如银耳、百合）润肺。秋季需防燥。'},
-      '水':{organ:'肾、膀胱',sense:'耳',tips:'注意肾脏和泌尿系统，不憋尿，保持充足饮水。黑色食物（如黑豆、黑芝麻）补肾。冬季需保暖。'}
-    };
+    var over=[], miss=[];
+    Object.keys(wxCount).forEach(function(k){if(wxCount[k]>=3)over.push(k);if(wxCount[k]===0)miss.push(k);});
+    if (over.length) h.push('<p><b>⚠ 过旺风险：</b>'+over.map(function(e){return e+'过旺→'+map[e].o+'负担较重。';}).join('')+'</p>');
+    if (miss.length) h.push('<p><b>💡 缺失提醒：</b>'+miss.map(function(e){return '缺'+e+'→需关注'+map[e].o+'功能，可通过饮食和环境补益。';}).join('')+'</p>');
 
-    // 旺极和弱极的健康风险
-    healthHtml += '<p><b>日主' + dm + '属' + dm + '：</b>' + (healthMap[r.dmElement] ? healthMap[r.dmElement].organ + '系统是先天关注重点。' + healthMap[r.dmElement].tips : '') + '</p>';
-
-    // 太过和不及
-    var overElements = [], missingElements = [];
-    Object.keys(wxCount).forEach(function(k) {
-      if (wxCount[k] >= 3) overElements.push(k);
-      if (wxCount[k] === 0) missingElements.push(k);
-    });
-
-    if (overElements.length > 0) {
-      healthHtml += '<p><b>⚠ 五行偏旺：</b>';
-      overElements.forEach(function(e) {
-        healthHtml += e + '过旺注意' + (healthMap[e] ? healthMap[e].organ : '') + '负担。';
-      });
-      healthHtml += '</p>';
+    // 地支冲克健康提示
+    var clashTips={子午:'心肾不交，注意失眠和血压',卯酉:'肝胆和呼吸道需注意',寅申:'筋骨和神经系统',巳亥:'内分泌和代谢',辰戌:'消化系统',丑未:'脾胃湿气'};
+    var zhis=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi];
+    for (var i=0;i<zhis.length;i++) for (var j=i+1;j<zhis.length;j++){
+      var key=[zhis[i],zhis[j]].sort().join(''); var key2=[zhis[j],zhis[i]].sort().join('');
+      if (clashTips[key]) h.push('<p><b>🔺 地支相冲：</b>'+zhis[i]+zhis[j]+'相冲 — '+clashTips[key]+'。</p>');
     }
 
-    if (missingElements.length > 0) {
-      healthHtml += '<p><b>💡 五行缺失：</b>';
-      missingElements.forEach(function(e) {
-        healthHtml += '缺' + e + '需关注' + (healthMap[e] ? healthMap[e].organ : '') + '功能。';
-      });
-      healthHtml += '</p>';
-    }
-
-    healthHtml += '<p style="font-size:0.78rem;color:var(--text-muted);">以上为五行健康参考，如有身体不适请及时就医，不可替代专业医疗诊断。</p>';
-    return healthHtml;
+    h.push('<p style="font-size:0.78rem;color:var(--text-muted);">以上为五行健康参考，如有不适请及时就医。</p>');
+    return h.join('');
   },
 
   // ==== 注意事项 ====
