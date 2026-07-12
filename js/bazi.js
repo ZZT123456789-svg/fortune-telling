@@ -116,19 +116,10 @@ var BaziModule = {
   _getLongitude: function(prefix) {
     var prov = document.getElementById('baziProvince' + prefix).value;
     var city = document.getElementById('baziCity' + prefix).value;
-    if (prov === '北京' || prov === '上海' || prov === '天津' || prov === '重庆') {
-      return this.cityLongitudes[prov] || 116;
-    }
-    if (city && this.cityLongitudes[city]) return this.cityLongitudes[city];
-    if (prov && this.cityLongitudes[prov]) return this.cityLongitudes[prov];
-    var provLong = {
-      '黑龙江':126.6,'吉林':125.3,'辽宁':123.4,'内蒙古':111.7,'河北':114.5,'山西':112.5,
-      '山东':117.0,'江苏':118.8,'浙江':120.2,'安徽':117.3,'江西':115.9,'福建':119.3,
-      '河南':113.7,'湖北':114.3,'湖南':113.0,'广东':113.3,'广西':108.3,'海南':110.3,
-      '四川':104.1,'贵州':106.7,'云南':102.7,'西藏':91.1,'陕西':108.9,'甘肃':103.8,
-      '青海':101.8,'宁夏':106.3,'新疆':87.6
-    };
-    return provLong[prov] || 116;
+    var coord = null;
+    if (city) coord = BaziDB.getCityCoord(city);
+    if (!coord && prov) coord = BaziDB.getProvCoord(prov);
+    return coord ? coord.lng : 116;
   },
 
   /** 真太阳时计算 */
@@ -196,39 +187,25 @@ var BaziModule = {
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx, actualYear: year};
   },
 
-  /** 月柱 — 月支按节气固定，月干按五虎遁口诀 */
+  /** 月柱 — 使用BaziDB精确节气数据 */
   _getMonthPillar: function(yearGanIdx, month, day) {
-    // 12节大致的日期（前后1-2天误差）
-    var jieDay = [4,6,5,6,6,7,8,8,8,8,7,6]; // 立春2月~小寒1月, index=0对应寅月
-    // 确定当前节气月 (寅=0)
-    var bm = (month - 2 + 12) % 12; // 公历月→节气月(近似): 2月→寅0
-    if (day < jieDay[bm]) {
-      bm = (bm - 1 + 12) % 12; // 在当月节之前,属上一个月
-    }
-
-    // 五虎遁: 甲己之年丙作首(年干0→月干2), 乙庚戊为头(1→4), 丙辛庚起(2→6), 丁壬壬位(3→8), 戊癸甲寅(4→0)
+    var bm = BaziDB.getBaziMonth(year, month, day);
     var monthStartGan = [2, 4, 6, 8, 0];
     var ganIdx = (monthStartGan[yearGanIdx % 5] + bm) % 10;
-    var zhiIdx = (2 + bm) % 12; // 寅=2
+    var zhiIdx = (2 + bm) % 12;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
 
-  /** 日柱 — 以1900-01-01=甲戌为基准，通用公式计算 */
+  /** 日柱 — 使用BaziDB精确基准表 */
   _getDayPillar: function(year, month, day) {
-    // 1900-01-01 = 甲戌日 (gan=0, zhi=10)
-    var ref = new Date(1900, 0, 1);
-    var target = new Date(year, month - 1, day);
-    var diffDays = Math.round((target - ref) / 86400000);
-    var ganIdx = ((diffDays % 10) + 10) % 10;
-    var zhiIdx = ((diffDays % 12) + 12) % 12;
-    return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
+    var dp = BaziDB.getDayPillar(year, month, day);
+    return {gan: dp.gan, zhi: dp.zhi, ganIdx: dp.ganIdx, zhiIdx: dp.zhiIdx};
   },
 
   /** 时柱 — 23点后算次日子时，时干按五鼠遁口诀 */
   _getHourPillar: function(dayGanIdx, hour) {
-    // 五鼠遁: 甲己还加甲(日干0→时干0), 乙庚丙作初(1→2), 丙辛从戊起(2→4), 丁壬庚子居(3→6), 戊癸壬子发(4→8)
     var hourStartGan = [0, 2, 4, 6, 8];
-    var zhiIdx = Math.floor(((hour + 1) % 24) / 2) % 12; // 子时=23-1→0, 丑时=1-3→1...
+    var zhiIdx = Math.floor(((hour + 1) % 24) / 2) % 12;
     var ganIdx = (hourStartGan[dayGanIdx % 5] + zhiIdx) % 10;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
