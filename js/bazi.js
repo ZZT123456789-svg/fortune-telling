@@ -200,10 +200,10 @@ var BaziModule = {
     return {gan: dp.gan, zhi: dp.zhi, ganIdx: dp.ganIdx, zhiIdx: dp.zhiIdx};
   },
 
-  /** 时柱 — 23点后算次日子时，时干按五鼠遁口诀 */
+  /** 时柱 — 时辰=floor(hour/2)，22-23为亥时，0-1为子时 */
   _getHourPillar: function(dayGanIdx, hour) {
     var hourStartGan = [0, 2, 4, 6, 8];
-    var zhiIdx = Math.floor(((hour + 1) % 24) / 2) % 12;
+    var zhiIdx = Math.floor(hour / 2) % 12; // 0-1→子 2-3→丑 ... 22-23→亥
     var ganIdx = (hourStartGan[dayGanIdx % 5] + zhiIdx) % 10;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
@@ -242,20 +242,10 @@ var BaziModule = {
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     var trueHour = ts.hour;
 
-    // ⚠️ 子时换日规则：真太阳时>=23点，日柱（及年柱月柱）算次日
-    var calcDay = day;
-    var calcMonth = month;
-    var calcYear = year;
-    if (trueHour >= 23) {
-      var nextDate = new Date(year, month - 1, day + 1);
-      calcYear = nextDate.getFullYear();
-      calcMonth = nextDate.getMonth() + 1;
-      calcDay = nextDate.getDate();
-    }
-
-    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay, trueHour);
-    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay, trueHour, calcYear);
-    var dayP = this._getDayPillar(calcYear, calcMonth, calcDay);
+    // 不换日（日柱以0点为界，非23点）
+    var yearP = this._getYearPillar(year, month, day, trueHour);
+    var monthP = this._getMonthPillar(yearP.ganIdx, month, day, trueHour, year);
+    var dayP = this._getDayPillar(year, month, day);
     var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
 
     var dayMaster = dayP.gan;
