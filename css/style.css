@@ -197,6 +197,8 @@ body {
   position: absolute;
   top: 100%;
   right: 0;
+  min-width: 240px;
+  z-index: 100;
   margin-top: 0.5rem;
   background: var(--bg-card);
   border: 1.5px solid var(--border-medium);
@@ -207,6 +209,19 @@ body {
   z-index: 100;
 }
 .contact-popup.show { display: block; }
+.contact-close {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+}
+.contact-close:hover { color: var(--red); }
 .contact-item {
   font-size: 0.95rem;
   color: var(--text);

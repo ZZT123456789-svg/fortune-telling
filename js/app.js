@@ -444,14 +444,6 @@ function copyContact(text, btn) {
     setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1500);
   }
 }
-// 点击页面其他地方关闭
-document.addEventListener('click', function(e) {
-  var popup = document.getElementById('contactPopup');
-  var btn = document.getElementById('contactBtn');
-  if (popup && popup.classList.contains('show') && e.target !== btn && !btn.contains(e.target)) {
-    popup.classList.remove('show');
-  }
-});
 
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
