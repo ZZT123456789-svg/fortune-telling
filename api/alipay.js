@@ -43,10 +43,12 @@ module.exports = async function handler(req, res) {
       name: plan.name,
       money: plan.money
     };
-    // 签名字符串：参数按键排序，key=value&拼接，末尾加商户KEY
+    // 签名字符串：参数按键排序，值不编码，key=value&拼接，末尾加商户KEY
     var sortedKeys = Object.keys(zpayParams).sort();
-    var signStr = sortedKeys.map(function(k) { return k + '=' + zpayParams[k]; }).join('&') + zpayKey;
-    zpayParams.sign = crypto.createHash('md5').update(signStr).digest('hex').toLowerCase();
+    var signStr = sortedKeys.map(function(k) {
+      return k + '=' + zpayParams[k];
+    }).join('&') + zpayKey;
+    zpayParams.sign = crypto.createHash('md5').update(signStr, 'utf8').digest('hex').toLowerCase();
 
     const postData = querystring.stringify(zpayParams);
     const result = await new Promise(function(resolve, reject) {
