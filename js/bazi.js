@@ -355,6 +355,14 @@ var BaziModule = {
       var hour = parseInt(document.getElementById('baziHour1').value);
       var minute = parseInt(document.getElementById('baziMinute1').value) || 0;
       if (!year || !month || !day || isNaN(hour)) { alert('请填写完整的出生日期和时间'); return; }
+
+      // 农历→阳历转换（近似）
+      var calType = document.getElementById('baziCalType1').value;
+      if (calType === 'lunar') {
+        var solar = this._lunarToSolar(year, month, day);
+        year = solar.year; month = solar.month; day = solar.day;
+      }
+
       var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
       Paywall.tryAccess('baziResult', function() { BaziModule._renderSingle(result); });
     } else {
@@ -571,6 +579,14 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析仅供参考，感情更需用心经营</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+  },
+
+  /** 农历→阳历近似转换（简化，农历比阳历晚约20-50天） */
+  _lunarToSolar: function(ly, lm, ld) {
+    // 简易：农历日期 + 约30天 = 阳历日期
+    var d = new Date(ly, lm - 1, ld + 28);
+    // 如果超过当月天数则进位
+    return {year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate()};
   },
 
   // ==== 身强弱判断 ====
