@@ -32,7 +32,9 @@ module.exports = async function handler(req, res) {
     if (!zpayKey) return res.status(500).json({ error: '商户密钥未配置，请在 Vercel 环境变量中设置 ZPAY_KEY' });
 
     const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
-    const params = {
+
+    // ZPay: 构建参数 + 签名 + 发送
+    var zpayParams = {
       pid: process.env.ZPAY_PID,
       type: 'alipay',
       out_trade_no: outTradeNo,
@@ -41,23 +43,12 @@ module.exports = async function handler(req, res) {
       name: plan.name,
       money: plan.money
     };
+    // 签名字符串：参数按键排序，key=value&拼接，末尾加商户KEY
+    var sortedKeys = Object.keys(zpayParams).sort();
+    var signStr = sortedKeys.map(function(k) { return k + '=' + zpayParams[k]; }).join('&') + zpayKey;
+    zpayParams.sign = crypto.createHash('md5').update(signStr).digest('hex').toLowerCase();
 
-    // ZPay MD5签名：参数按字母排序，key=value&格式拼接，末尾加商户KEY
-    var signParams = {
-      money: plan.money,
-      name: plan.name,
-      notify_url: 'https://daowenai.icu/api/alipay-notify',
-      out_trade_no: outTradeNo,
-      pid: process.env.ZPAY_PID,
-      return_url: 'https://daowenai.icu',
-      type: 'alipay'
-    };
-    var keys = Object.keys(signParams).sort();
-    var signStr = keys.map(function(k) { return k + '=' + signParams[k]; }).join('&') + zpayKey;
-    params.sign = crypto.createHash('md5').update(signStr).digest('hex').toLowerCase();
-
-    // 发送请求到 ZPay
-    const postData = querystring.stringify(params);
+    const postData = querystring.stringify(zpayParams);
     const result = await new Promise(function(resolve, reject) {
       var req2 = https.request({
         hostname: 'api.z-pay.cn',
