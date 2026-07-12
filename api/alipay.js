@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
     const plan = PRICE_MAP[tier];
     if (!plan) return res.status(400).json({ error: '无效套餐' });
 
-    var zpayKey = process.env.ZPAY_KEY;
+    var zpayKey = (process.env.ZPAY_KEY || '').trim();
     if (!zpayKey) return res.status(500).json({ error: '商户密钥未配置，请在 Vercel 环境变量中设置 ZPAY_KEY' });
 
     const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
@@ -71,7 +71,16 @@ module.exports = async function handler(req, res) {
     });
 
     // ZPay 返回支付跳转URL
-    res.json({ success: true, payUrl: result, outTradeNo: outTradeNo, tier: tier, amount: plan.money });
+    // 返回前先检查，附带签名串用于调试
+    var debugSign = sortedKeys.map(function(k) { return k + '=' + zpayParams[k]; }).join('&');
+    res.json({
+      success: true,
+      payUrl: result,
+      outTradeNo: outTradeNo,
+      tier: tier,
+      amount: plan.money,
+      _debug: { signStr: debugSign, sign: zpayParams.sign }
+    });
 
   } catch (err) {
     console.error('ZPay error:', err);
