@@ -42,14 +42,19 @@ module.exports = async function handler(req, res) {
       money: plan.money
     };
 
-    // ZPay MD5签名：参数排序后拼接 + key
-    var signStr = params.pid + params.type + params.out_trade_no +
-      params.notify_url + params.return_url + params.name + params.money + zpayKey;
+    // ZPay MD5签名：参数按字母排序，key=value&格式拼接，末尾加商户KEY
+    var signParams = {
+      money: plan.money,
+      name: plan.name,
+      notify_url: 'https://daowenai.icu/api/alipay-notify',
+      out_trade_no: outTradeNo,
+      pid: process.env.ZPAY_PID,
+      return_url: 'https://daowenai.icu',
+      type: 'alipay'
+    };
+    var keys = Object.keys(signParams).sort();
+    var signStr = keys.map(function(k) { return k + '=' + signParams[k]; }).join('&') + zpayKey;
     params.sign = crypto.createHash('md5').update(signStr).digest('hex').toLowerCase();
-    params.key = zpayKey; // ZPay 也可能要求在body里传key
-
-    // 调试日志（部署后可查看 Vercel Logs）
-    console.log('ZPay request:', JSON.stringify({...params, key:'***'}));
 
     // 发送请求到 ZPay
     const postData = querystring.stringify(params);
