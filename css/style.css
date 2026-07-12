@@ -1789,8 +1789,8 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
 .paywall-cover {
   position: absolute;
   inset: 0;
-  background: rgba(245,240,232,0.92);
-  backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1803,8 +1803,8 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   padding: 1.5rem;
 }
 .paywall-icon { font-size: 3rem; margin-bottom: 0.5rem; }
-.paywall-inner h3 { color: var(--gold); font-size: 1.1rem; margin-bottom: 0.5rem; }
-.paywall-inner p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.6rem; }
+.paywall-inner h3 { color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem; }
+.paywall-inner p { color: #bbb; font-size: 0.85rem; margin-bottom: 0.6rem; }
 .shop-grid {
   display: flex;
   gap: 0.8rem;
