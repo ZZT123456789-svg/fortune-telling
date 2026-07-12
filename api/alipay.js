@@ -28,10 +28,10 @@ module.exports = async function handler(req, res) {
     const plan = PRICE_MAP[tier];
     if (!plan) return res.status(400).json({ error: '无效套餐' });
 
-    const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
-
-    // ZPay API 参数（不带 sign，先构建签名字符串）
     var zpayKey = process.env.ZPAY_KEY;
+    if (!zpayKey) return res.status(500).json({ error: '商户密钥未配置，请在 Vercel 环境变量中设置 ZPAY_KEY' });
+
+    const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
     const params = {
       pid: process.env.ZPAY_PID,
       type: 'alipay',
@@ -42,11 +42,14 @@ module.exports = async function handler(req, res) {
       money: plan.money
     };
 
-    // ZPay MD5签名：key + 参数拼接
-    var signStr = 'pid=' + params.pid + '&type=' + params.type + '&out_trade_no=' + params.out_trade_no +
-      '&notify_url=' + params.notify_url + '&return_url=' + params.return_url +
-      '&name=' + params.name + '&money=' + params.money + zpayKey;
-    params.sign = crypto.createHash('md5').update(signStr).digest('hex');
+    // ZPay MD5签名：参数排序后拼接 + key
+    var signStr = params.pid + params.type + params.out_trade_no +
+      params.notify_url + params.return_url + params.name + params.money + zpayKey;
+    params.sign = crypto.createHash('md5').update(signStr).digest('hex').toLowerCase();
+    params.key = zpayKey; // ZPay 也可能要求在body里传key
+
+    // 调试日志（部署后可查看 Vercel Logs）
+    console.log('ZPay request:', JSON.stringify({...params, key:'***'}));
 
     // 发送请求到 ZPay
     const postData = querystring.stringify(params);
