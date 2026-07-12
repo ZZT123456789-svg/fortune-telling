@@ -45,20 +45,44 @@ var Paywall = {
     return true;
   },
 
-  /** 渲染后检查：有余额扣1，无余额显示紧凑条 */
+  /** 渲染后检查：有余额扣1+展开，无余额隐藏分析卡片+显示紧凑条 */
   checkCover: function(containerId) {
-    if (this.hasBalance()) { this.deduct(); return true; }
-    else { this.showCompact(containerId); return false; }
+    var el = document.getElementById(containerId);
+    if (this.hasBalance()) {
+      this.deduct();
+      // 展开所有分析卡片
+      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = ''; }); }
+      return true;
+    } else {
+      // 隐藏分析卡片，只显示免费部分
+      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = 'none'; }); }
+      this.showCompact(containerId);
+      return false;
+    }
   },
 
   tryAccess: function(containerId, callback) {
-    if (this.hasBalance()) { this.deduct(); if (callback) callback(); return true; }
-    else { if (callback) callback(); this.showCompact(containerId); return false; }
+    var el = document.getElementById(containerId);
+    if (this.hasBalance()) {
+      this.deduct();
+      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = ''; }); }
+      if (callback) callback();
+      return true;
+    } else {
+      if (callback) callback();
+      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = 'none'; }); }
+      this.showCompact(containerId);
+      return false;
+    }
   },
 
   refreshWalls: function() {
     var bars = document.querySelectorAll('.paywall-bar');
-    if (this.hasBalance()) { bars.forEach(function(b) { b.remove(); }); }
+    if (this.hasBalance()) {
+      bars.forEach(function(b) { b.remove(); });
+      // 展开所有被隐藏的分析卡片
+      document.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = ''; });
+    }
   },
 
   openShop: function() { var o = document.getElementById('paywallShopOverlay'); if (o) o.classList.add('active'); },

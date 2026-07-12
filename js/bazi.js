@@ -449,11 +449,11 @@ var BaziModule = {
     // 格局描述
     var patternDesc = pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('');
 
-    ctn.innerHTML =
-      '<div class="result-header">☯️ ' + r.name + ' 八字命理全盘解析</div>' +
-      infoHtml +
+    // === 免费部分：八字信息 + 四柱表 ===
+    var freeHtml = '<div class="result-header">☯️ ' + r.name + ' 八字命理全盘解析</div>' + infoHtml;
 
-      // ====== 第1步：统计五行，判定旺衰 ======
+    // === 付费部分：完整解析 ===
+    var paidHtml =
       '<div class="analysis-card"><h4>📊 第一步：统计五行，判定日主旺衰</h4>' +
         '<p><b>日主' + r.dayMaster + '（五行' + r.dmElement + '）</b>，生于<b>' + self.diZhi[r.monthP.zhiIdx] + '月</b>。</p>' +
         '<p><b>五行统计：</b></p>' + wxBars +
@@ -556,6 +556,11 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+
+    // 完整输出（排盘免费，解析付费）
+    ctn.innerHTML = freeHtml + paidHtml;
+    // 免费也扣减或显示付费提示
+    Paywall.checkCover('baziResult');
   },
 
   _renderDual: function(a, b, compat) {
