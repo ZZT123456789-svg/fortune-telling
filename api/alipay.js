@@ -72,15 +72,12 @@ module.exports = async function handler(req, res) {
     });
 
     // ZPay 返回支付跳转URL
-    // 返回前先检查，附带签名串用于调试
-    var debugSign = sortedKeys.map(function(k) { return k + '=' + zpayParams[k]; }).join('&');
     res.json({
       success: true,
       payUrl: result,
       outTradeNo: outTradeNo,
       tier: tier,
-      amount: plan.money,
-      _debug: { signStr: debugSign, sign: zpayParams.sign }
+      amount: plan.money
     });
 
   } catch (err) {
