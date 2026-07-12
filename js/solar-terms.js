@@ -78,5 +78,6 @@ var SolarTermModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.8rem;">⚠ 节气日期为近似值，精确日期每年有1-2天偏差</p>' +
       '<button class="btn-secondary" onclick="SolarTermModule.close()">🔙 返回</button>';
+    Paywall.blockAll('solarTermResult');
   }
 };

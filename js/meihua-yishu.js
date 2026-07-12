@@ -119,7 +119,8 @@ var MeihuaModule = {
     var n3 = parseInt(document.getElementById('meihuaNum3').value);
     if (!n1 || !n2 || !n3) { alert('请输入三个数字（1-999）'); return; }
     var result = this._qiGua(n1, n2, n3);
-    Paywall.tryAccess('meihuaResult', function() { MeihuaModule._render(result); });
+    MeihuaModule._render(result);
+    Paywall.blockAll('meihuaResult');
   },
 
   useTime: function() {
@@ -131,7 +132,8 @@ var MeihuaModule = {
     document.getElementById('meihuaNum2').value = n2;
     document.getElementById('meihuaNum3').value = n3;
     var result = this._qiGua(n1, n2, n3);
-    Paywall.tryAccess('meihuaResult', function() { MeihuaModule._render(result); });
+    MeihuaModule._render(result);
+    Paywall.blockAll('meihuaResult');
   },
 
   _render: function(r) {

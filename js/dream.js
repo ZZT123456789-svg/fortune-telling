@@ -90,6 +90,6 @@ var DreamModule = {
         '<p style="text-align:center;color:var(--text-secondary);padding:1rem;">暂未收录此梦境关键词，建议尝试其他关键词（如水、蛇、飞、掉牙等）。</p>' +
         '<button class="btn-secondary" onclick="DreamModule.close()">🔙 返回</button>';
     }
-    Paywall.checkCover('dreamResult');
+    Paywall.blockAll('dreamResult');
   }
 };

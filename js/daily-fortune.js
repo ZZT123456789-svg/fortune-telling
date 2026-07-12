@@ -186,6 +186,7 @@ var DailyModule = {
         '<span class="lucky-item">⚠️ 忌：<b>' + this._randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累']) + '</b></span>' +
         '</div>';
     }
+    Paywall.blockAll('stickResult');
   },
 
   reshake: function() {

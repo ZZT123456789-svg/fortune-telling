@@ -1786,6 +1786,19 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
 .ts-note { font-size: 0.72rem; color: var(--text-muted); }
 
 /* ========== PAYWALL ========== */
+.paywall-block {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: inherit;
+  min-height: 200px;
+}
+
 .paywall-bar {
   text-align: center;
   padding: 0.6rem 1rem;

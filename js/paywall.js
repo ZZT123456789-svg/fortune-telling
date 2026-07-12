@@ -45,6 +45,32 @@ var Paywall = {
     return true;
   },
 
+  /** 强力遮盖：无余额完全黑掉内容，只显示购买按钮 */
+  blockAll: function(containerId) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (this.hasBalance()) { this.deduct(); return true; }
+
+    // 先清掉旧遮盖
+    var old = el.querySelector('.paywall-block');
+    if (old) old.remove();
+
+    var block = document.createElement('div');
+    block.className = 'paywall-block';
+    block.innerHTML =
+      '<div style="text-align:center;padding:2rem;">' +
+        '<div style="font-size:3rem;">🔒</div>' +
+        '<p style="color:#fff;font-weight:bold;font-size:1.1rem;margin:0.5rem 0;">付费解读内容</p>' +
+        '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>' +
+        '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.6rem 2rem;margin-top:0.8rem;font-size:1rem;">🎫 购买解读次数</button>' +
+        '<p style="color:#999;font-size:0.76rem;margin-top:0.6rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>' +
+      '</div>';
+    el.style.position = 'relative';
+    el.style.minHeight = '180px';
+    el.appendChild(block);
+    return false;
+  },
+
   /** 渲染后检查：有余额扣1+展开，无余额隐藏分析卡片+显示紧凑条 */
   checkCover: function(containerId) {
     var el = document.getElementById(containerId);
@@ -77,12 +103,22 @@ var Paywall = {
   },
 
   refreshWalls: function() {
-    var bars = document.querySelectorAll('.paywall-bar');
     if (this.hasBalance()) {
-      bars.forEach(function(b) { b.remove(); });
-      // 展开所有被隐藏的分析卡片
+      document.querySelectorAll('.paywall-bar').forEach(function(b) { b.remove(); });
+      document.querySelectorAll('.paywall-block').forEach(function(b) { b.remove(); });
       document.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = ''; });
     }
+  },
+
+  /** 兑换后刷新已打开模块 */
+  _refreshModules: function() {
+    // 刷新所有已缓存的结果
+    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+    if (typeof ZiweiModule !== 'undefined' && ZiweiModule._lastChart && ZiweiModule._renderSVG) {
+      ZiweiModule._renderSVG(ZiweiModule._lastChart, ZiweiModule._lastSiHua, ZiweiModule._lastY, ZiweiModule._lastM, ZiweiModule._lastD, ZiweiModule._lastH, ZiweiModule._lastGender, ZiweiModule._lastYGZ, ZiweiModule._lastJu);
+    }
+    // 其他模块：直接移除遮盖层
+    this.refreshWalls();
   },
 
   openShop: function() { var o = document.getElementById('paywallShopOverlay'); if (o) o.classList.add('active'); },
@@ -104,10 +140,7 @@ var Paywall = {
       document.getElementById('redeemResult').innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ ' + result.msg + '</p><p style="color:var(--text-secondary);">当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
       input.value = '';
       this.refreshWalls();
-      // 刷新八字（如有缓存数据）
-      if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
-        BaziModule._renderSingle(BaziModule._lastResult);
-      }
+      this._refreshModules();
     } else {
       document.getElementById('redeemResult').innerHTML = '<p style="color:#c44;">❌ ' + result.msg + '</p>';
     }

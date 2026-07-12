@@ -43,6 +43,7 @@ var XiaoLiuRenModule = {
     if (!m || !d || isNaN(h)) { alert('请填写完整的农历月日时'); return; }
     var result = this._calc(m, d, h);
     this._render(result);
+    Paywall.blockAll('xlrResult');
   },
 
   useNow: function() {
@@ -57,6 +58,7 @@ var XiaoLiuRenModule = {
     document.getElementById('xlrHour').value = h;
     var result = this._calc(m, d, h);
     this._render(result);
+    Paywall.blockAll('xlrResult');
   },
 
   _render: function(result) {

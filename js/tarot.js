@@ -220,6 +220,7 @@ var TarotModule = {
     else summary = '三张皆逆位，能量较为阻滞。但逆位提醒我们停下来反思、修正方向。沉淀之后必有更好的出发。';
     html += '<div class="reading-summary"><h4>🔮 综合解读</h4><p>' + summary + '</p></div>';
     reading.innerHTML = html;
+    Paywall.blockAll('tarotReading');
   },
 
   reset: function() {

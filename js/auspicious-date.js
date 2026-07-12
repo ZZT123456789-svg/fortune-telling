@@ -56,6 +56,6 @@ var AuspiciousDateModule = {
       '<div style="color:var(--text-muted);font-size:0.82rem;text-align:center;">建议备选日期：' + altY + '年' + altM + '月' + altD + '日</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">仅供参考，重大事宜请咨询专业择日师</p>' +
       '<button class="btn-secondary" onclick="AuspiciousDateModule.close()">🔙 返回</button>';
-    Paywall.checkCover('ausDateResult');
+    Paywall.blockAll('ausDateResult');
   }
 };

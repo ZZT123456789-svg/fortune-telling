@@ -111,7 +111,8 @@ var LiuyaoModule = {
     document.getElementById('yaoDisplay').innerHTML = html;
 
     if (this.currentRound >= 6) {
-      Paywall.tryAccess('liuyaoResult', function() { LiuyaoModule._showResult(); });
+      LiuyaoModule._showResult();
+      Paywall.blockAll('liuyaoResult');
     } else {
       this._updateRound();
     }

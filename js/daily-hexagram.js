@@ -48,6 +48,7 @@ var DailyHexagramModule = {
       '<div style="text-align:center;color:var(--gold-pale);padding:0.5rem;">' + hex.judgment + '</div>' +
       '<div style="color:var(--text);line-height:1.7;padding:0.5rem;">' + hex.advice + '</div>' +
       '<button class="btn-secondary" onclick="DailyHexagramModule.close()">🔙 返回</button>';
+    Paywall.blockAll('dailyHexagramResult');
   }
 };
 

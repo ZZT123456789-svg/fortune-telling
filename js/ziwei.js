@@ -310,10 +310,11 @@ var ZiweiModule = {
     var liuNianGZ = this._yearGZ(now.getFullYear());
     chart.liuNian = {year: now.getFullYear(), gan: liuNianGZ.ganStr, zhi: liuNianGZ.zhiStr};
 
-    var self = this;
-    Paywall.tryAccess('ziweiResult', function() {
-      self._renderSVG(chart, siHua, y, m, d, h, gender, yGZ, ju);
-    });
+    this._lastChart = chart; this._lastSiHua = siHua;
+    this._lastY = y; this._lastM = m; this._lastD = d; this._lastH = h;
+    this._lastGender = gender; this._lastYGZ = yGZ; this._lastJu = ju;
+    this._renderSVG(chart, siHua, y, m, d, h, gender, yGZ, ju);
+    Paywall.blockAll('ziweiResult');
 
     // 安十二宫
     var chart = this._placePalaces(m, hourZhi);
