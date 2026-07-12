@@ -200,10 +200,10 @@ var BaziModule = {
     return {gan: dp.gan, zhi: dp.zhi, ganIdx: dp.ganIdx, zhiIdx: dp.zhiIdx};
   },
 
-  /** 时柱 — 时辰=floor(hour/2)，22-23为亥时，0-1为子时 */
+  /** 时柱 — 不换日，22-23=亥时，0-1=子时 */
   _getHourPillar: function(dayGanIdx, hour) {
     var hourStartGan = [0, 2, 4, 6, 8];
-    var zhiIdx = Math.floor(hour / 2) % 12; // 0-1→子 2-3→丑 ... 22-23→亥
+    var zhiIdx = Math.floor(hour / 2) % 12; // 22→11(亥) 23→11(亥) 0→0(子)
     var ganIdx = (hourStartGan[dayGanIdx % 5] + zhiIdx) % 10;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },
@@ -242,7 +242,7 @@ var BaziModule = {
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     var trueHour = ts.hour;
 
-    // 不换日（日柱以0点为界，非23点）
+    // 日柱不换日（以0点为界），22-23均为亥时
     var yearP = this._getYearPillar(year, month, day, trueHour);
     var monthP = this._getMonthPillar(yearP.ganIdx, month, day, trueHour, year);
     var dayP = this._getDayPillar(year, month, day);
