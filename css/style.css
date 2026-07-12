@@ -1792,8 +1792,9 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   background: rgba(0,0,0,0.92);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 0.8rem;
   z-index: 10;
   border-radius: inherit;
   min-height: 200px;
