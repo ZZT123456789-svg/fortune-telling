@@ -213,15 +213,15 @@ function showBuyContact(tier) {
     qrDiv.id = 'alipayQR';
     qrDiv.style.textAlign = 'center';
     qrDiv.style.padding = '1rem';
-    // 用 Google Charts API 生成二维码
-    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.payUrl);
+    var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.payUrl);
     qrDiv.innerHTML =
       '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 支付宝扫码支付 ¥' + data.amount + '</p>' +
-      '<img src="' + qrUrl + '" alt="支付宝支付二维码" style="width:200px;height:200px;border-radius:8px;border:2px solid var(--border-subtle);">' +
-      '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);">' + data.amount + '元 / ' + (tier==3?'3次':tier==10?'10次':'20次') + '解读</p>' +
-      '<p style="font-size:0.74rem;color:var(--text-muted);">支付成功后截图联系客服获取兑换码</p>' +
+      '<img src="' + qrImgUrl + '" alt="支付宝二维码" style="width:200px;height:200px;border-radius:8px;border:2px solid var(--border-subtle);">' +
+      '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);">' + (tier==3?'3次':tier==10?'10次':'20次') + '解读 · ¥' + data.amount + '</p>' +
+      '<a href="' + data.payUrl + '" target="_blank" class="btn-primary" style="display:inline-block;width:auto;padding:0.5rem 1.5rem;text-decoration:none;margin-top:0.3rem;">📱 打开支付宝支付</a>' +
+      '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">支付后截图联系客服获取兑换码</p>' +
       '<p style="font-size:0.74rem;color:var(--text-muted);">💬 微信：ZZT-2004-12</p>' +
-      '<button class="btn-secondary" onclick="document.getElementById(\'alipayQR\').remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.5rem;">🔙 返回选择套餐</button>';
+      '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.3rem;">🔙 返回</button>';
     shopContent.appendChild(qrDiv);
   })
   .catch(function(err) {
