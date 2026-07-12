@@ -121,14 +121,22 @@ var Paywall = {
     this.refreshWalls();
   },
 
-  openShop: function() { var o = document.getElementById('paywallShopOverlay'); if (o) o.classList.add('active'); },
-  closeShop: function() { var o = document.getElementById('paywallShopOverlay'); if (o) o.classList.remove('active'); },
+  openShop: function() {
+    var o = document.getElementById('paywallShopOverlay');
+    if (o) { o.style.zIndex = '9999'; o.classList.add('active'); }
+  },
+  closeShop: function() {
+    var o = document.getElementById('paywallShopOverlay');
+    if (o) { o.classList.remove('active'); o.style.zIndex = ''; }
+  },
   openRedeem: function() {
-    var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.add('active');
+    var o = document.getElementById('paywallRedeemOverlay');
+    if (o) { o.style.zIndex = '9999'; o.classList.add('active'); }
     var b = document.getElementById('pwTopBalance'); if (b) b.textContent = this.getBalance();
   },
   closeRedeem: function() {
-    var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.remove('active');
+    var o = document.getElementById('paywallRedeemOverlay');
+    if (o) { o.classList.remove('active'); o.style.zIndex = ''; }
     this.refreshWalls();
   },
 

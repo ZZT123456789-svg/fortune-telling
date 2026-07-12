@@ -1368,7 +1368,6 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   inset: 0;
   z-index: 9000;
 }
-.tool-overlay.paywall-top { z-index: 9500; }
   background: rgba(0,0,0,0.6);
   display: none;
   align-items: flex-start;
