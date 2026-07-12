@@ -183,8 +183,49 @@ var Paywall = {
   }
 };
 
-// 购买联系弹窗
+// 购买流程 — 调用支付宝API生成二维码
 function showBuyContact(tier) {
-  var prices = {3:'¥4.9',10:'¥9.9',20:'¥19.9'};
-  alert('请通过以下方式联系购买：\n\n微信：ZZT-2004-12\nQQ：3237659951\n\n购买 ' + prices[tier] + ' / ' + tier + '次 兑换码\n\n付款后发送付款截图获取兑换码');
+  var shopModal = document.getElementById('paywallShopOverlay');
+  var shopContent = shopModal.querySelector('.tool-modal');
+
+  // 显示加载
+  shopContent.querySelector('.shop-grid').style.display = 'none';
+  var existingQR = document.getElementById('alipayQR');
+  if (existingQR) existingQR.remove();
+
+  var loadingEl = document.createElement('div');
+  loadingEl.id = 'alipayLoading';
+  loadingEl.innerHTML = '<p style="text-align:center;padding:1rem;">⏳ 正在生成支付二维码...</p>';
+  shopContent.appendChild(loadingEl);
+
+  // 调用API
+  fetch('/api/alipay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tier: tier })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (loadingEl) loadingEl.remove();
+    if (data.error) { alert(data.error); return; }
+
+    var qrDiv = document.createElement('div');
+    qrDiv.id = 'alipayQR';
+    qrDiv.style.textAlign = 'center';
+    qrDiv.style.padding = '1rem';
+    // 用 Google Charts API 生成二维码
+    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.payUrl);
+    qrDiv.innerHTML =
+      '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 支付宝扫码支付 ¥' + data.amount + '</p>' +
+      '<img src="' + qrUrl + '" alt="支付宝支付二维码" style="width:200px;height:200px;border-radius:8px;border:2px solid var(--border-subtle);">' +
+      '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);">' + data.amount + '元 / ' + (tier==3?'3次':tier==10?'10次':'20次') + '解读</p>' +
+      '<p style="font-size:0.74rem;color:var(--text-muted);">支付成功后截图联系客服获取兑换码</p>' +
+      '<p style="font-size:0.74rem;color:var(--text-muted);">💬 微信：ZZT-2004-12</p>' +
+      '<button class="btn-secondary" onclick="document.getElementById(\'alipayQR\').remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.5rem;">🔙 返回选择套餐</button>';
+    shopContent.appendChild(qrDiv);
+  })
+  .catch(function(err) {
+    if (loadingEl) loadingEl.remove();
+    alert('支付服务暂不可用，请联系客服：微信 ZZT-2004-12');
+  });
 }

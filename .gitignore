@@ -13,3 +13,4 @@ desktop.ini
 *.tmp
 *.log
 .vercel
+.env*
