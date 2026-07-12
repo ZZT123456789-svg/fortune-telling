@@ -175,21 +175,19 @@ var BaziModule = {
     return jieqi;
   },
 
-  /** 年柱 — 标准公式 (year-3)%10 和 (year-3)%12，以立春为界 */
-  _getYearPillar: function(year, month, day) {
-    // 立春在2月4日前后，立春前用上一年
-    if (month < 2 || (month === 2 && day < 4)) {
+  /** 年柱 — 以立春精确时间为界 */
+  _getYearPillar: function(year, month, day, hour) {
+    if (BaziDB.isBeforeLichun(year, month, day, hour || 12)) {
       year = year - 1;
     }
-    // 标准公式: (年-4)÷10余数=天干, (年-4)÷12余数=地支（1984甲子年基准）
     var ganIdx = ((year - 4) % 10 + 10) % 10;
     var zhiIdx = ((year - 4) % 12 + 12) % 12;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx, actualYear: year};
   },
 
-  /** 月柱 — 使用BaziDB精确节气数据 */
-  _getMonthPillar: function(yearGanIdx, month, day) {
-    var bm = BaziDB.getBaziMonth(year, month, day);
+  /** 月柱 — 使用BaziDB精确节气数据（含立春小时判断） */
+  _getMonthPillar: function(yearGanIdx, month, day, hour, calcYear) {
+    var bm = BaziDB.getBaziMonth(calcYear, month, day, hour || 12);
     var monthStartGan = [2, 4, 6, 8, 0];
     var ganIdx = (monthStartGan[yearGanIdx % 5] + bm) % 10;
     var zhiIdx = (2 + bm) % 12;
@@ -255,8 +253,8 @@ var BaziModule = {
       calcDay = nextDate.getDate();
     }
 
-    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay);
-    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay);
+    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay, trueHour);
+    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay, trueHour, calcYear);
     var dayP = this._getDayPillar(calcYear, calcMonth, calcDay);
     var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
 

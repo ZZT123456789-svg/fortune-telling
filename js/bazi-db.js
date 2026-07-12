@@ -31,21 +31,59 @@ var BaziDB = {
     2050:[4,6,5,6,6,7,8,8,8,8,7,6]
   },
 
+  // 立春精确时间（部分年份，时分，用于边界判定）
+  lichunTimes: {
+    2024:{m:2,d:4,H:16,M:27}, 2025:{m:2,d:3,H:22,M:10}, 2026:{m:2,d:4,H:4,M:2},
+    2023:{m:2,d:4,H:10,M:42}, 2022:{m:2,d:4,H:4,M:51}, 2021:{m:2,d:3,H:23,M:0},
+    2020:{m:2,d:4,H:17,M:3}, 2019:{m:2,d:4,H:11,M:14}, 2018:{m:2,d:4,H:5,M:28},
+    2017:{m:2,d:3,H:23,M:34}, 2016:{m:2,d:4,H:17,M:46}, 2015:{m:2,d:4,H:11,M:58},
+    2014:{m:2,d:4,H:6,M:3}, 2013:{m:2,d:4,H:0,M:13}, 2012:{m:2,d:4,H:18,M:22},
+    2011:{m:2,d:4,H:12,M:33}, 2010:{m:2,d:4,H:6,M:42}, 2009:{m:2,d:4,H:0,M:50},
+    2008:{m:2,d:4,H:19,M:0}, 2007:{m:2,d:4,H:13,M:14}, 2006:{m:2,d:4,H:7,M:25},
+    2005:{m:2,d:4,H:1,M:34}, 2004:{m:2,d:4,H:19,M:46}, 2003:{m:2,d:4,H:13,M:57},
+    2002:{m:2,d:4,H:8,M:8}, 2001:{m:2,d:4,H:2,M:20}, 2000:{m:2,d:4,H:20,M:32}
+  },
+
   /** 获取某年某月的"节"日期 */
   getJieDay: function(year, jieIdx) {
-    // jieIdx: 0=立春(2月),1=惊蛰(3月)...11=小寒(1月)
     if (this.jieQi[year]) return this.jieQi[year][jieIdx];
-    // 无精确数据时用近似值
     var approx = [4,5,5,5,6,7,7,8,8,7,7,6];
     return approx[jieIdx];
   },
 
-  /** 获取精确的节气月（公历月→八字月） */
-  getBaziMonth: function(year, month, day) {
-    var jie = this.getJieDay(year, (month - 2 + 12) % 12); // 当月"节"的日期
-    var bm = (month - 2 + 12) % 12; // 2月→0(寅), 3月→1(卯)...
-    if (month < 2) bm = (month + 10); // 1月→小寒后=丑(11)
-    // 如果日期在当月节之前，属于上一个月
+  /** 判断是否在立春之前（精确到小时） */
+  isBeforeLichun: function(year, month, day, hour) {
+    var lt = this.lichunTimes[year];
+    if (!lt) {
+      // 无精确数据：默认立春2月4日18时
+      if (month < 2) return true;
+      if (month > 2) return false;
+      if (day < 4) return true;
+      if (day > 4) return false;
+      return hour < 18;
+    }
+    if (month < lt.m) return true;
+    if (month > lt.m) return false;
+    if (day < lt.d) return true;
+    if (day > lt.d) return false;
+    return hour < lt.H || (hour === lt.H && 0 < lt.M);
+  },
+
+  /** 获取精确的节气月（公历月→八字月，立春精确到小时） */
+  getBaziMonth: function(year, month, day, hour) {
+    hour = hour || 12;
+    var jie = this.getJieDay(year, (month - 2 + 12) % 12);
+    var bm = (month - 2 + 12) % 12;
+    if (month < 2) bm = (month + 10);
+
+    // 在节当天但还没到精确时刻？仍属上月（仅对已知时间的年份有效）
+    if (day === jie && month === 2 && jie === 4 && this.lichunTimes[year]) {
+      if (this.isBeforeLichun(year, month, day, hour)) {
+        bm = (bm - 1 + 12) % 12; // 仍在丑月
+        return bm;
+      }
+    }
+    // 一般情况：日期在节之前属于上月
     if (day < jie) bm = (bm - 1 + 12) % 12;
     return bm;
   },
@@ -128,24 +166,15 @@ var BaziDB = {
     2025:[0,5],2026:[5,0],2027:[0,5],2028:[5,10],2029:[1,5],2030:[6,0]
   },
 
-  /** 精确日柱计算（使用基准查表） */
+  /** 精确日柱计算（以1900-01-01=甲戌为基准，万年历通用算法） */
   getDayPillar: function(year, month, day) {
-    var base = this.dayGanBase[year];
-    if (!base) {
-      // fallback to formula
-      var ref = new Date(1900,0,1), tgt = new Date(year, month-1, day);
-      var diff = Math.round((tgt - ref) / 86400000);
-      var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-      var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-      return {gan:g[((diff%10)+10)%10], zhi:z[((10+diff)%12+12)%12]};
-    }
-    var tgt = new Date(year, month - 1, day);
-    var jan1 = new Date(year, 0, 1);
-    var dayOfYear = Math.floor((tgt - jan1) / 86400000);
-    var g = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-    var z = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-    var ganIdx = (base[0] + dayOfYear) % 10;
-    var zhiIdx = (base[1] + dayOfYear) % 12;
-    return {gan: g[ganIdx], zhi: z[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
+    var ref = new Date(1900, 0, 1);
+    var target = new Date(year, month - 1, day);
+    var diff = Math.round((target - ref) / 86400000);
+    var tg = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    var dz = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+    var ganIdx = ((diff % 10) + 10) % 10;
+    var zhiIdx = ((10 + diff) % 12 + 12) % 12;
+    return {gan: tg[ganIdx], zhi: dz[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   }
 };
