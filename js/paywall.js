@@ -183,7 +183,26 @@ var Paywall = {
   }
 };
 
-// 购买流程 — 调用支付宝API生成二维码
+// ===== 支付返回自动弹兑换码 =====
+(function() {
+  var q = window.location.search;
+  if (q.indexOf('paid=1') !== -1) {
+    var m = q.match(/code=([^&]+)/);
+    if (m) {
+      setTimeout(function() {
+        var o = document.getElementById('paywallRedeemOverlay');
+        if (o) o.classList.add('active');
+        var inp = document.getElementById('redeemCodeInput');
+        if (inp) inp.value = m[1];
+        var re = document.getElementById('redeemResult');
+        if (re) re.innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ 支付成功！兑换码已自动填入</p><p style="color:var(--text-secondary);">点击上方"兑换"按钮激活次数</p>';
+        window.history.replaceState({}, '', '/');
+      }, 800);
+    }
+  }
+})();
+
+// 购买流程 — 调用支付API生成二维码
 function showBuyContact(tier) {
   var shopModal = document.getElementById('paywallShopOverlay');
   var shopContent = shopModal.querySelector('.tool-modal');
@@ -217,11 +236,15 @@ function showBuyContact(tier) {
     qrDiv.innerHTML =
       '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 支付宝扫码支付 ¥' + data.amount + '</p>' +
       '<img src="' + qrImgUrl + '" alt="支付宝二维码" style="width:200px;height:200px;border-radius:8px;border:2px solid var(--border-subtle);">' +
-      '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);">' + (tier==3?'3次':tier==10?'10次':'20次') + '解读 · ¥' + data.amount + '</p>' +
+      '<p style="margin-top:0.5rem;font-size:0.9rem;color:var(--text);">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
       '<a href="' + data.payUrl + '" target="_blank" class="btn-primary" style="display:inline-block;width:auto;padding:0.5rem 1.5rem;text-decoration:none;margin-top:0.3rem;">📱 打开支付宝支付</a>' +
-      '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">支付后截图联系客服获取兑换码</p>' +
-      '<p style="font-size:0.74rem;color:var(--text-muted);">💬 微信：ZZT-2004-12</p>' +
-      '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.3rem;">🔙 返回</button>';
+      '<div style="margin-top:0.8rem;padding:0.6rem;background:rgba(60,179,113,0.08);border:1px dashed #3cb371;border-radius:8px;">' +
+        '<p style="font-size:0.76rem;color:#3cb371;margin:0;">🎫 支付成功后兑换码</p>' +
+        '<p style="font-size:1.1rem;font-weight:bold;color:var(--gold);margin:0.3rem 0;letter-spacing:0.05em;">' + data.code + '</p>' +
+        '<button class="copy-btn" onclick="copyContact(\'' + data.code + '\',this)" style="font-size:0.8rem;">📋 一键复制兑换码</button>' +
+        '<p style="font-size:0.7rem;color:var(--text-muted);margin:0.3rem 0 0;">复制后关闭弹窗，点"点此兑换"输入即可</p>' +
+      '</div>' +
+      '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.5rem;">🔙 返回</button>';
     shopContent.appendChild(qrDiv);
   })
   .catch(function(err) {
