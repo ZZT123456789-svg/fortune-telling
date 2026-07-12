@@ -230,25 +230,42 @@ function showBuyContact(tier) {
     if (loadingEl) loadingEl.remove();
     if (data.error) { alert(data.error); return; }
 
-    // 尝试弹窗，被拦截则降级
-    var pw = window.open(data.payUrl, 'ZPay', 'width=500,height=700,left=' + ((screen.width-500)/2) + ',top=' + ((screen.height-700)/2));
+    // 判断移动端还是PC端
+    var isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
 
-    var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.payUrl);
     var qrDiv = document.createElement('div');
     qrDiv.id = 'alipayQR';
     qrDiv.style.textAlign = 'center';
     qrDiv.style.padding = '1rem';
-    qrDiv.innerHTML =
-      '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 支付宝扫码支付 ¥' + data.amount + '</p>' +
-      '<img src="' + qrImgUrl + '" alt="支付宝二维码" style="width:200px;height:200px;border-radius:8px;border:2px solid var(--border-subtle);">' +
-      '<p style="margin-top:0.3rem;font-size:0.9rem;color:var(--text-secondary);">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
-      (pw ? '<p style="font-size:0.76rem;color:#3cb371;">✅ 支付窗口已弹出</p>' : '<a href="' + data.payUrl + '" target="_blank" class="btn-primary" style="display:inline-block;width:auto;padding:0.4rem 1.2rem;text-decoration:none;">📱 打开支付页面</a>') +
-      '<div style="margin-top:0.6rem;padding:0.6rem;background:rgba(60,179,113,0.08);border:1px dashed #3cb371;border-radius:8px;">' +
-        '<p style="font-size:0.76rem;color:#3cb371;margin:0;">🎫 支付成功后兑换码（支付前先复制）</p>' +
-        '<p style="font-size:1.2rem;font-weight:bold;color:var(--gold);margin:0.3rem 0;letter-spacing:0.05em;">' + data.code + '</p>' +
-        '<button class="copy-btn" onclick="copyContact(\'' + data.code + '\',this)" style="font-size:0.85rem;padding:4px 16px;">📋 一键复制兑换码</button>' +
-      '</div>' +
-      '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.5rem;">🔙 返回</button>';
+
+    if (isMobile) {
+      // 手机端：直接跳转支付宝
+      qrDiv.innerHTML =
+        '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 正在跳转支付宝...</p>' +
+        '<p style="font-size:0.9rem;color:var(--text-secondary);">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
+        '<a href="' + data.payUrl + '" class="btn-primary" style="display:inline-block;width:auto;padding:0.6rem 2rem;text-decoration:none;font-size:1rem;">📱 点击支付 ¥' + data.amount + '</a>' +
+        '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">如未跳转请点击上方按钮</p>' +
+        '<div style="margin-top:0.8rem;padding:0.6rem;background:rgba(60,179,113,0.08);border:1px dashed #3cb371;border-radius:8px;">' +
+          '<p style="font-size:0.76rem;color:#3cb371;margin:0;">🎫 支付后兑换码（长按复制）</p>' +
+          '<p style="font-size:1.2rem;font-weight:bold;color:var(--gold);margin:0.3rem 0;letter-spacing:0.05em;">' + data.code + '</p>' +
+          '<button class="copy-btn" onclick="copyContact(\'' + data.code + '\',this)" style="font-size:0.85rem;padding:4px 16px;">📋 一键复制兑换码</button>' +
+        '</div>';
+      // 自动跳转
+      setTimeout(function() { window.location.href = data.payUrl; }, 800);
+    } else {
+      // PC端：显示二维码
+      var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(data.payUrl);
+      qrDiv.innerHTML =
+        '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">📱 支付宝扫码支付 ¥' + data.amount + '</p>' +
+        '<img src="' + qrImgUrl + '" alt="支付宝二维码" style="width:220px;height:220px;border-radius:8px;border:2px solid var(--border-subtle);">' +
+        '<p style="margin-top:0.3rem;font-size:0.9rem;color:var(--text-secondary);">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
+        '<div style="margin-top:0.6rem;padding:0.6rem;background:rgba(60,179,113,0.08);border:1px dashed #3cb371;border-radius:8px;">' +
+          '<p style="font-size:0.76rem;color:#3cb371;margin:0;">🎫 支付后兑换码（支付前先复制）</p>' +
+          '<p style="font-size:1.2rem;font-weight:bold;color:var(--gold);margin:0.3rem 0;letter-spacing:0.05em;">' + data.code + '</p>' +
+          '<button class="copy-btn" onclick="copyContact(\'' + data.code + '\',this)" style="font-size:0.85rem;padding:4px 16px;">📋 一键复制兑换码</button>' +
+        '</div>';
+    }
+    qrDiv.innerHTML += '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.5rem;">🔙 返回</button>';
     shopContent.appendChild(qrDiv);
   })
   .catch(function(err) {
