@@ -1794,10 +1794,10 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 0.8rem;
+  padding-top: 0;
   z-index: 10;
   border-radius: inherit;
-  min-height: 200px;
+  min-height: 80px;
 }
 
 .paywall-bar {

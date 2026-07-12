@@ -58,12 +58,12 @@ var Paywall = {
     var block = document.createElement('div');
     block.className = 'paywall-block';
     block.innerHTML =
-      '<div style="text-align:center;padding:2rem;">' +
+      '<div style="text-align:center;padding:0.6rem 2rem 2rem 2rem;">' +
         '<div style="font-size:3rem;">🔒</div>' +
-        '<p style="color:#fff;font-weight:bold;font-size:1.1rem;margin:0.5rem 0;">付费解读内容</p>' +
+        '<p style="color:#fff;font-weight:bold;font-size:1.1rem;margin:0.3rem 0;">付费解读内容</p>' +
         '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>' +
-        '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.6rem 2rem;margin-top:0.8rem;font-size:1rem;">🎫 购买解读次数</button>' +
-        '<p style="color:#999;font-size:0.76rem;margin-top:0.6rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>' +
+        '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.6rem 2rem;margin-top:0.5rem;font-size:1rem;">🎫 购买解读次数</button>' +
+        '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>' +
       '</div>';
     el.style.position = 'relative';
     el.style.minHeight = '180px';
