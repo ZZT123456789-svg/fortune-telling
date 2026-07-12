@@ -41,6 +41,7 @@
   <!-- ====== Header ====== -->
   <header class="header">
     <div class="header-top-right">
+      <button class="redeem-btn" onclick="Paywall.openRedeem()">🎫 兑换码</button>
       <button class="contact-btn" id="contactBtn" onclick="toggleContact()">📧 联系我们</button>
       <div class="contact-popup" id="contactPopup">
         <div class="contact-item">
@@ -221,7 +222,7 @@
       <input type="text" id="redeemCodeInput" class="form-input full" placeholder="输入兑换码，如 DAOWEN-A3K7" style="text-align:center;font-size:1.1rem;text-transform:uppercase;">
       <button class="btn-primary" onclick="Paywall.doRedeem()">✅ 兑换</button>
       <div id="redeemResult" style="text-align:center;padding:0.5rem;"></div>
-      <p style="text-align:center;color:var(--text-muted);font-size:0.76rem;margin-top:0.5rem;">余额：<b id="pwTopBalance">0</b> 次</p>
+      <p style="text-align:center;color:var(--text-secondary);font-size:0.9rem;margin-top:0.8rem;">🎫 当前剩余解读次数：<b id="pwTopBalance" style="color:var(--gold);font-size:1.1rem;">0</b> 次</p>
     </div>
   </div>
 

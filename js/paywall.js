@@ -117,6 +117,8 @@ var Paywall = {
   openRedeem: function() {
     var overlay = document.getElementById('paywallRedeemOverlay');
     if (overlay) overlay.classList.add('active');
+    var bal = document.getElementById('pwTopBalance');
+    if (bal) bal.textContent = this.getBalance();
   },
 
   closeRedeem: function() {

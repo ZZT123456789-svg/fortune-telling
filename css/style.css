@@ -162,6 +162,22 @@ body {
   right: 1rem;
   z-index: 3;
 }
+.redeem-btn {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #c9a96e, #d4a574);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(201,169,110,0.3);
+  margin-right: 0.5rem;
+}
+.redeem-btn:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(201,169,110,0.5); }
+
 .contact-btn {
   padding: 0.6rem 1.2rem;
   background: var(--bg-card);
