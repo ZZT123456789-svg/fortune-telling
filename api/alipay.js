@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
     const postData = querystring.stringify(zpayParams);
     const result = await new Promise(function(resolve, reject) {
       var req2 = https.request({
-        hostname: 'api.z-pay.cn',
+        hostname: 'pay.z-pay.cn',
         path: '/submit.php',
         method: 'POST',
         headers: {
