@@ -183,16 +183,7 @@ var Paywall = {
 
   if (code) {
     setTimeout(function() {
-      var result = Paywall.redeemCode(code.trim());
-      if (result.success) {
-        localStorage.removeItem('daowen_pending_code');
-        Paywall.refreshWalls();
-        Paywall._refreshModules();
-        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
-        var stEl = document.getElementById('alipayStatus');
-        if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付成功！' + result.amount + '次解读已到账，内容已解锁</p>';
-        else alert('✅ 支付成功！' + result.amount + ' 次解读已到账，内容已解锁。');
-      }
+      Paywall._doAutoRedeem(code);
       window.history.replaceState({},'','/');
     }, 500);
   }
@@ -201,22 +192,52 @@ var Paywall = {
 // 手动检查支付（PC端扫码后点击）
 Paywall._checkPayment = function() {
   var code = localStorage.getItem('daowen_pending_code');
+  var order = localStorage.getItem('daowen_pending_order');
   if (!code) { alert('未找到待兑换码，请先选择套餐支付。'); return; }
+
+  var stEl = document.getElementById('alipayStatus');
+  if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在验证支付状态...</p>';
+
+  // 如果有订单号，先查ZPay验证
+  if (order) {
+    var self = this;
+    fetch('/api/check-order?order=' + order)
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if (d.paid) {
+          self._doAutoRedeem(code);
+        } else {
+          if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⏳ 暂未检测到支付，请确认已付款后重试</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
+          else alert('暂未检测到支付记录。请确认已付款后重试。');
+        }
+      })
+      .catch(function(){
+        // 查询失败，降级为直接兑换（信任用户已支付）
+        self._doAutoRedeem(code);
+      });
+  } else {
+    this._doAutoRedeem(code);
+  }
+};
+
+Paywall._doAutoRedeem = function(code) {
   var result = this.redeemCode(code.trim());
+  var stEl = document.getElementById('alipayStatus');
   if (result.success) {
     localStorage.removeItem('daowen_pending_code');
+    localStorage.removeItem('daowen_pending_order');
     this.refreshWalls();
     this._refreshModules();
     if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
-    var stEl = document.getElementById('alipayStatus');
-    if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付成功！' + result.amount + '次解读已到账，内容已解锁</p>';
-    else alert('✅ 支付成功！' + result.amount + ' 次解读已到账，内容已解锁。');
+    if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付已验证！' + result.amount + '次解读已到账，内容已解锁</p>';
+    else alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
   } else {
-    // 码可能已被使用（之前自动兑换过了）
     if (result.msg.indexOf('已被使用') !== -1) {
-      alert('✅ 次数已到账！请关闭此窗口查看解读内容。');
+      if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ 次数已到账！</p>';
+      else alert('✅ 次数已到账！');
     } else {
-      alert('❌ ' + result.msg + ' 请联系客服：微信 ZZT-2004-12');
+      if (stEl) stEl.innerHTML = '<p style="color:#c44;">❌ '+result.msg+'</p>';
+      else alert('❌ ' + result.msg);
     }
   }
 };
@@ -243,8 +264,9 @@ function showBuyContact(tier) {
     var qrDiv = document.createElement('div'); qrDiv.id = 'alipayQR';
     qrDiv.style.cssText = 'text-align:center;padding:1rem;';
 
-    // 先把兑换码存到localStorage，支付回来后自动兑换
+    // 存储待验证的订单信息
     localStorage.setItem('daowen_pending_code', data.code);
+    localStorage.setItem('daowen_pending_order', data.outTradeNo);
 
     var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(data.payUrl);
     var payBtn = isMobile
