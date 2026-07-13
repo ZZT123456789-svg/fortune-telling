@@ -524,9 +524,20 @@ var BaziModule = {
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
 
-    // 全付费墙：排盘+解析都需购买
-    ctn.innerHTML = freeHtml + paidHtml;
-    Paywall.blockAll('baziResult');
+    // 排盘免费 + 解析付费
+    if (Paywall.hasBalance()) {
+      Paywall.deduct();
+      ctn.innerHTML = freeHtml + paidHtml;
+    } else {
+      ctn.innerHTML = freeHtml +
+        '<div style="text-align:center;padding:1rem;margin:0.5rem 0;background:rgba(0,0,0,0.04);border-radius:8px;border:1px dashed var(--border-subtle);">' +
+          '<p style="font-size:2rem;margin:0;">🔒</p>' +
+          '<p style="color:var(--text-secondary);font-weight:bold;margin:0.3rem 0;">完整命理解析</p>' +
+          '<p style="font-size:0.8rem;color:var(--text-muted);">旺衰判定 · 调候用神 · 十神布局 · 格局层次 · 大运走势 · 事业财运婚姻健康</p>' +
+          '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.5rem 2rem;margin-top:0.3rem;">🎫 购买解读次数</button>' +
+          '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">已有兑换码？<a href=\"javascript:Paywall.openRedeem()\" style=\"color:var(--gold);\">点此兑换</a></p>' +
+        '</div>';
+    }
   },
 
   _renderDual: function(a, b, compat) {

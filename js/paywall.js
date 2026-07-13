@@ -118,12 +118,16 @@ var Paywall = {
   /** 兑换后刷新已打开模块 */
   _refreshModules: function() {
     // 刷新所有已缓存的结果
-    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
+      BaziModule._renderSingle(BaziModule._lastResult);
+    }
     if (typeof ZiweiModule !== 'undefined' && ZiweiModule._lastChart && ZiweiModule._renderSVG) {
       ZiweiModule._renderSVG(ZiweiModule._lastChart, ZiweiModule._lastSiHua, ZiweiModule._lastY, ZiweiModule._lastM, ZiweiModule._lastD, ZiweiModule._lastH, ZiweiModule._lastGender, ZiweiModule._lastYGZ, ZiweiModule._lastJu);
     }
-    // 其他模块：直接移除遮盖层
     this.refreshWalls();
+    // 重新检查所有模块的付费墙
+    document.querySelectorAll('.paywall-block').forEach(function(b){b.remove();});
+    document.querySelectorAll('.paywall-bar').forEach(function(b){b.remove();});
   },
 
   openShop: function() {
@@ -180,7 +184,11 @@ var Paywall = {
       if (result.success) {
         Paywall.refreshWalls();
         Paywall._refreshModules();
-        alert('✅ 支付成功！已自动激活 ' + result.amount + ' 次解读，现在可以查看完整内容了。');
+        // 刷新八字显示（如果之前有结果缓存）
+        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
+          BaziModule._renderSingle(BaziModule._lastResult);
+        }
+        alert('✅ 支付成功！已自动激活 ' + result.amount + ' 次解读，完整解析已展开。');
       } else {
         var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.add('active');
         var re = document.getElementById('redeemResult'); if (re) re.innerHTML = '<p style="color:#c44;">❌ '+result.msg+'</p><p style="color:var(--text-secondary);">请联系客服：微信 ZZT-2004-12</p>';
