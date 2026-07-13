@@ -209,17 +209,21 @@ var BaziModule = {
   },
 
   _getShiShen: function(dayGan, otherGan) {
-    var sameMap = {甲:'甲',乙:'乙',丙:'丙',丁:'丁',戊:'戊',己:'己',庚:'庚',辛:'辛',壬:'壬',癸:'癸'};
-    var shengMap = {甲:'丙',乙:'丁',丙:'戊',丁:'己',戊:'庚',己:'辛',庚:'壬',辛:'癸',壬:'甲',癸:'乙'};
-    var keMap = {甲:'戊',乙:'己',丙:'庚',丁:'辛',戊:'壬',己:'癸',庚:'甲',辛:'乙',壬:'丙',癸:'丁'};
-    var shengWoMap = {甲:'癸',乙:'壬',丙:'甲',丁:'乙',戊:'丙',己:'丁',庚:'戊',辛:'己',壬:'庚',癸:'辛'};
-    var keWoMap = {甲:'庚',乙:'辛',丙:'壬',丁:'癸',戊:'甲',己:'乙',庚:'丙',辛:'丁',壬:'戊',癸:'己'};
-
-    if (otherGan === shengMap[dayGan]) return '食神/伤官';
-    if (otherGan === keMap[dayGan]) return '正财/偏财';
-    if (otherGan === shengWoMap[dayGan]) return '正印/偏印';
-    if (otherGan === keWoMap[dayGan]) return '正官/七杀';
-    if (otherGan === sameMap[dayGan]) return '比肩/劫财';
+    // 天干五行+阴阳: yang=1, yin=0
+    var gi = {
+      '甲':{e:'木',y:1},'乙':{e:'木',y:0},'丙':{e:'火',y:1},'丁':{e:'火',y:0},
+      '戊':{e:'土',y:1},'己':{e:'土',y:0},'庚':{e:'金',y:1},'辛':{e:'金',y:0},
+      '壬':{e:'水',y:1},'癸':{e:'水',y:0}
+    };
+    var s = {木:'火',火:'土',土:'金',金:'水',水:'木'}; // 相生
+    var k = {木:'土',土:'水',水:'火',火:'金',金:'木'}; // 相克
+    var d = gi[dayGan], o = gi[otherGan];
+    if (!d || !o) return '';
+    if (d.e === o.e) return d.y === o.y ? '比肩' : '劫财';           // 同我
+    if (s[d.e] === o.e) return d.y === o.y ? '食神' : '伤官';       // 我生
+    if (k[d.e] === o.e) return d.y === o.y ? '偏财' : '正财';       // 我克
+    if (s[o.e] === d.e) return d.y === o.y ? '偏印' : '正印';       // 生我
+    if (k[o.e] === d.e) return d.y === o.y ? '七杀' : '正官';       // 克我
     return '';
   },
 
