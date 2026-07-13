@@ -1,10 +1,7 @@
 /**
- * ZPay 支付 — Vercel Serverless
- * 改为构造支付URL，前端直接跳转（绕过服务端UA问题）
+ * ZPay 支付 API
  */
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
 
 const PRICE_MAP = {
   '3':  { money: '4.90',  name: '道问-3次解读',  count: 3 },
@@ -12,73 +9,65 @@ const PRICE_MAP = {
   '20': { money: '19.90', name: '道问-20次解读', count: 20 }
 };
 
-// 预生成兑换码池
-var CODE_POOL = [];
-function initPool() {
-  if (CODE_POOL.length > 0) return;
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  for (var i = 0; i < 200; i++) {
-    var code = 'DW-';
-    for (var j = 0; j < 4; j++) { code += chars[Math.floor(Math.random() * chars.length)]; }
-    code += '-';
-    for (var k = 0; k < 4; k++) { code += chars[Math.floor(Math.random() * chars.length)]; }
-    CODE_POOL.push(code);
+// 与前端 paywall.js _codeDB 一致的备用码（在线购买专用）
+var ONLINE_CODES = [
+  'DW-A1K3',3,'DW-B2M9',3,'DW-C5N8',3,'DW-D1P6',3,'DW-E4Q2',3,
+  'DW-F8R1',3,'DW-G3S5',3,'DW-H7T9',3,'DW-J2U4',3,'DW-K6V8',3,
+  'DW-R3B9',10,'DW-S7C4',10,'DW-T2D8',10,'DW-U6E1',10,'DW-V1F5',10,
+  'DW-B5M4',20,'DW-C8N9',20,'DW-D2P3',20,'DW-E6Q7',20,'DW-F1R2',20
+];
+// 在前端 codeDB 中添加对应条目
+function genCode(tier) {
+  // 找一个对应tier的码
+  var count = tier==='3'?3:tier==='10'?10:20;
+  for (var i=0;i<ONLINE_CODES.length;i+=2) {
+    if (ONLINE_CODES[i+1]===count) return ONLINE_CODES[i];
   }
+  return 'DW-A1K3'; // fallback
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Access-Control-Allow-Methods','POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers','Content-Type');
+  if (req.method==='OPTIONS') return res.status(200).end();
+  if (req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
 
   try {
-    const { tier } = req.body || {};
-    const plan = PRICE_MAP[tier];
-    if (!plan) return res.status(400).json({ error: '无效套餐' });
+    var body = typeof req.body==='string' ? JSON.parse(req.body) : (req.body||{});
+    var tier = String(body.tier||'3');
+    var plan = PRICE_MAP[tier];
+    if (!plan) return res.status(400).json({error:'无效套餐'});
 
-    var zpayKey = (process.env.ZPAY_KEY || '').trim();
-    var zpayPid = (process.env.ZPAY_PID || '').trim();
-    if (!zpayKey || !zpayPid) return res.status(500).json({ error: '支付配置未完成' });
+    var zkey = (process.env.ZPAY_KEY||'').trim();
+    var zpid = (process.env.ZPAY_PID||'').trim();
+    if (!zkey||!zpid) return res.status(500).json({error:'支付配置未完成'});
 
-    const outTradeNo = 'DW' + Date.now() + Math.random().toString(36).substr(2, 6);
+    var out = 'DW'+Date.now()+Math.random().toString(36).substr(2,6);
+    var rcode = genCode(tier);
 
-    // 预生成兑换码
-    initPool();
-    var redeemCode = CODE_POOL.shift();
+    // 简化return_url（不含&参数，防止破坏签名）
+    var returnUrl = 'https://daowenai.icu/#paid-'+rcode;
 
-    // 存储订单信息（供通知回调验证和前端查询）
-    var orders = JSON.parse(process.env.ORDER_STORE || '{}');
-    orders[outTradeNo] = { code: redeemCode, count: plan.count, tier: tier, paid: false, time: Date.now() };
-    process.env.ORDER_STORE = JSON.stringify(orders);
-
-    // return_url 带上兑换码
-    var returnUrl = 'https://daowenai.icu?paid=1&code=' + redeemCode + '&order=' + outTradeNo;
-
-    var params = {
-      pid: zpayPid,
-      type: 'alipay',
-      out_trade_no: outTradeNo,
+    // 构建参数（只用于签名，不包含敏感信息）
+    var p = {
+      pid: zpid, type: 'alipay', out_trade_no: out,
       notify_url: 'https://daowenai.icu/api/alipay-notify',
-      return_url: returnUrl,
-      name: plan.name,
-      money: plan.money
+      return_url: returnUrl, name: plan.name, money: plan.money
     };
 
-    var sortedKeys = Object.keys(params).sort();
-    var signStr = sortedKeys.map(function(k) { return k + '=' + params[k]; }).join('&') + zpayKey;
-    params.sign = crypto.createHash('md5').update(signStr, 'utf8').digest('hex').toLowerCase();
+    var keys = Object.keys(p).sort();
+    var signStr = keys.map(function(k){return k+'='+p[k];}).join('&')+zkey;
+    p.sign = crypto.createHash('md5').update(signStr,'utf8').digest('hex').toLowerCase();
 
-    var queryStr = Object.keys(params).map(function(k) {
-      return k + '=' + encodeURIComponent(params[k]);
-    }).join('&');
-    var payUrl = 'https://api.z-pay.cn/submit.php?' + queryStr;
+    // 构建支付URL（参数需要encode）
+    var qs = keys.map(function(k){return k+'='+encodeURIComponent(p[k]);}).join('&');
+    qs += '&sign='+encodeURIComponent(p.sign);
+    var payUrl = 'https://api.z-pay.cn/submit.php?'+qs;
 
-    res.json({ success: true, payUrl: payUrl, outTradeNo: outTradeNo, amount: plan.money, code: redeemCode, count: plan.count });
-
-  } catch (err) {
-    console.error('ZPay error:', err);
-    res.status(500).json({ error: '支付创建失败' });
+    res.json({success:true,payUrl:payUrl,outTradeNo:out,amount:plan.money,code:rcode,count:plan.count});
+  } catch(e) {
+    console.error('ZPay:',e);
+    res.status(500).json({error:'支付创建失败'});
   }
 };

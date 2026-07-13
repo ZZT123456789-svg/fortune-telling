@@ -9,7 +9,12 @@ var Paywall = {
     'DAOWEN-R3B9':10,'DAOWEN-S7C4':10,'DAOWEN-T2D8':10,'DAOWEN-U6E1':10,'DAOWEN-V1F5':10,
     'DAOWEN-W9G3':10,'DAOWEN-X4H7':10,'DAOWEN-Y8J2':10,'DAOWEN-Z3K6':10,'DAOWEN-A7L1':10,
     'DAOWEN-B5M4':20,'DAOWEN-C8N9':20,'DAOWEN-D2P3':20,'DAOWEN-E6Q7':20,'DAOWEN-F1R2':20,
-    'DAOWEN-G9S6':20,'DAOWEN-H4T1':20,'DAOWEN-J8U5':20,'DAOWEN-K3V9':20,'DAOWEN-L7W4':20
+    'DAOWEN-G9S6':20,'DAOWEN-H4T1':20,'DAOWEN-J8U5':20,'DAOWEN-K3V9':20,'DAOWEN-L7W4':20,
+    // 在线购买生成的码
+    'DW-A1K3':3,'DW-B2M9':3,'DW-C5N8':3,'DW-D1P6':3,'DW-E4Q2':3,
+    'DW-F8R1':3,'DW-G3S5':3,'DW-H7T9':3,'DW-J2U4':3,'DW-K6V8':3,
+    'DW-R3B9':10,'DW-S7C4':10,'DW-T2D8':10,'DW-U6E1':10,'DW-V1F5':10,
+    'DW-B5M4':20,'DW-C8N9':20,'DW-D2P3':20,'DW-E6Q7':20,'DW-F1R2':20
   },
   STORAGE_KEY: 'daowen_balance',
   USED_CODES_KEY: 'daowen_used_codes',
@@ -160,17 +165,28 @@ var Paywall = {
   }
 };
 
-// ===== 支付返回自动弹兑换码 =====
+// ===== 支付返回自动弹兑换码（支持?paid=1&code=XXX 和 #paid-XXX 两种格式） =====
 (function() {
+  var code = null;
   var q = window.location.search;
-  if (q.indexOf('paid=1') !== -1) {
-    var m = q.match(/code=([^&]+)/);
-    if (m) setTimeout(function() {
-      var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.add('active');
-      var inp = document.getElementById('redeemCodeInput'); if (inp) inp.value = m[1];
-      var re = document.getElementById('redeemResult'); if (re) re.innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ 支付成功！兑换码已自动填入</p><p style="color:var(--text-secondary);">点击"兑换"激活次数</p>';
-      window.history.replaceState({}, '', '/');
-    }, 800);
+  var h = window.location.hash;
+  if (q.indexOf('paid=1') !== -1) { var m = q.match(/code=([^&#]+)/); if (m) code = m[1]; }
+  else if (h.indexOf('#paid-') === 0) { code = h.replace('#paid-',''); }
+  if (code) {
+    setTimeout(function() {
+      var inp = document.getElementById('redeemCodeInput'); if (inp) inp.value = code;
+      // 自动兑换
+      var result = Paywall.redeemCode(code);
+      if (result.success) {
+        Paywall.refreshWalls();
+        Paywall._refreshModules();
+        alert('✅ 支付成功！已自动激活 ' + result.amount + ' 次解读，现在可以查看完整内容了。');
+      } else {
+        var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.add('active');
+        var re = document.getElementById('redeemResult'); if (re) re.innerHTML = '<p style="color:#c44;">❌ '+result.msg+'</p><p style="color:var(--text-secondary);">请联系客服：微信 ZZT-2004-12</p>';
+      }
+      window.history.replaceState({},'','/');
+    }, 1200);
   }
 })();
 
