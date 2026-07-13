@@ -16,14 +16,18 @@ var ONLINE_CODES = [
   'DW-R3B9',10,'DW-S7C4',10,'DW-T2D8',10,'DW-U6E1',10,'DW-V1F5',10,
   'DW-B5M4',20,'DW-C8N9',20,'DW-D2P3',20,'DW-E6Q7',20,'DW-F1R2',20
 ];
-// 在前端 codeDB 中添加对应条目
+// 轮换返回对应tier的码（避免每次购买都用同一个）
+var _tierIdx = {3:0,10:0,20:0};
 function genCode(tier) {
-  // 找一个对应tier的码
   var count = tier==='3'?3:tier==='10'?10:20;
+  var pool = [];
   for (var i=0;i<ONLINE_CODES.length;i+=2) {
-    if (ONLINE_CODES[i+1]===count) return ONLINE_CODES[i];
+    if (ONLINE_CODES[i+1]===count) pool.push(ONLINE_CODES[i]);
   }
-  return 'DW-A1K3'; // fallback
+  if (!pool.length) return 'DW-A1K3';
+  // 时间戳伪随机选取
+  var idx = (Date.now() % 100) % pool.length;
+  return pool[idx];
 }
 
 module.exports = async function handler(req, res) {
