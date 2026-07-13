@@ -169,34 +169,57 @@ var Paywall = {
   }
 };
 
-// ===== 支付返回自动弹兑换码（支持?paid=1&code=XXX 和 #paid-XXX 两种格式） =====
+// ===== 支付返回自动兑换 =====
 (function() {
+  // 检测URL中的支付返回
   var code = null;
   var q = window.location.search;
   var h = window.location.hash;
   if (q.indexOf('paid=1') !== -1) { var m = q.match(/code=([^&#]+)/); if (m) code = m[1]; }
   else if (h.indexOf('#paid-') === 0) { code = h.replace('#paid-',''); }
+
+  // 检测localStorage中的待兑换码
+  if (!code) { code = localStorage.getItem('daowen_pending_code'); }
+
   if (code) {
     setTimeout(function() {
-      var inp = document.getElementById('redeemCodeInput'); if (inp) inp.value = code;
-      // 自动兑换
-      var result = Paywall.redeemCode(code);
+      var result = Paywall.redeemCode(code.trim());
       if (result.success) {
+        localStorage.removeItem('daowen_pending_code');
         Paywall.refreshWalls();
         Paywall._refreshModules();
-        // 刷新八字显示（如果之前有结果缓存）
-        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
-          BaziModule._renderSingle(BaziModule._lastResult);
-        }
-        alert('✅ 支付成功！已自动激活 ' + result.amount + ' 次解读，完整解析已展开。');
-      } else {
-        var o = document.getElementById('paywallRedeemOverlay'); if (o) o.classList.add('active');
-        var re = document.getElementById('redeemResult'); if (re) re.innerHTML = '<p style="color:#c44;">❌ '+result.msg+'</p><p style="color:var(--text-secondary);">请联系客服：微信 ZZT-2004-12</p>';
+        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+        var stEl = document.getElementById('alipayStatus');
+        if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付成功！' + result.amount + '次解读已到账，内容已解锁</p>';
+        else alert('✅ 支付成功！' + result.amount + ' 次解读已到账，内容已解锁。');
       }
       window.history.replaceState({},'','/');
-    }, 1200);
+    }, 500);
   }
 })();
+
+// 手动检查支付（PC端扫码后点击）
+Paywall._checkPayment = function() {
+  var code = localStorage.getItem('daowen_pending_code');
+  if (!code) { alert('未找到待兑换码，请先选择套餐支付。'); return; }
+  var result = this.redeemCode(code.trim());
+  if (result.success) {
+    localStorage.removeItem('daowen_pending_code');
+    this.refreshWalls();
+    this._refreshModules();
+    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+    var stEl = document.getElementById('alipayStatus');
+    if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付成功！' + result.amount + '次解读已到账，内容已解锁</p>';
+    else alert('✅ 支付成功！' + result.amount + ' 次解读已到账，内容已解锁。');
+  } else {
+    // 码可能已被使用（之前自动兑换过了）
+    if (result.msg.indexOf('已被使用') !== -1) {
+      alert('✅ 次数已到账！请关闭此窗口查看解读内容。');
+    } else {
+      alert('❌ ' + result.msg + ' 请联系客服：微信 ZZT-2004-12');
+    }
+  }
+};
 
 // ===== 购买套餐 → 调用API → 跳转/二维码 =====
 function showBuyContact(tier) {
@@ -220,28 +243,25 @@ function showBuyContact(tier) {
     var qrDiv = document.createElement('div'); qrDiv.id = 'alipayQR';
     qrDiv.style.cssText = 'text-align:center;padding:1rem;';
 
+    // 先把兑换码存到localStorage，支付回来后自动兑换
+    localStorage.setItem('daowen_pending_code', data.code);
+
     var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(data.payUrl);
     var payBtn = isMobile
       ? '<a href="' + data.payUrl + '" class="btn-primary" style="display:inline-block;width:auto;padding:0.6rem 2rem;text-decoration:none;font-size:1.1rem;">📱 点击支付 ¥' + data.amount + '</a>'
       : '<img src="' + qrImgUrl + '" style="width:220px;height:220px;border-radius:8px;border:2px solid var(--border-subtle);">';
 
     qrDiv.innerHTML =
-      '<div style="background:#fffbe6;border:2px solid #f0c040;border-radius:12px;padding:1rem;margin-bottom:0.5rem;">' +
-        '<p style="font-size:1.2rem;font-weight:bold;color:#c08000;margin:0;">⚠️ 先复制兑换码，再支付！</p>' +
-        '<p style="font-size:0.82rem;color:#8a6a20;margin:0.2rem 0;">支付后关闭当前窗口，粘贴兑换码即可激活</p>' +
-      '</div>' +
-      '<p style="color:var(--gold);font-weight:bold;margin-bottom:0.5rem;">' + (isMobile ? '📱 点击支付 ¥' + data.amount : '📱 扫码支付 ¥' + data.amount) + '</p>' +
+      '<p style="color:var(--gold);font-weight:bold;font-size:1.1rem;">' + (isMobile ? '📱 点击支付 ¥' + data.amount : '📱 扫码支付 ¥' + data.amount) + '</p>' +
       payBtn +
       '<p style="font-size:0.9rem;color:var(--text-secondary);margin:0.3rem 0;">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
-      '<div style="margin-top:0.8rem;padding:0.8rem;background:rgba(60,179,113,0.1);border:2px dashed #3cb371;border-radius:10px;">' +
-        '<p style="font-size:0.8rem;color:#3cb371;margin:0 0 0.3rem;">🎫 您的兑换码（支付前先复制）</p>' +
-        '<p style="font-size:1.3rem;font-weight:bold;color:var(--gold);margin:0.2rem 0;letter-spacing:0.05em;">' + data.code + '</p>' +
-        '<button class="copy-btn" onclick="copyContact(\'' + data.code + '\',this)" style="font-size:0.9rem;padding:6px 20px;">📋 一键复制兑换码</button>' +
-      '</div>' +
-      '<button class="btn-primary" onclick="Paywall.closeShop();Paywall.openRedeem();document.getElementById(\'redeemCodeInput\').value=\'' + data.code + '\';" style="width:auto;padding:0.6rem 1.5rem;margin-top:0.6rem;font-size:0.95rem;">✅ 我已支付，去兑换</button>' +
-      '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">支付完成点此按钮自动填入兑换码</p>';
+      '<p style="font-size:0.82rem;color:var(--text-muted);">支付完成后<b>无需任何操作</b>，次数自动到账</p>' +
+      '<div id="alipayStatus" style="margin-top:0.6rem;padding:0.5rem;background:rgba(201,169,110,0.08);border-radius:8px;text-align:center;">' +
+        '<p style="font-size:0.85rem;color:var(--gold);margin:0;">⏳ 等待支付完成...</p>' +
+        '<button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">✅ 我已完成支付</button>' +
+      '</div>';
 
-    if (isMobile) setTimeout(function() { window.location.href = data.payUrl; }, 1000);
+    if (isMobile) setTimeout(function() { window.location.href = data.payUrl; }, 800);
 
     qrDiv.innerHTML += '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.3rem;">🔙 返回</button>';
     shopContent.appendChild(qrDiv);
