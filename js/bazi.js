@@ -430,10 +430,10 @@ var BaziModule = {
         '<p><b>五行统计：</b></p>' + wxBars +
         '<p style="margin-top:0.5rem;"><b>判定依据：</b>' +
           '月令' + self.diZhi[r.monthP.zhiIdx] + '月' +
-          (bodyStrength.support >= bodyStrength.control + 2 ? '生扶日主有力（得令），' :
-           bodyStrength.support >= bodyStrength.control ? '对日主有一定帮扶（得令），' :
+          (bodyStrength.total >= 4 ? '生扶日主有力（得令），' :
+           bodyStrength.total >= 2.5 ? '对日主有一定帮扶，' :
            '不帮日主（失令），') +
-          '全局帮扶' + bodyStrength.support + ' vs 克制' + bodyStrength.control + '。' +
+          '同元素' + bodyStrength.same + '个，生扶元素' + bodyStrength.sheng + '个。' +
         '</p>' +
         '<p style="text-align:center;font-size:1.3rem;font-weight:bold;color:var(--gold);">结论：<b>' + bodyStrength.level + '</b></p>' +
         '<p>' + bodyStrength.desc + '</p>' +
