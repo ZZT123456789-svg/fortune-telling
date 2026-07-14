@@ -230,7 +230,7 @@ var ZiweiModule = {
       if(mt)svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="8" fill="#aaa">'+mt.trim()+'</text>';
     }
     svg+='</svg>';
-    ctn.innerHTML=svg+'<p style="text-align:center;font-size:0.74rem;color:var(--text-muted);margin-top:0.4rem;">紫微斗数 · 文墨天机风格 · 飞星盘 · 仅供娱乐参考</p><button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
+    ctn.innerHTML=svg+'<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
     setTimeout(function(){ctn.scrollIntoView({behavior:'smooth',block:'start'});},200);
   }
 };
