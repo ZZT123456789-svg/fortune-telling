@@ -169,26 +169,6 @@ var Paywall = {
   }
 };
 
-// ===== 支付返回自动兑换 =====
-(function() {
-  // 检测URL中的支付返回
-  var code = null;
-  var q = window.location.search;
-  var h = window.location.hash;
-  if (q.indexOf('paid=1') !== -1) { var m = q.match(/code=([^&#]+)/); if (m) code = m[1]; }
-  else if (h.indexOf('#paid-') === 0) { code = h.replace('#paid-',''); }
-
-  // 检测localStorage中的待兑换码
-  if (!code) { code = localStorage.getItem('daowen_pending_code'); }
-
-  if (code) {
-    setTimeout(function() {
-      Paywall._doAutoRedeem(code);
-      window.history.replaceState({},'','/');
-    }, 500);
-  }
-})();
-
 // 手动检查支付（PC端扫码后点击）
 Paywall._checkPayment = function() {
   var code = localStorage.getItem('daowen_pending_code');
@@ -290,3 +270,19 @@ function showBuyContact(tier) {
   })
   .catch(function(err) { if (loadEl) loadEl.remove(); alert('支付服务暂不可用，请稍后重试'); });
 }
+
+// ===== 支付返回自动兑换（放在文件末尾，确保所有方法已定义） =====
+(function() {
+  var code = null;
+  var q = window.location.search;
+  var h = window.location.hash;
+  if (q.indexOf('paid=1') !== -1) { var m = q.match(/code=([^&#]+)/); if (m) code = m[1]; }
+  else if (h.indexOf('#paid-') === 0) { code = h.replace('#paid-',''); }
+  if (!code) { code = localStorage.getItem('daowen_pending_code'); }
+  if (code) {
+    setTimeout(function() {
+      if (typeof Paywall._doAutoRedeem === 'function') Paywall._doAutoRedeem(code);
+      window.history.replaceState({},'','/');
+    }, 800);
+  }
+})();
