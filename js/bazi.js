@@ -373,7 +373,7 @@ var BaziModule = {
     // 安全获取所有分析数据（任何一个出错都不影响排盘显示）
     var bodyStrength, favorableElements, careerAnalysis, bestDir, industries;
     var lifeTraj, nameAnalysis, detailedDaYun, pattern, healthAnalysis, cautions;
-    try { bodyStrength = this._judgeBodyStrength(r); } catch(e) { bodyStrength = {level:'—',support:0,control:0,desc:'',advice:''}; }
+    try { bodyStrength = BaziClassics.judgeStrength(r); } catch(e) { bodyStrength = {level:'—',total:0,desc:'',advice:''}; }
     try { favorableElements = this._getFavorableElements(r, bodyStrength); } catch(e) { favorableElements = {favorable:[],unfavorable:[]}; }
     try { careerAnalysis = this._getCareerAnalysis(r, bodyStrength); } catch(e) { careerAnalysis = ''; }
     try { bestDir = this._getBestDirection(r, favorableElements); } catch(e) { bestDir = ''; }
@@ -410,7 +410,19 @@ var BaziModule = {
     var daYunHtml = '';
     for (var dyi=0;dyi<r.daYun.length;dyi++) { var dy=r.daYun[dyi]; daYunHtml += '<span style=\"padding:0 4px;\">'+dy.age+'岁:<b>'+dy.gan+dy.zhi+'</b></span>'; }
 
-    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字排盘</div>' + infoHtml;
+    // 穷通宝鉴调候
+    var tiaoHou = BaziClassics.getTiaoHou(r.dayMaster, r.monthP.zhiIdx >= 2 ? ((r.monthP.zhiIdx-1)%12+1) : (r.monthP.zhiIdx+11));
+    // 滴天髓体性
+    var dts = BaziClassics.diTianSui[r.dayMaster]||'';
+    var dtsBH = BaziClassics.diTianSuiBaiHua[r.dayMaster]||'';
+
+    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字排盘</div>' + infoHtml +
+      '<div class=\"analysis-card\" style=\"background:linear-gradient(135deg,rgba(201,169,110,0.06),rgba(201,169,110,0.02));border-left:3px solid var(--gold);\"><h4>📜 《滴天髓》论' + r.dayMaster + '</h4>' +
+        '<p style=\"font-family:KaiTi,serif;font-size:1.05rem;color:var(--gold-pale);line-height:1.8;\">' + dts + '</p>' +
+        '<p style=\"color:var(--text);\">' + dtsBH + '</p></div>' +
+      '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》调候</h4>' +
+        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，调候用神：<b style=\"color:var(--gold);\">' + (tiaoHou.yongShen||'需结合全局') + '</b></p>' +
+        '<p style=\"font-size:0.85rem;\">《穷通宝鉴》云：先看季节冷暖，再论旺衰。调候为八字第一急务。</p></div>';
 
     var paidHtml =
       '<div class=\"analysis-card\"><h4>📊 第一步：判定旺衰</h4>' +
