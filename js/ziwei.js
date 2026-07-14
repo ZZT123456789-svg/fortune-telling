@@ -169,8 +169,8 @@ var ZiweiModule = {
 
     var svg='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg"><rect width="'+W+'" height="'+H+'" fill="#fdfaf3"/>';
 
-    svg+='<text x="'+(W/2)+'" y="22" text-anchor="middle" font-family="KaiTi,serif" font-size="18" fill="#333" font-weight="bold">紫微斗数 · 飞星盘</text>';
-    svg+='<text x="'+(W/2)+'" y="44" text-anchor="middle" font-size="11" fill="#888">'+info.y+'-'+info.m+'-'+info.d+' '+info.h+'时 · '+info.g+' · 农历'+info.lunarMonth+'月'+info.lunarDay+' · '+info.yG.gan+self.dz[info.yG.zhi]+'年 · '+info.ju+'局</text>';
+    svg+='<text x="'+(W/2)+'" y="22" text-anchor="middle" font-family="KaiTi,serif" font-size="22" fill="#333" font-weight="bold">紫微斗数 · 飞星盘</text>';
+    svg+='<text x="'+(W/2)+'" y="46" text-anchor="middle" font-size="15" fill="#888">'+info.y+'-'+info.m+'-'+info.d+' '+info.h+'时 · '+info.g+' · 农历'+info.lunarMonth+'月'+info.lunarDay+' · '+info.yG.gan+self.dz[info.yG.zhi]+'年 · '+info.ju+'局</text>';
 
     // 三合连线
     var tri=[[0,4,8],[1,5,9],[2,6,10],[3,7,11]];
@@ -182,12 +182,12 @@ var ZiweiModule = {
     // 中宫(2×2合并)
     var cpx=mx+cw,cpy=my+chH,cpw=cw*2,cph=chH*2;
     svg+='<rect x="'+cpx+'" y="'+cpy+'" width="'+cpw+'" height="'+cph+'" fill="#fef9ee" stroke="#c9a56a" stroke-width="2"/>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+24)+'" text-anchor="middle" font-size="15" fill="#333" font-weight="bold">'+name+'</text>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+48)+'" text-anchor="middle" font-size="11" fill="#666">'+info.yG.gan+self.dz[info.yG.zhi]+'年 '+info.g+' '+info.ju+'局</text>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+68)+'" text-anchor="middle" font-size="10" fill="#888">农历'+info.lunarMonth+'月'+info.lunarDay+'</text>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+86)+'" text-anchor="middle" font-size="10" fill="#888">真太阳时 '+String(info.h).padStart(2,'0')+':00</text>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+106)+'" text-anchor="middle" font-size="10" fill="#888">命宫:'+self.dz[info.mingZhi]+' 身宫:'+self.dz[info.shenZhi]+'</text>';
-    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+124)+'" text-anchor="middle" font-size="9" fill="#aaa">流年 '+info.lnYear+' '+info.lnGan+info.lnZhi+'年</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+26)+'" text-anchor="middle" font-size="18" fill="#333" font-weight="bold">'+name+'</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+52)+'" text-anchor="middle" font-size="15" fill="#666">'+info.yG.gan+self.dz[info.yG.zhi]+'年 '+info.g+' '+info.ju+'局</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+74)+'" text-anchor="middle" font-size="12" fill="#888">农历'+info.lunarMonth+'月'+info.lunarDay+'</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+94)+'" text-anchor="middle" font-size="12" fill="#888">真太阳时 '+String(info.h).padStart(2,'0')+':00</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+114)+'" text-anchor="middle" font-size="11" fill="#888">命宫:'+self.dz[info.mingZhi]+' 身宫:'+self.dz[info.shenZhi]+'</text>';
+    svg+='<text x="'+(cpx+cpw/2)+'" y="'+(cpy+134)+'" text-anchor="middle" font-size="10" fill="#aaa">流年 '+info.lnYear+' '+info.lnGan+info.lnZhi+'年</text>';
 
     // 四化图例
     var shEnt=[{k:'禄',v:sh[0]},{k:'权',v:sh[1]},{k:'科',v:sh[2]},{k:'忌',v:sh[3]}];
@@ -203,9 +203,9 @@ var ZiweiModule = {
       var gx=mx+gp[gi].c*cw,gy=my+gp[gi].r*chH,p=ps[i];
       var fill=i===0?'#fef9ee':'#fdfaf5',stroke=i===0?'#c9a56a':'#d4c5a0',sw=i===0?'1.5':'0.8';
       svg+='<rect x="'+gx+'" y="'+gy+'" width="'+cw+'" height="'+chH+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
-      svg+='<text x="'+(gx+cw/2)+'" y="'+(gy+16)+'" text-anchor="middle" font-family="KaiTi,serif" font-size="13" fill="#444" font-weight="bold">'+p.name+'</text>';
-      svg+='<text x="'+(gx+10)+'" y="'+(gy+15)+'" font-size="9" fill="#c9a56a">'+p.zhi+'</text>';
-      svg+='<text x="'+(gx+cw-8)+'" y="'+(gy+15)+'" text-anchor="end" font-size="8" fill="#aaa">'+(p.dx||0)+'~'+(p.dx+9)+'岁</text>';
+      svg+='<text x="'+(gx+cw/2)+'" y="'+(gy+16)+'" text-anchor="middle" font-family="KaiTi,serif" font-size="15" fill="#444" font-weight="bold">'+p.name+'</text>';
+      svg+='<text x="'+(gx+10)+'" y="'+(gy+15)+'" font-size="11" fill="#c9a56a">'+p.zhi+'</text>';
+      svg+='<text x="'+(gx+cw-8)+'" y="'+(gy+15)+'" text-anchor="end" font-size="10" fill="#aaa">'+(p.dx||0)+'~'+(p.dx+9)+'岁</text>';
 
       var cy=gy+36,lh=16;
       // 主星(红字+庙旺+四化)
@@ -216,18 +216,18 @@ var ZiweiModule = {
         var bm=self.brightMap[bv]||'—',sc=hsh?shc[hsh]:'#c03030';
         svg+=(hsh?'<circle cx="'+(gx+12)+'" cy="'+(cy-5)+'" r="5" fill="'+shc[hsh]+'"/><text x="'+(gx+12)+'" y="'+(cy-3)+'" text-anchor="middle" font-size="7" fill="#fff" font-weight="bold">'+hsh+'</text>':'');
         var xoff=hsh?32:20;
-        svg+='<text x="'+(gx+xoff)+'" y="'+cy+'" font-family="KaiTi,serif" font-size="11.5" fill="'+sc+'" font-weight="bold">'+star.name+'</text>';
-        svg+='<text x="'+(gx+cw-10)+'" y="'+cy+'" text-anchor="end" font-size="8" fill="#aaa">'+bm+'</text>';
+        svg+='<text x="'+(gx+xoff)+'" y="'+cy+'" font-family="KaiTi,serif" font-size="14" fill="'+sc+'" font-weight="bold">'+star.name+'</text>';
+        svg+='<text x="'+(gx+cw-10)+'" y="'+cy+'" text-anchor="end" font-size="10" fill="#aaa">'+bm+'</text>';
         cy+=lh;
       }
       // 辅星
       for(var ss2=0;ss2<p.ss.length;ss2++){
         var sd=self.subData[p.ss[ss2]];if(!sd)continue;
-        svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="9" fill="#666">'+sd.short+' '+sd.name+'</text>';cy+=14;
+        svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="11" fill="#666">'+sd.short+' '+sd.name+'</text>';cy+=14;
       }
       // 杂星
       var mt='';for(var mc=0;mc<p.xs.length;mc++){var xd=self.subData[p.xs[mc]+7];if(xd)mt+=xd.short+' ';}
-      if(mt)svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="8" fill="#aaa">'+mt.trim()+'</text>';
+      if(mt)svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="10" fill="#aaa">'+mt.trim()+'</text>';
     }
     svg+='</svg>';
     ctn.innerHTML=svg+'<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
