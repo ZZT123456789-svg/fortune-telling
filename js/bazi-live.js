@@ -516,9 +516,6 @@ var BaziModule = {
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
 
-    // 滚动到结果
-    setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
-
     // 排盘免费 + 解析付费
     if (Paywall.hasBalance()) {
       Paywall.deduct();

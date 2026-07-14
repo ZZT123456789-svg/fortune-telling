@@ -150,7 +150,6 @@ var ZiweiModule = {
     ctn.innerHTML=html+
       '<p style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">紫微斗数排盘 · 十四主星+辅星+杂星+四化+大限 · 仅供娱乐参考</p>'+
       '<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
-    setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 200);
   }
 };
 
