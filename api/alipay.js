@@ -50,8 +50,8 @@ module.exports = async function handler(req, res) {
     var out = 'DW'+Date.now()+Math.random().toString(36).substr(2,6);
     var rcode = genCode(tier);
 
-    // 简化return_url（不含&参数，防止破坏签名）
-    var returnUrl = 'https://daowenai.icu/#paid-'+rcode;
+    // return_url 只跳回首页，码走localStorage
+    var returnUrl = 'https://daowenai.icu';
 
     // 构建参数（只用于签名，不包含敏感信息）
     var p = {

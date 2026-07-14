@@ -271,18 +271,26 @@ function showBuyContact(tier) {
   .catch(function(err) { if (loadEl) loadEl.remove(); alert('支付服务暂不可用，请稍后重试'); });
 }
 
-// ===== 支付返回自动兑换（放在文件末尾，确保所有方法已定义） =====
+// ===== 支付返回自动兑换 =====
 (function() {
-  var code = null;
-  var q = window.location.search;
-  var h = window.location.hash;
-  if (q.indexOf('paid=1') !== -1) { var m = q.match(/code=([^&#]+)/); if (m) code = m[1]; }
-  else if (h.indexOf('#paid-') === 0) { code = h.replace('#paid-',''); }
-  if (!code) { code = localStorage.getItem('daowen_pending_code'); }
+  var code = localStorage.getItem('daowen_pending_code');
   if (code) {
+    // 页面加载时检测到待兑换码，自动尝试兑换
     setTimeout(function() {
-      if (typeof Paywall._doAutoRedeem === 'function') Paywall._doAutoRedeem(code);
-      window.history.replaceState({},'','/');
-    }, 800);
+      var result = Paywall.redeemCode(code.trim());
+      if (result.success) {
+        localStorage.removeItem('daowen_pending_code');
+        localStorage.removeItem('daowen_pending_order');
+        Paywall.refreshWalls();
+        Paywall._refreshModules();
+        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+        alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
+      }
+      // 如果兑换失败（码已被使用），说明之前已兑换过，删除残留
+      if (result.msg && result.msg.indexOf('已被使用') !== -1) {
+        localStorage.removeItem('daowen_pending_code');
+        localStorage.removeItem('daowen_pending_order');
+      }
+    }, 1000);
   }
 })();
