@@ -172,11 +172,17 @@ var ZiweiModule = {
     svg+='<text x="'+(W/2)+'" y="22" text-anchor="middle" font-family="KaiTi,serif" font-size="22" fill="#333" font-weight="bold">紫微斗数 · 飞星盘</text>';
     svg+='<text x="'+(W/2)+'" y="46" text-anchor="middle" font-size="15" fill="#888">'+info.y+'-'+info.m+'-'+info.d+' '+info.h+'时 · '+info.g+' · 农历'+info.lunarMonth+'月'+info.lunarDay+' · '+info.yG.gan+self.dz[info.yG.zhi]+'年 · '+info.ju+'局</text>';
 
-    // 三合连线
+    // 三合连线(四组三角)
     var tri=[[0,4,8],[1,5,9],[2,6,10],[3,7,11]];
     tri.forEach(function(t){
       var pts=[];for(var ti=0;ti<3;ti++){var gi=pO.indexOf(t[ti]);if(gi>=0)pts.push({x:mx+gp[gi].c*cw+cw/2,y:my+gp[gi].r*chH+chH/2});}
-      if(pts.length===3)svg+='<polygon points="'+pts[0].x+','+pts[0].y+' '+pts[1].x+','+pts[1].y+' '+pts[2].x+','+pts[2].y+'" fill="none" stroke="rgba(180,150,100,0.35)" stroke-width="1.2" stroke-dasharray="6,4"/>';
+      if(pts.length===3)svg+='<polygon points="'+pts[0].x+','+pts[0].y+' '+pts[1].x+','+pts[1].y+' '+pts[2].x+','+pts[2].y+'" fill="none" stroke="#c9a56a" stroke-width="2" stroke-dasharray="8,5" opacity="0.5"/>';
+    });
+    // 对宫连线(六条直线)
+    var dui=[[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
+    dui.forEach(function(d){
+      var a=pO.indexOf(d[0]),b=pO.indexOf(d[1]);
+      if(a>=0&&b>=0)svg+='<line x1="'+(mx+gp[a].c*cw+cw/2)+'" y1="'+(my+gp[a].r*chH+chH/2)+'" x2="'+(mx+gp[b].c*cw+cw/2)+'" y2="'+(my+gp[b].r*chH+chH/2)+'" stroke="#d4c5a0" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>';
     });
 
     // 中宫(2×2合并)
