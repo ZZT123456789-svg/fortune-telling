@@ -367,65 +367,53 @@ var BaziModule = {
   _renderSingle: function(r) {
     var self = this;
     var ctn = document.getElementById('baziResult');
+    if (!ctn) return;
     ctn.style.display = 'block';
 
-    // ====== 按6步法运行全部分析 ======
-    var bodyStrength = this._judgeBodyStrength(r);
-    var favorableElements = this._getFavorableElements(r, bodyStrength);
-    var careerAnalysis = this._getCareerAnalysis(r, bodyStrength);
-    var bestDir = this._getBestDirection(r, favorableElements);
-    var industries = this._getSuitableIndustries(r, favorableElements);
-    var lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength);
-    var nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements);
-    var detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength);
-    var pattern = this._getPattern(r, bodyStrength);
-    var healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount);
-    var cautions = this._getCautions(r, bodyStrength, r.wxCount);
+    // 安全获取所有分析数据（任何一个出错都不影响排盘显示）
+    var bodyStrength, favorableElements, careerAnalysis, bestDir, industries;
+    var lifeTraj, nameAnalysis, detailedDaYun, pattern, healthAnalysis, cautions;
+    try { bodyStrength = this._judgeBodyStrength(r); } catch(e) { bodyStrength = {level:'—',support:0,control:0,desc:'',advice:''}; }
+    try { favorableElements = this._getFavorableElements(r, bodyStrength); } catch(e) { favorableElements = {favorable:[],unfavorable:[]}; }
+    try { careerAnalysis = this._getCareerAnalysis(r, bodyStrength); } catch(e) { careerAnalysis = ''; }
+    try { bestDir = this._getBestDirection(r, favorableElements); } catch(e) { bestDir = ''; }
+    try { industries = this._getSuitableIndustries(r, favorableElements); } catch(e) { industries = ''; }
+    try { lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength); } catch(e) { lifeTraj = ''; }
+    try { nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements); } catch(e) { nameAnalysis = ''; }
+    try { detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength); } catch(e) { detailedDaYun = ''; }
+    try { pattern = this._getPattern(r, bodyStrength); } catch(e) { pattern = {patterns:[],level:'',levelDesc:''}; }
+    try { healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount); } catch(e) { healthAnalysis = ''; }
+    try { cautions = this._getCautions(r, bodyStrength, r.wxCount); } catch(e) { cautions = ''; }
 
-    // 第3步：十神（七字对照日主）
+    // 十神表
     var labels = ['年柱','月柱','日柱','时柱'];
     var ganNames = [r.yearP.gan, r.monthP.gan, r.dayP.gan, r.hourP.gan];
     var ssHtml = '';
-    labels.forEach(function(l, i) {
-      var ss = r.shiShen[i].ganSS;
-      if (i === 2) ss = '日主（本人）';
-      ssHtml += '<tr><td>' + l + '</td><td><b>' + ganNames[i] + '</b></td><td>' + (ss || '—') + '</td></tr>';
-    });
+    for (var si=0;si<4;si++) {
+      var ss = (r.shiShen[si] && r.shiShen[si].ganSS) || '—';
+      if (si === 2) ss = '日主（本人）';
+      ssHtml += '<tr><td style=\"padding:4px 8px;border:1px solid var(--border-subtle);\">'+labels[si]+'</td><td style=\"padding:4px 8px;border:1px solid var(--border-subtle);font-weight:bold;\">'+ganNames[si]+'</td><td style=\"padding:4px 8px;border:1px solid var(--border-subtle);\">'+ss+'</td></tr>';
+    }
 
-    // 四柱信息汇总
-    var infoHtml =
-      '<p><b>八字：</b>' + r.yearP.gan + r.yearP.zhi + ' ' + r.monthP.gan + r.monthP.zhi + ' ' + r.dayP.gan + r.dayP.zhi + ' ' + r.hourP.gan + r.hourP.zhi + '</p>' +
-      '<p><b>日主：</b>' + r.dayMaster + '（五行属' + r.dmElement + '）&nbsp;&nbsp;<b>性别：</b>' + r.gender + '&nbsp;&nbsp;<b>生肖：</b>' + self.shengXiao[r.yearP.zhiIdx] + '&nbsp;&nbsp;<b>纳音：</b>' + r.naYin + '</p>' +
-      '<p><b>🌞 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
-        '（经度' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分 + 均时差' + (r.trueSolar.eot >= 0 ? '+' : '') + r.trueSolar.eot + '分）</p>';
+    // 基本信息
+    var infoHtml = '<div style=\"padding:0.5rem;background:var(--bg-card);border-radius:8px;margin-bottom:0.5rem;\">' +
+      '<p><b>八字：</b>' + r.yearP.gan+r.yearP.zhi + ' ' + r.monthP.gan+r.monthP.zhi + ' ' + r.dayP.gan+r.dayP.zhi + ' ' + r.hourP.gan+r.hourP.zhi + '</p>' +
+      '<p><b>日主：</b>' + r.dayMaster + '（' + r.dmElement + '）&nbsp;<b>性别：</b>' + r.gender + '&nbsp;<b>生肖：</b>' + (self.shengXiao[r.yearP.zhiIdx]||'') + '&nbsp;<b>纳音：</b>' + (r.naYin||'') + '</p></div>';
 
     // 五行条形图
-    var wxMax = Math.max(1, r.wxCount['金'], r.wxCount['木'], r.wxCount['水'], r.wxCount['火'], r.wxCount['土']);
-    var wxBars = '';
-    var wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
-    ['金','木','水','火','土'].forEach(function(k) {
-      var pct = Math.round(r.wxCount[k] / wxMax * 100);
-      wxBars += '<div class="wx-bar-row"><span class="wx-label">' + k + '</span>' +
-        '<div class="wx-bar-track"><div class="wx-bar-fill" style="width:' + pct + '%;background:' + wxColors[k] + ';"></div></div>' +
-        '<span class="wx-count">' + r.wxCount[k] + '</span></div>';
-    });
+    var wxBars = '', wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
+    var wxMax = Math.max(1, r.wxCount['金']||0, r.wxCount['木']||0, r.wxCount['水']||0, r.wxCount['火']||0, r.wxCount['土']||0);
+    ['金','木','水','火','土'].forEach(function(k) { var pct=Math.round((r.wxCount[k]||0)/wxMax*100);
+      wxBars += '<div class=\"wx-bar-row\"><span class=\"wx-label\">'+k+'</span><div class=\"wx-bar-track\"><div class=\"wx-bar-fill\" style=\"width:'+pct+'%;background:'+wxColors[k]+';\"></div></div><span class=\"wx-count\">'+(r.wxCount[k]||0)+'</span></div>'; });
 
     // 大运走势
-    var daYunHtml = '<div class="bazi-info-row">';
-    r.daYun.forEach(function(dy) {
-      daYunHtml += '<span style="padding:0 0.2rem;">' + dy.age + '岁:<b>' + dy.gan + dy.zhi + '</b></span>';
-    });
-    daYunHtml += '</div>';
+    var daYunHtml = '';
+    for (var dyi=0;dyi<r.daYun.length;dyi++) { var dy=r.daYun[dyi]; daYunHtml += '<span style=\"padding:0 4px;\">'+dy.age+'岁:<b>'+dy.gan+dy.zhi+'</b></span>'; }
 
-    // 格局描述
-    var patternDesc = pattern.patterns.map(function(p) { return '<p style="line-height:1.7;">' + p + '</p>'; }).join('');
+    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字排盘</div>' + infoHtml;
 
-    // === 免费部分：八字信息 + 四柱表 ===
-    var freeHtml = '<div class="result-header">☯️ ' + r.name + ' 八字命理全盘解析</div>' + infoHtml;
-
-    // === 付费部分：完整解析 ===
     var paidHtml =
-      '<div class="analysis-card"><h4>📊 第一步：统计五行，判定日主旺衰</h4>' +
+      '<div class=\"analysis-card\"><h4>📊 第一步：判定旺衰</h4>' +
         '<p><b>日主' + r.dayMaster + '（五行' + r.dmElement + '）</b>，生于<b>' + self.diZhi[r.monthP.zhiIdx] + '月</b>。</p>' +
         '<p><b>五行统计：</b></p>' + wxBars +
         '<p style="margin-top:0.5rem;"><b>判定依据：</b>' +
