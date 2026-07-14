@@ -426,13 +426,27 @@ var BaziModule = {
     var dts = BaziClassics.diTianSui[r.dayMaster]||'';
     var dtsBH = BaziClassics.diTianSuiBaiHua[r.dayMaster]||'';
 
-    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字排盘</div>' + infoHtml +
-      '<div class=\"analysis-card\" style=\"background:linear-gradient(135deg,rgba(201,169,110,0.06),rgba(201,169,110,0.02));border-left:3px solid var(--gold);\"><h4>📜 《滴天髓》论' + r.dayMaster + '</h4>' +
+    // 判断全局寒暖(滴天髓调候总纲)
+    var seasonIdx = r.monthP.zhiIdx; // 0子1丑2寅...11亥
+    var isWinter = (seasonIdx===0||seasonIdx===1||seasonIdx===10||seasonIdx===11); // 亥子丑冬
+    var isSummer = (seasonIdx===4||seasonIdx===5||seasonIdx===6); // 巳午未夏
+    var hasFire = r.wxCount['火']>=2, hasWater = r.wxCount['水']>=2;
+    var diTianHou = '';
+    if (isWinter && !hasFire) diTianHou = '全局冬月寒湿，' + r.dmElement + '无火调候，按《滴天髓》寒暖总纲——寒则无生机，急需丙火太阳暖局为第一急务。';
+    else if (isSummer && !hasWater) diTianHou = '全局夏月燥热，' + r.dmElement + '无水润局，按《滴天髓》燥则物病，急需癸水雨露润局为第一急务。';
+    else if (isWinter && hasFire) diTianHou = '全局冬月有火调候，寒暖得宜，五行有生发之机。';
+    else if (isSummer && hasWater) diTianHou = '全局夏月有水润燥，寒热平衡，五行流通有度。';
+    else diTianHou = '全局气候平和，不寒不燥，调候非急务，以格局旺衰为主。';
+
+    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字命理全盘</div>' + infoHtml +
+      '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4>🔥 《滴天髓》调候总纲（第一优先级）</h4>' +
+        '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
+        '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
+      '<div class=\"analysis-card\"><h4>📜 《滴天髓》' + r.dayMaster + '体性</h4>' +
         '<p style=\"font-family:KaiTi,serif;font-size:1.05rem;color:var(--gold-pale);line-height:1.8;\">' + dts + '</p>' +
-        '<p style=\"color:var(--text);\">' + dtsBH + '</p></div>' +
-      '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》调候</h4>' +
-        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，调候用神：<b style=\"color:var(--gold);\">' + (tiaoHou.yongShen||'需结合全局') + '</b></p>' +
-        '<p style=\"font-size:0.85rem;\">《穷通宝鉴》云：先看季节冷暖，再论旺衰。调候为八字第一急务。</p></div>';
+        '<p>' + dtsBH + '</p></div>' +
+      '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
+        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
     var paidHtml =
       '<div class=\"analysis-card\"><h4>📊 第一步：判定旺衰</h4>' +
