@@ -418,6 +418,7 @@ var BaziModule = {
     // 大运走势
     var daYunHtml = '';
     for (var dyi=0;dyi<r.daYun.length;dyi++) { var dy=r.daYun[dyi]; daYunHtml += '<span style=\"padding:0 4px;\">'+dy.age+'岁:<b>'+dy.gan+dy.zhi+'</b></span>'; }
+    var patternDesc = (pattern.patterns||[]).map(function(p) { return '<p style=\"line-height:1.7;\">' + p + '</p>'; }).join('');
 
     // 穷通宝鉴调候
     var tiaoHou = BaziClassics.getTiaoHou(r.dayMaster, r.monthP.zhiIdx >= 2 ? ((r.monthP.zhiIdx-1)%12+1) : (r.monthP.zhiIdx+11));
