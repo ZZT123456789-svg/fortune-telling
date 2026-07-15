@@ -283,36 +283,35 @@ var BaziModule = {
   },
 
   _analyzeDual: function(a, b) {
-    var sheng = {木:'火',火:'土',土:'金',金:'水',水:'木'};
-    var ke = {木:'土',土:'水',水:'火',火:'金',金:'木'};
-    var aElem = a.dmElement, bElem = b.dmElement;
+    var sheng={木:'火',火:'土',土:'金',金:'水',水:'木'};
+    var ke={木:'土',土:'水',水:'火',火:'金',金:'木'};
+    var aElem=a.dmElement, bElem=b.dmElement;
+    var relation='', score=0;
 
-    var relation = '', score = 0;
-    if (sheng[aElem] === bElem) { relation = a.name + '生助' + b.name + '，' + a.name + '付出较多。'; score = 75; }
-    else if (sheng[bElem] === aElem) { relation = b.name + '生助' + a.name + '，' + b.name + '付出较多。'; score = 75; }
-    else if (ke[aElem] === bElem) { relation = a.name + '克制' + b.name + '，关系中需注意张力。'; score = 55; }
-    else if (ke[bElem] === aElem) { relation = b.name + '克制' + a.name + '，关系中需注意张力。'; score = 55; }
-    else if (aElem === bElem) { relation = '五行相同，性格相似，互相理解但也可能竞争。'; score = 70; }
-    else { relation = '没有直接生克关系，关系平和。'; score = 65; }
+    // 五行生克
+    if(sheng[aElem]===bElem){relation=a.name+'的'+aElem+'生助'+b.name+'的'+bElem+'，付出方为'+a.name+'，关系偏包容型。';score=75;}
+    else if(sheng[bElem]===aElem){relation=b.name+'的'+bElem+'生助'+a.name+'的'+aElem+'，付出方为'+b.name+'，关系偏滋养型。';score=75;}
+    else if(ke[aElem]===bElem){relation=a.name+'的'+aElem+'克制'+b.name+'的'+bElem+'，'+a.name+'在关系中较强势，需注意平衡。';score=55;}
+    else if(ke[bElem]===aElem){relation=b.name+'的'+bElem+'克制'+a.name+'的'+aElem+'，'+b.name+'在关系中较强势，需注意平衡。';score=55;}
+    else if(aElem===bElem){relation='两人同属'+aElem+'，性格相似有共鸣，但长期也需各自空间避免竞争。';score=70;}
+    else{relation='五行无直接生克，相处自然不拘束，但也需主动经营。';score=65;}
 
-    var aSx = a.yearP.zhiIdx, bSx = b.yearP.zhiIdx;
-    var clashPairs = [[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
-    var isClash = false;
-    clashPairs.forEach(function(pair) {
-      if ((aSx === pair[0] && bSx === pair[1]) || (aSx === pair[1] && bSx === pair[0])) isClash = true;
-    });
-    if (isClash) { relation += ' ⚠ 生肖相冲，需更多包容。'; score -= 15; }
+    // 生肖
+    var sxA=this.shengXiao[a.yearP.zhiIdx],sxB=this.shengXiao[b.yearP.zhiIdx];
+    var compat={鼠:['牛','龙','猴'],牛:['鼠','蛇','鸡'],虎:['马','狗','猪'],兔:['羊','狗','猪'],龙:['鼠','猴','鸡'],蛇:['牛','鸡','猴'],马:['虎','羊','狗'],羊:['兔','马','猪'],猴:['鼠','龙','蛇'],鸡:['牛','龙','蛇'],狗:['虎','兔','马'],猪:['虎','兔','羊']};
+    var clashCheck=(a.yearP.zhiIdx+6)%12===b.yearP.zhiIdx;
+    if(compat[sxA]&&compat[sxA].indexOf(sxB)>=0){relation+=' ✅ 生肖相合（三合/六合），缘分基础好。';score+=10;}
+    else if(clashCheck){relation+=' ⚠️ 生肖六冲，需要更多包容和理解。';score-=15;}
+    else{score+=5;}
 
-    var shengxiaoCompat = {
-      '鼠':['牛','龙','猴'],'牛':['鼠','蛇','鸡'],'虎':['马','狗','猪'],'兔':['羊','狗','猪'],
-      '龙':['鼠','猴','鸡'],'蛇':['牛','鸡','猴'],'马':['虎','羊','狗'],'羊':['兔','马','猪'],
-      '猴':['鼠','龙','蛇'],'鸡':['牛','龙','蛇'],'狗':['虎','兔','马'],'猪':['虎','兔','羊']
-    };
-    var aSxName = this.shengXiao[aSx], bSxName = this.shengXiao[bSx];
-    var compatList = shengxiaoCompat[aSxName] || [];
-    if (compatList.indexOf(bSxName) !== -1) { relation += ' ✅ 生肖相合，缘分不错。'; score += 10; }
+    // 日支(夫妻宫)关系
+    if(a.dayP.zhiIdx===b.dayP.zhiIdx){score-=5;relation+=' 日支相同（夫妻宫伏吟），缘分深但容易互相消耗。';}
+    if((a.dayP.zhiIdx+6)%12===b.dayP.zhiIdx){score-=5;relation+=' 日支六冲，感情波动较大需磨合。';}
 
-    return {relation: relation, score: Math.max(0, Math.min(100, score))};
+    // 纳音
+    if(a.naYin===b.naYin){score+=5;relation+=' 纳音相同，气场共振。';}
+
+    return{relation:relation, score:Math.max(0,Math.min(100,score))};
   },
 
   calculate: function() {
@@ -577,23 +576,71 @@ var BaziModule = {
   _renderDual: function(a, b, compat) {
     var ctn = document.getElementById('baziResult');
     ctn.style.display = 'block';
+    var sheng={木:'火',火:'土',土:'金',金:'水',水:'木'};
+    var ke={木:'土',土:'水',水:'火',火:'金',金:'木'};
+    var self=this;
+
+    // 五行互补分析
+    var comp='';
+    if(sheng[a.dmElement]===b.dmElement)comp=a.name+'的'+a.dmElement+'生助'+b.name+'的'+b.dmElement+'，'+a.name+'在关系中付出较多，乐于照顾对方。';
+    else if(sheng[b.dmElement]===a.dmElement)comp=b.name+'的'+b.dmElement+'生助'+a.name+'的'+a.dmElement+'，'+b.name+'在关系中更主动付出。';
+    else if(ke[a.dmElement]===b.dmElement)comp=a.name+'的'+a.dmElement+'克制'+b.name+'的'+b.dmElement+'，关系中'+a.name+'可能比较强势，需要注意沟通方式。';
+    else if(ke[b.dmElement]===a.dmElement)comp=b.name+'的'+b.dmElement+'克制'+a.name+'的'+a.dmElement+'，关系中'+b.name+'可能比较强势。';
+    else if(a.dmElement===b.dmElement)comp='两人日主同为'+a.dmElement+'，性格相似有默契，但也容易产生竞争。';
+    else comp='两人五行没有直接生克关系，相处比较自然随和。';
+
+    // 生肖三合六合
+    var sxA=this.shengXiao[a.yearP.zhiIdx],sxB=this.shengXiao[b.yearP.zhiIdx];
+    var sxComp={鼠:['牛','龙','猴'],牛:['鼠','蛇','鸡'],虎:['马','狗','猪'],兔:['羊','狗','猪'],龙:['鼠','猴','鸡'],蛇:['牛','鸡','猴'],马:['虎','羊','狗'],羊:['兔','马','猪'],猴:['鼠','龙','蛇'],鸡:['牛','龙','蛇'],狗:['虎','兔','马'],猪:['虎','兔','羊']};
+    var sxMatch=(sxComp[sxA]||[]).indexOf(sxB)>=0;
+    var sxClash=[0,1,2,3,4,5,6,7,8,9,10,11];var clashZhi=(a.yearP.zhiIdx+6)%12===b.yearP.zhiIdx;
+
+    // 日柱地支关系
+    var dzRel='';
+    if(a.dayP.zhiIdx===b.dayP.zhiIdx)dzRel='两人日支相同（夫妻宫伏吟），缘分深但易互相消耗。';
+    else if((a.dayP.zhiIdx+6)%12===b.dayP.zhiIdx)dzRel='两人日支六冲，感情容易波动，需要更多包容。';
+    else if(([0,4,8].indexOf(a.dayP.zhiIdx)>=0&&[0,4,8].indexOf(b.dayP.zhiIdx)>=0)||([1,5,9].indexOf(a.dayP.zhiIdx)>=0&&[1,5,9].indexOf(b.dayP.zhiIdx)>=0))dzRel='两人日支三合，志趣相投，缘分较好。';
+    else dzRel='两人日支无冲无合，感情基础需日常经营。';
+
     ctn.innerHTML =
-      '<div class="result-header">👫 双人合盘</div>' +
-      '<div style="display:flex;gap:1rem;flex-wrap:wrap;">' +
-        '<div style="flex:1;min-width:200px;padding:0.5rem;background:var(--bg-card);border-radius:var(--radius-sm);">' +
-          '<b>' + a.name + '</b> ' + a.gender + '<br/>日主：' + a.dayMaster + '（' + a.dmElement + '）<br/>' +
-          '八字：' + a.yearP.gan + a.yearP.zhi + ' ' + a.monthP.gan + a.monthP.zhi + ' ' + a.dayP.gan + a.dayP.zhi + ' ' + a.hourP.gan + a.hourP.zhi +
+      '<div class="result-header">👫 ' + a.name + ' & ' + b.name + ' 双人合盘</div>' +
+      // 两人信息卡片
+      '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">' +
+        '<div style="flex:1;min-width:200px;padding:0.8rem;background:var(--bg-card);border-radius:var(--radius-sm);border-left:3px solid var(--gold);">' +
+          '<b>' + a.name + '</b> ' + a.gender + ' · 日主' + a.dayMaster + '(' + a.dmElement + ')<br/>' +
+          '<span style="font-size:0.82rem;">八字：' + a.yearP.gan+a.yearP.zhi+' '+a.monthP.gan+a.monthP.zhi+' '+a.dayP.gan+a.dayP.zhi+' '+a.hourP.gan+a.hourP.zhi+'</span><br/>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">生肖：'+sxA+' · 纳音：'+a.naYin+'</span>' +
         '</div>' +
-        '<div style="flex:1;min-width:200px;padding:0.5rem;background:var(--bg-card);border-radius:var(--radius-sm);">' +
-          '<b>' + b.name + '</b> ' + b.gender + '<br/>日主：' + b.dayMaster + '（' + b.dmElement + '）<br/>' +
-          '八字：' + b.yearP.gan + b.yearP.zhi + ' ' + b.monthP.gan + b.monthP.zhi + ' ' + b.dayP.gan + b.dayP.zhi + ' ' + b.hourP.gan + b.hourP.zhi +
+        '<div style="flex:1;min-width:200px;padding:0.8rem;background:var(--bg-card);border-radius:var(--radius-sm);border-left:3px solid #c9a040;">' +
+          '<b>' + b.name + '</b> ' + b.gender + ' · 日主' + b.dayMaster + '(' + b.dmElement + ')<br/>' +
+          '<span style="font-size:0.82rem;">八字：' + b.yearP.gan+b.yearP.zhi+' '+b.monthP.gan+b.monthP.zhi+' '+b.dayP.gan+b.dayP.zhi+' '+b.hourP.gan+b.hourP.zhi+'</span><br/>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted);">生肖：'+sxB+' · 纳音：'+b.naYin+'</span>' +
         '</div>' +
       '</div>' +
-      '<div class="analysis-card"><h4>💞 合盘分析</h4>' +
+      // 五行互补
+      '<div class="analysis-card"><h4>🌿 五行互补</h4><p>'+comp+'</p></div>' +
+      // 生肖配对
+      '<div class="analysis-card"><h4>🐾 生肖配对</h4><p>' +
+        (sxMatch?'✅ 生肖相合（三合/六合），缘分基础不错。':'⚠️ 生肖无合，但也不冲，正常缘分。') +
+        (clashZhi?' ⚠️ 但生肖六冲，需注意沟通方式，多包容。':'') +
+      '</p></div>' +
+      // 日柱夫妻宫
+      '<div class="analysis-card"><h4>💑 日柱（夫妻宫）关系</h4><p>'+dzRel+'</p></div>' +
+      // 十神互动
+      '<div class="analysis-card"><h4>🔗 十神互动</h4><p>' +
+        a.name+'的日主'+a.dayMaster+'与'+b.name+'的日主'+b.dayMaster+'之间：'+comp +
+      '</p></div>' +
+      // 匹配度
+      '<div class="analysis-card"><h4>💞 综合匹配度</h4>' +
+        '<p style="text-align:center;font-size:2rem;color:var(--gold);font-weight:bold;">' + compat.score + '%</p>' +
         '<p>' + compat.relation + '</p>' +
-        '<p style="text-align:center;font-size:1.5rem;">匹配度：<b style="color:var(--gold);">' + compat.score + '%</b></p>' +
+        '<p style="font-size:0.82rem;color:var(--text-secondary);">' +
+          (compat.score>=75?'两人缘分配对较高，五行互补、生肖相合，适合长期发展。':
+           compat.score>=60?'两人有基本的缘分基础，需要多沟通、多包容，感情可稳中求进。':
+           '两人缘分有挑战，但感情的核心在于经营，用心处之依然能有好的结果。') +
+        '</p>' +
       '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析仅供参考，感情更需用心经营</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析基于传统命理规则，仅供娱乐参考。感情最重要的是两个人的用心经营。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
   },
 
