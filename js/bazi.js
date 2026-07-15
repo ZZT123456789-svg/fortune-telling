@@ -443,103 +443,13 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
-    var paidHtml =
-      '<div class=\"analysis-card\"><h4>📊 第一步：判定旺衰</h4>' +
-        '<p><b>日主' + r.dayMaster + '（五行' + r.dmElement + '）</b>，生于<b>' + self.diZhi[r.monthP.zhiIdx] + '月</b>。</p>' +
-        '<p><b>五行统计：</b></p>' + wxBars +
-        '<p style="margin-top:0.5rem;"><b>判定依据：</b>' +
-          '月令' + self.diZhi[r.monthP.zhiIdx] + '月' +
-          (bodyStrength.total >= 4 ? '生扶日主有力（得令），' :
-           bodyStrength.total >= 2.5 ? '对日主有一定帮扶，' :
-           '不帮日主（失令），') +
-          '同元素' + bodyStrength.same + '个，生扶元素' + bodyStrength.sheng + '个。' +
-        '</p>' +
-        '<p style="text-align:center;font-size:1.3rem;font-weight:bold;color:var(--gold);">结论：<b>' + bodyStrength.level + '</b></p>' +
-        '<p>' + bodyStrength.desc + '</p>' +
-        '<p style="font-size:0.85rem;color:var(--text-secondary);">💡 用神方向：' + bodyStrength.advice + '</p>' +
-      '</div>' +
+    // === 深度解读(每个八字完全不一样) ===
+    var deep = this._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
 
-      // ====== 第2步：定调候用神 ======
-      '<div class="analysis-card"><h4>🌡️ 第二步：定调候用神（优先级最高）</h4>' +
-        '<p>《穷通宝鉴》云：先看季节冷暖，再论旺衰。调候为八字第一急务。</p>' +
-        '<p><b>日主' + r.dayMaster + '生于' +
-          (r.monthP.zhiIdx >= 2 && r.monthP.zhiIdx <= 4 ? '春季（木旺），' :
-           r.monthP.zhiIdx >= 5 && r.monthP.zhiIdx <= 7 ? '夏季（火旺），需优先用水润局、金发水源。' :
-           r.monthP.zhiIdx >= 8 && r.monthP.zhiIdx <= 10 ? '秋季（金旺），需优先用火暖局、木生火。' :
-           '冬季（水旺），需优先用火暖局、木生火。') +
-        '</b></p>' +
-        '<p><b>喜用神：</b>' + favorableElements.favorable.join('、') + '。' +
-        (favorableElements.favorable.length > 0 ?
-          '生活中多接触' + favorableElements.favorable.join('、') + '五行相关的事物可补益运势。' :
-          '需结合具体大运流年取用。') +
-        '</p>' +
-      '</div>' +
+    var paidHtml = deep;
 
-      // ====== 第3步：排布十神 ======
-      '<div class="analysis-card"><h4>🔗 第三步：排布十神（以日主' + r.dayMaster + '为中心）</h4>' +
-        '<p style="font-size:0.85rem;color:var(--text-secondary);">十神口诀：生我者印星，我生者食伤，克我者官杀，我克者财星，同我者比劫。</p>' +
-        '<table style="width:100%;font-size:0.85rem;margin-top:0.4rem;">' +
-          '<tr><th>柱位</th><th>天干</th><th>十神</th></tr>' + ssHtml +
-        '</table>' +
-        '<p style="margin-top:0.4rem;font-size:0.85rem;">💡 所有人生事项全部由十神组合判断：<b>官杀=事业压力贵人、财星=钱财异性、食伤=才华口才、印星=学业长辈、比劫=朋友竞争</b>。</p>' +
-      '</div>' +
-
-      // ====== 第4步：定格局 ======
-      '<div class="analysis-card"><h4>🏛️ 第四步：定格局，看人生层次</h4>' +
-        '<p style="text-align:center;font-size:1.1rem;color:var(--gold);font-weight:bold;">格局层次：' + pattern.level + '</p>' +
-        '<p>' + pattern.levelDesc + '</p>' +
-        patternDesc +
-      '</div>' +
-
-      // ====== 第5步：大运流年 ======
-      '<div class="analysis-card"><h4>📅 第五步：大运走势（每步10年）</h4>' +
-        '<p style="font-size:0.85rem;color:var(--text-secondary);">大运干支与原局产生生克冲合刑害，决定十年整体吉凶。</p>' +
-        daYunHtml +
-        '<p style="font-size:0.82rem;color:var(--text-muted);">流年干支每年一变，与大运、原局互动，断当年具体事件。</p>' +
-      '</div>' +
-
-      // 大运详细分析
-      '<div class="analysis-card"><h4>📅 每步大运详解</h4>' + detailedDaYun + '</div>' +
-
-      // ====== 第6步：专项断事 ======
-      '<div class="analysis-card"><h4>🎯 第六步：专项断事</h4></div>' +
-
-      // 事业
-      '<div class="analysis-card"><h5>💼 事业分析</h5><p>' + careerAnalysis + '</p>' +
-        '<p style="font-size:0.85rem;"><b>🧭 适合方位：</b>' + bestDir + '</p>' +
-        '<p style="font-size:0.85rem;"><b>🏭 适合行业：</b>' + industries + '</p>' +
-      '</div>' +
-
-      // 财运
-      '<div class="analysis-card"><h5>💰 财运</h5><p>' +
-        (bodyStrength.level.indexOf('强') !== -1 ?
-          '身强能任财星，财运基础较好，有存钱和投资能力。' :
-          '身弱不胜财，需待帮身大运方能得财。平时宜守不宜攻，理财以稳健为主。') +
-        (r.wxCount['金'] >= 2 || r.wxCount['水'] >= 2 ? ' 命局财星有根，中年走财运时收入明显提升。' : '') +
-        (r.wxCount[r.dmElement] >= 3 ? ' 比劫较旺，注意合伙投资风险，防止朋友借钱不还或利润被分走。' : '') +
-      '</p></div>' +
-
-      // 婚姻
-      '<div class="analysis-card"><h5>💕 婚姻</h5><p>' +
-        (r.gender === '男' ?
-          '男命以财星为妻，' + (r.wxCount['金'] >= 1 || r.wxCount['水'] >= 1 || r.wxCount['火'] >= 1 ? '命局有财星，正缘不缺席。' : '财星较弱，正缘来得稍晚，35岁前后机会更大。') :
-          '女命以官杀为夫，' + (r.wxCount['金'] >= 1 || r.wxCount['火'] >= 1 ? '命局官星有气，夫缘尚可。' : '官星偏弱，适合晚婚，先立业后成家更稳妥。')) +
-        (r.wxCount[r.dmElement] >= 3 ? ' 比劫旺感情中易遇竞争，需用心经营、保持信任。' : '') +
-      '</p></div>' +
-
-      // 健康
-      '<div class="analysis-card"><h5>🏥 健康</h5>' + healthAnalysis + '</div>' +
-
-      // 注意事项
-      '<div class="analysis-card"><h5>⚠️ 注意事项与化解</h5>' + cautions + '</div>' +
-
-      // 人生起伏
-      '<div class="analysis-card"><h4>📈 人生起伏</h4><p style="line-height:1.8;">' + lifeTraj + '</p></div>' +
-
-      // 名字与八字
-      '<div class="analysis-card"><h4>📛 名字与八字</h4>' + nameAnalysis + '</div>' +
-
-      // 结尾赠言
+    // 结尾赠言
+    paidHtml +=
       '<div style="text-align:center;padding:1.2rem 0.8rem;margin-top:0.5rem;background:rgba(201,169,110,0.06);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">' +
         '<p style="font-family:KaiTi,STKaiti,serif;font-size:1.2rem;color:var(--gold);letter-spacing:0.15em;">天行健，君子以自强不息</p>' +
         '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
@@ -566,7 +476,6 @@ var BaziModule = {
     }
     } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
-
   _renderDual: function(a, b, compat) {
     var ctn = document.getElementById('baziResult');
     ctn.style.display = 'block';
@@ -636,6 +545,79 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析基于传统命理规则，仅供娱乐参考。感情最重要的是两个人的用心经营。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+  },
+
+  /** 生成独一无二的深层分析 */
+  _buildDeepAnalysis: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na) {
+    var sz=this.diZhi, mx=r.monthP.zhiIdx, allG=[r.yearP.gan,r.monthP.gan,r.dayP.gan,r.hourP.gan];
+    var allZ=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi];
+    var wx=r.wxCount, dm=r.dayMaster, de=r.dmElement;
+    var mN=mx>=2&&mx<=4?'春':mx>=5&&mx<=7?'夏':mx>=8&&mx<=10?'秋':'冬';
+
+    // 四柱逐位解读
+    var pA='';var pos=['年','月','日','时'],ages=['0-18(少年)','18-35(青年)','35-50(中年)','50+(晚年)'];
+    for(var i=0;i<4;i++){
+      var ss=r.shiShen[i].ganSS||'—',desc='';
+      if(i===2)desc='日主本人，夫妻宫坐'+allZ[i]+'。';
+      else if(ss.indexOf('印')>=0)desc='印星护身，'+pos[i]+'柱有长辈/学业助力。';
+      else if(ss.indexOf('官')>=0||ss.indexOf('杀')>=0)desc='官杀当权，'+pos[i]+'柱代表'+(ss.indexOf('杀')>=0?'压力和挑战':'规矩和责任')+'。';
+      else if(ss.indexOf('财')>=0)desc='财星显现，'+pos[i]+'柱与钱财/异性缘分相关。';
+      else if(ss.indexOf('食')>=0||ss.indexOf('伤')>=0)desc='食伤泄秀，'+pos[i]+'柱代表才华发挥和创造力。';
+      else desc='比劫帮扶，'+pos[i]+'柱代表同辈力量。';
+      pA+='<p><b>'+pos[i]+'柱 '+allG[i]+allZ[i]+'：</b>'+desc+'（十神：'+ss+'，'+ages[i]+'）</p>';
+    }
+
+    // 地支冲合
+    var zR='';
+    for(var zi=0;zi<4;zi++)for(var zj=zi+1;zj<4;zj++){
+      if(allZ[zi]===allZ[zj])zR+=pos[zi]+pos[zj]+'同为<b>'+allZ[zi]+'</b>（伏吟），';
+      if((this.wuXingMap[allZ[zi]]||'')===(this.wuXingMap[allZ[zj]]||'')&&allZ[zi]!==allZ[zj])zR+=pos[zi]+pos[zj]+'五行相同，';
+    }
+    var cc={'子午':1,'丑未':1,'寅申':1,'卯酉':1,'辰戌':1,'巳亥':1};
+    for(var ci=0;ci<4;ci++)for(var cj=ci+1;cj<4;cj++){
+      var k1=allZ[ci]+allZ[cj],k2=allZ[cj]+allZ[ci];if(cc[k1]||cc[k2])zR+=pos[ci]+pos[cj]+'<b>相冲</b>（'+allZ[ci]+allZ[cj]+'冲），';
+    }
+    if(!zR)zR='四柱地支无冲无合，运势平稳。';
+
+    // 十神互动
+    var y2d=this._getShiShen(dm,allG[0]),m2d=this._getShiShen(dm,allG[1]),h2d=this._getShiShen(dm,allG[3]);
+    var iA='';
+    if(y2d)iA+='年干'+allG[0]+'为<b>'+y2d+'</b>——祖辈/早年影响。';
+    if(m2d)iA+='月干'+allG[1]+'为<b>'+m2d+'</b>——父母/事业环境。';
+    if(h2d)iA+='时干'+allG[3]+'为<b>'+h2d+'</b>——子女/晚年运势。';
+
+    // 财运特判
+    var caT='';
+    if(bs.level.indexOf('强')>=0)caT='身强能任财星，有独立获取财富的能力。';
+    else caT='身弱不胜财，需借印比帮身运得财，平时宜守。';
+    if(wx['金']>=2||wx['水']>=2)caT+='命局财星有根，财运来源稳定。';
+    if(wx[de]>=3)caT+='比劫较旺，注意合伙风险，防止利润被分走。';
+
+    // 婚姻特判
+    var maT='';
+    var dzChar={子:'聪慧善变',丑:'踏实稳重',寅:'独立自主',卯:'温和细腻',辰:'包容大气',巳:'热情积极',午:'开朗大方',未:'温厚善良',申:'果敢利落',酉:'精致有品',戌:'忠诚可靠',亥:'灵活聪颖'};
+    maT='日支'+r.dayP.zhi+'为夫妻宫，配偶特质：'+dzChar[r.dayP.zhi]+'。';
+    if(r.gender==='男')maT+='男命以财为妻，';
+    else maT+='女命以官杀为夫，';
+    if(wx[de]>=3)maT+='比劫旺需防感情竞争。';
+
+    var h='';
+    h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4>📋 四柱逐位解读</h4>'+pA+'<p style=\"font-size:0.85rem;color:var(--text-secondary);\">'+zR+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>📊 旺衰判定</h4><p>日主<b>'+dm+'('+de+')</b>，生于<b>'+sz[mx]+'月</b>（'+mN+'季）。同元素'+bs.same+'个，生扶'+bs.sheng+'个。判定：<b style=\"color:var(--gold);font-size:1.2rem;\">'+bs.level+'</b></p><p>'+bs.desc+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>🔗 十神布局</h4><table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>'+ssHtml+'</table><p style=\"margin-top:0.4rem;\">'+iA+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>⚖️ 调候与用神</h4><p>日主'+dm+'生于'+sz[mx]+'月，调候：<b>'+th.yongShen+'</b>。喜用神：'+bs.level.indexOf('强')>=0?'克泄耗为主。':'生扶为主。'+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>🏛️ 格局</h4><p>月令格局分析，层次：<b style=\"color:var(--gold);\">'+pt.level+'</b></p><p>'+pt.levelDesc+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>💼 事业</h4><p>'+ca+'</p><p style=\"font-size:0.85rem;\">🧭 方位：'+bd+' | 🏭 行业：'+ind+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>💰 财运</h4><p>'+caT+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>💕 婚姻</h4><p>'+maT+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>🏥 健康</h4>'+ha+'</div>';
+    h+='<div class=\"analysis-card\"><h4>⚠️ 注意事项</h4>'+ct+'</div>';
+    h+='<div class=\"analysis-card\"><h4>📅 大运走势</h4>'+dyHtml+'</div>';
+    h+='<div class=\"analysis-card\"><h4>📅 每步大运详解</h4>'+ddYun+'</div>';
+    h+='<div class=\"analysis-card\"><h4>📈 人生起伏</h4><p style=\"line-height:1.8;\">'+lt+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4>📛 名字与八字</h4>'+na+'</div>';
+
+    return h;
   },
 
   /** 农历→阳历近似转换（简化，农历比阳历晚约20-50天） */
