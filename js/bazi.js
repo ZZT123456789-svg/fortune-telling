@@ -1164,29 +1164,37 @@ var BaziModule = {
     return html;
   },
 
-  _getDayMasterAnalysis: function(dm, element, wxCount) {
-    var analyses = {
-      '甲':'日主甲木，如参天大树，正直向上，有领导才能。适合管理岗位。木主仁，为人仁德有担当。',
-      '乙':'日主乙木，如藤萝花草，柔韧适应力强。外表柔和内心坚韧，有艺术天赋。',
-      '丙':'日主丙火，如烈日当空，热情开朗有感染力。火主礼，注重礼仪形式。需防急躁冲动。',
-      '丁':'日主丁火，如灯烛之光，温和内敛持久。心思细腻直觉敏锐，适合细致工作。',
-      '戊':'日主戊土，如城墙大地，厚重沉稳有包容力。土主信，重承诺守信义。',
-      '己':'日主己土，如田园之土，温和滋养，善于照顾他人。谦逊踏实可靠。',
-      '庚':'日主庚金，如刀剑利器，刚毅果敢执行力强。金主义，重义气有原则。',
-      '辛':'日主辛金，如珠宝首饰，精致细腻追求完美。外表冷静内心丰富。',
-      '壬':'日主壬水，如江河大海，豁达大气思维开阔。水主智，聪明好学善于应变。',
-      '癸':'日主癸水，如雨露甘泉，柔美细腻直觉力强。内心丰富善于观察，有灵性。'
-    };
-    var base = analyses[dm] || '日主' + dm + '，五行属' + element + '。';
-    var weakElements = [], strongElements = [];
-    Object.keys(wxCount).forEach(function(k) {
-      if (wxCount[k] === 0) weakElements.push(k);
-      if (wxCount[k] >= 3) strongElements.push(k);
-    });
-    var extra = '';
-    if (weakElements.length > 0) extra += ' 缺少' + weakElements.join('、') + '元素，可多接触相关事物补足。';
-    if (strongElements.length > 0) extra += ' ' + strongElements.join('、') + '偏旺，需留意相关运势。';
-    return base + extra;
+  _getDayMasterAnalysis: function(r) {
+    var dm=r.dayMaster,elem=r.dmElement;
+    var ps=[r.yearP,r.monthP,r.dayP,r.hourP];
+    var dts=BaziClassics.diTianSui[dm]||'';
+    var dtsBH=BaziClassics.diTianSuiBaiHua[dm]||'';
+
+    // 日主根气分析
+    var rootCount=0;ps.forEach(function(p){if((p.zhi==='寅'||p.zhi==='卯')&&elem==='木')rootCount++;if((p.zhi==='巳'||p.zhi==='午')&&elem==='火')rootCount++;if((p.zhi==='申'||p.zhi==='酉')&&elem==='金')rootCount++;if((p.zhi==='亥'||p.zhi==='子')&&elem==='水')rootCount++;if((p.zhi==='辰'||p.zhi==='戌'||p.zhi==='丑'||p.zhi==='未')&&elem==='土')rootCount++;});
+    var rootDesc=rootCount>=3?'日主根气深厚，意志坚定不易动摇。':(rootCount>=1?'日主有根气，有一定主见和定力。':'日主无根，性格灵活多变，适应力强。');
+
+    // 日支夫妻宫分析
+    var dayZhi=r.dayP.zhi, dayZhiElem=this.wuXingMap[dayZhi];
+    var zhiDesc='日坐'+dayZhi+'（夫妻宫），';
+    var zhiMap={子:'配偶聪明灵活但情绪波动大',丑:'配偶踏实稳重，家庭观念强',寅:'配偶独立有个性，事业心强',卯:'配偶温和细腻，有艺术气质',辰:'配偶包容力强，有管理才能',巳:'配偶热情积极，社交能力强',午:'配偶开朗大方，有领导气质',未:'配偶温和善良，重视家庭',申:'配偶聪明果敢，执行力强',酉:'配偶精致注重细节，有品味',戌:'配偶忠诚可靠，有责任心',亥:'配偶聪慧灵活，善解人意'};
+    zhiDesc+=zhiMap[dayZhi]||'配偶特质需结合全局看';
+
+    // 五行缺失影响
+    var wx=r.wxCount, weak=[],strong=[];
+    Object.keys(wx).forEach(function(k){if(wx[k]===0)weak.push(k);if(wx[k]>=3)strong.push(k);});
+    var wuDesc='';
+    if(weak.length)wuDesc=' 五行缺'+weak.join('、')+'，在生活中可多接触相关元素补益。';
+    if(strong.length)wuDesc+=' '+strong.join('、')+'元素偏旺，需留意对应脏腑和运势。';
+
+    // 十天干特殊
+    var special='';
+    if(dm==='甲'&&r.wxCount['火']>=2)special='甲木见火为发荣，才华有展现的舞台。';
+    if(dm==='丙'&&r.wxCount['水']>=2)special='丙火得水既济，刚柔并济为贵。';
+    if(dm==='庚'&&r.wxCount['火']>=1)special='庚金得火锻炼，可成利器。';
+    if(dm==='壬'&&r.wxCount['木']>=2)special='壬水得木泄秀，才华横溢。';
+
+    return dtsBH+' '+rootDesc+' '+zhiDesc+wuDesc+' '+special;
   }
 };
 
