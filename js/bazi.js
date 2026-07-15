@@ -443,10 +443,24 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
-    // === 深度解读(每个八字完全不一样) ===
-    var deep = this._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
+    // === AI深度解读(优先) 或 规则解读(降级) ===
+    var paidHtml = '';
+    if (Paywall.hasBalance()) {
+      // AI解读占位(异步加载)
+      paidHtml = '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
+        '<p style=\"font-size:2rem;\">🤖</p>' +
+        '<p style=\"color:var(--gold);font-weight:bold;\">AI 正在生成深度解读...</p>' +
+        '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
+        '<div style=\"width:60px;height:4px;background:var(--border-subtle);margin:1rem auto;border-radius:2px;overflow:hidden;\">' +
+          '<div style=\"width:100%;height:100%;background:var(--gold);animation:loadingBar 1.5s ease-in-out infinite;\"></div></div>' +
+        '</div></div>';
+      // 异步请求AI
+      self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
+    } else {
+      // 规则解读(降级)
+      paidHtml = self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
+    }
 
-    var paidHtml = deep;
 
     // 结尾赠言
     paidHtml +=
@@ -545,6 +559,48 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析基于传统命理规则，仅供娱乐参考。感情最重要的是两个人的用心经营。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+  },
+
+  /** 调用AI生成深度解读 */
+  _callAIReading: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na) {
+    var self = this;
+    var chart = {
+      year: r.yearP.gan+r.yearP.zhi, month: r.monthP.gan+r.monthP.zhi,
+      day: r.dayP.gan+r.dayP.zhi, hour: r.hourP.gan+r.hourP.zhi,
+      dm: r.dayMaster, de: r.dmElement, gender: r.gender,
+      sx: this.shengXiao[r.yearP.zhiIdx], wx: r.wxCount,
+      ss: r.shiShen.map(function(s){return s.ganSS||'—';}),
+      strength: bs.level, tiaoHou: th.yongShen||'',
+      pattern: (pt.patterns||[]).join('; '),
+      dayun: r.daYun.map(function(d){return d.age+'岁:'+d.gan+d.zhi;})
+    };
+
+    fetch('/api/ai-reading', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({chart: chart})
+    })
+    .then(function(resp){return resp.json();})
+    .then(function(data){
+      var container = document.getElementById('aiReadingContainer');
+      if (!container) return;
+      if (data.success) {
+        // 渲染Markdown为HTML(简单处理)
+        var html = data.content
+          .replace(/## (.*)/g, '<h3 style="color:var(--gold);margin-top:1rem;">$1</h3>')
+          .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+          .replace(/\n\n/g, '</p><p style="line-height:1.9;">')
+          .replace(/\n- /g, '<br/>• ');
+        container.innerHTML = '<div class="analysis-card" style="border-left:3px solid #7c3aed;"><h4>🤖 AI深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由Claude AI基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
+      } else {
+        // AI失败，降级到规则解读
+        container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na);
+      }
+    })
+    .catch(function(){
+      var container = document.getElementById('aiReadingContainer');
+      if (container) container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na);
+    });
   },
 
   /** 生成独一无二的深层分析 */

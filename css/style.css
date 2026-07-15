@@ -1897,6 +1897,11 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
 #ziweiResult { overflow-x: auto; }
 #ziweiResult svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 
+@keyframes loadingBar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(500%); }
+}
+
 /* ========== DISCLAIMER ========== */
 .disclaimer-section {
   position: relative;
