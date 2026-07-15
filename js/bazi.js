@@ -851,35 +851,40 @@ var BaziModule = {
 
   // ==== 详细大运分析 ====
   _getDetailedDaYun: function(r, daYun, bodyStrength) {
-    var self=this, shengMap={木:'水',火:'木',土:'火',金:'土',水:'金'};
-    var keMap={木:'土',火:'金',土:'水',金:'木',水:'火'};
-    var dm=r.dmElement, html='';
-
-    var stageNames=['童年筑基','少年求学','青年立业','壮年腾飞','中年鼎盛','知命守成','花甲转型','古稀安享'];
-    var favorableInd=['教育、文化、医疗','互联网、能源、传媒','地产、建筑、农业','金融、制造、法律','贸易、物流、旅游','科技、设计、咨询','公益、教育、顾问','养生、文化、传承'];
+    var self=this,s={木:'火',火:'土',土:'金',金:'水',水:'木'},k={木:'土',火:'金',土:'水',金:'木',水:'火'};
+    var dm=r.dmElement,html='';
+    var allZ=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi];
 
     daYun.forEach(function(dy, idx) {
       var elem=self.wuXingMap[dy.gan], isFav=false;
-      if (bodyStrength.level.indexOf('强')!==-1){if(elem!==dm&&shengMap[dm]!==elem)isFav=true;}
-      else{if(elem===dm||shengMap[dm]===elem)isFav=true;}
+      if (bodyStrength.level.indexOf('强')!==-1){if(elem!==dm&&s[dm]!==elem)isFav=true;}
+      else{if(elem===dm||s[dm]===elem)isFav=true;}
 
-      // 元素互动描述
+      // 五行互动+具体影响
       var inter='';
-      if (shengMap[dm]===elem) inter='印星大运，生扶日主，利学业、贵人、房产和长辈助力。';
-      else if (shengMap[dm]&&self.wuXingMap[shengMap[dm]]===elem) inter=''; // 间接
-      else if (elem===dm) inter='比劫大运，同辈助力，适合合作、团队和拓展人脉。但需注意竞争和破财。';
-      else if (keMap[dm]===elem) inter='财星大运，财运上升期，适合投资、经营和开拓收入来源。';
-      else if (shengMap[elem]===dm) inter='食伤大运，才华展现期，适合创新、表达和技术提升。注意口舌是非。';
-      else inter='官杀大运，事业压力和机遇并存，适合争取职位晋升。注意健康和工作强度。';
+      if(s[dm]===elem)inter='印星'+dy.gan+dy.zhi+'生扶日主'+dm+'('+r.dmElement+')，此运得长辈和贵人助力，适合学习进修和巩固根基。';
+      else if(elem===dm)inter='比劫'+dy.gan+dy.zhi+'与日主同五行，此运同辈助力强，适合合作拓展。但需防竞争破财和合伙纠纷。';
+      else if(k[dm]===elem)inter='财星'+dy.gan+dy.zhi+'受日主'+dm+'克制，财运上升期，适合投资经营扩大收入。';
+      else if(s[elem]===dm)inter='食伤'+dy.gan+dy.zhi+'泄日主'+dm+'之气，才华展现期，适合创新表达技术提升。注意言行避免口舌。';
+      else if(k[elem]===dm)inter='官杀'+dy.gan+dy.zhi+'克制日主'+dm+'，事业压力与机遇并存，适合竞争晋升。注意劳逸结合。';
+      else inter=dy.gan+dy.zhi+'（'+elem+'）大运，需全局配合论断。';
 
-      var icon=isFav?'✅':'⚠️', label=isFav?'吉':'平';
-      var advice='';
-      if (isFav) advice='此运有利，建议积极把握。适合'+favorableInd[idx]+'方向。';
-      else advice='此运需稳扎稳打，不宜冒进。重点在积累和准备，等待下一波好运。';
+      // 大运与原局冲合
+      var clash='',cc={'子午':1,'丑未':1,'寅申':1,'卯酉':1,'辰戌':1,'巳亥':1};
+      for(var zi=0;zi<4;zi++){
+        var k1=allZ[zi]+dy.zhi,k2=dy.zhi+allZ[zi];
+        if(cc[k1]||cc[k2])clash+=['年','月','日','时'][zi]+'支'+allZ[zi]+'与运支'+dy.zhi+'相冲 ';
+        if(allZ[zi]===dy.zhi)clash+=['年','月','日','时'][zi]+'支与运支同为'+dy.zhi+'（伏吟） ';
+      }
+
+      var age=dy.age,label=isFav?'✅':'⚠️';
+      var advice=isFav?'此十年运势向好，建议积极进取。':'此十年宜稳守，积累实力等待时机。';
+      if(clash)advice+=' 注意：'+clash.trim()+',此期间相关宫位事务有变动。';
 
       html+='<div style="padding:0.4rem 0;border-bottom:1px solid var(--border-subtle);">'+
-        '<b>'+icon+' '+dy.age+'岁 '+dy.gan+dy.zhi+'（'+elem+'）'+label+' — '+stageNames[idx]+'</b>'+
+        '<b>'+label+' '+age+'岁 '+dy.gan+dy.zhi+'（'+elem+'）</b>'+
         '<br/><span style="font-size:0.82rem;color:var(--gold-pale);">'+inter+'</span>'+
+        (clash?'<br/><span style="font-size:0.8rem;color:var(--red);">⚡'+clash+'</span>':'')+
         '<br/><span style="font-size:0.82rem;color:var(--text);">💡 '+advice+'</span>'+
         '</div>';
     });
