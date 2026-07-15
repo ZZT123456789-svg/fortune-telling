@@ -316,8 +316,7 @@ var BaziModule = {
 
   calculate: function() {
     try {
-    console.log('=== BaziModule.calculate START ===');
-    if (this.currentMode === 'single') {
+        if (this.currentMode === 'single') {
       var name = document.getElementById('baziName1').value || '未命名';
       var gender = document.getElementById('baziGender1').value;
       var year = parseInt(document.getElementById('baziYear1').value);
@@ -336,8 +335,7 @@ var BaziModule = {
 
       var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
       this._lastResult = result;
-      console.log('=== _analyzeSingle DONE, calling _renderSingle ===');
-      this._renderSingle(result);
+        this._renderSingle(result);
     } else {
       var a = this._getDualPerson('A');
       var b = this._getDualPerson('B');
@@ -346,8 +344,7 @@ var BaziModule = {
       this._renderDual(a, b, compat);
     }
     } catch(e) {
-      console.error('Bazi calculate CRASH:', e.message, e.stack);
-      alert('排盘出错: ' + e.message + '\n请截图发给客服');
+      alert('排盘出错: ' + e.message + '\n请截图发客服微信: ZZT-2004-12');
     }
   },
 
@@ -371,11 +368,10 @@ var BaziModule = {
   },
 
   _renderSingle: function(r) {
-    console.log('=== _renderSingle START ===');
     try {
     var self = this;
     var ctn = document.getElementById('baziResult');
-    if (!ctn) { console.error('baziResult element NOT FOUND'); return; }
+    if (!ctn) { alert('排盘显示区域未找到，请刷新页面后重试'); return; }
     ctn.style.display = 'block';
 
     // 安全获取所有分析数据（任何一个出错都不影响排盘显示）
@@ -555,7 +551,6 @@ var BaziModule = {
     setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
 
     // 排盘免费 + 解析付费
-    console.log('=== Paywall check: hasBalance=' + Paywall.hasBalance() + ' ===');
     if (Paywall.hasBalance()) {
       Paywall.deduct();
       ctn.innerHTML = freeHtml + paidHtml;
@@ -569,8 +564,7 @@ var BaziModule = {
           '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">已有兑换码？<a href=\"javascript:Paywall.openRedeem()\" style=\"color:var(--gold);\">点此兑换</a></p>' +
         '</div>';
     }
-    console.log('=== _renderSingle DONE ===');
-    } catch(e) { console.error('_renderSingle CRASH:', e.message, e.stack); ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p>错误: ' + e.message + '</p>'; }
+    } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
 
   _renderDual: function(a, b, compat) {

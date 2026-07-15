@@ -35,7 +35,7 @@ var ZiweiModule = {
     {id:'lucun',name:'禄存',short:'存'},{id:'qingyang',name:'擎羊',short:'羊'},
     {id:'tuoluo',name:'陀罗',short:'陀'},{id:'huoxing',name:'火星',short:'火'},
     {id:'lingxing',name:'铃星',short:'铃'},{id:'dikong',name:'地空',short:'空'},
-    {id:'dijie',name:'地劫',short:'劫'},{id:'tianma',name:'天马',short:'马'}
+    {id:'dijie',name:'地劫',short:'劫'},{id:'tianma',name:'天马',short:'马'},{id:'tianku',name:'天哭',short:'哭'},{id:'tianxu',name:'天虚',short:'虚'},{id:'hongluan',name:'红鸾',short:'鸾'},{id:'tianxi',name:'天喜',short:'喜'},{id:'tianyao',name:'天姚',short:'姚'},{id:'xianchi',name:'咸池',short:'咸'}
   ],
 
   palaces:['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','官禄','田宅','福德','父母'],
@@ -132,6 +132,15 @@ var ZiweiModule = {
     xs[(lhr+2)%12].push(4);xs[(lhr+8)%12].push(5);
     // 天马(年支:亥卯未→巳5,申子辰→寅2,巳酉丑→亥11,寅午戌→申8)
     var tm={0:2,1:2,2:2,3:8,4:8,5:8,6:5,7:5,8:5,9:11,10:11,11:11};xs[tm[yG.zhi]||2].push(6);
+    // 天哭(年支卯起顺行) 天虚(年支酉起顺行)
+    var tkStart={0:2,1:3,2:4,3:5,4:6,5:7,6:8,7:9,8:10,9:11,10:0,11:1};xs[tkStart[yG.zhi]||2].push(7); //天哭=7
+    var txStart={0:8,1:9,2:10,3:11,4:0,5:1,6:2,7:3,8:4,9:5,10:6,11:7};xs[txStart[yG.zhi]||8].push(8); //天虚=8
+    // 红鸾(年支卯起顺行) 天喜(对冲)
+    var hlStart={0:2,1:3,2:4,3:5,4:6,5:7,6:8,7:9,8:10,9:11,10:0,11:1};xs[hlStart[yG.zhi]||2].push(9); //红鸾=9
+    var tx2Start={0:8,1:9,2:10,3:11,4:0,5:1,6:2,7:3,8:4,9:5,10:6,11:7};xs[tx2Start[yG.zhi]||8].push(10); //天喜=10
+    // 天姚(年支午起顺行) 咸池(年支卯起顺行)
+    var tyStart={0:5,1:6,2:7,3:8,4:9,5:10,6:11,7:0,8:1,9:2,10:3,11:4};xs[tyStart[yG.zhi]||5].push(11); //天姚=11
+    var xcStart={0:2,1:3,2:4,3:5,4:6,5:7,6:8,7:9,8:10,9:11,10:0,11:1};xs[xcStart[yG.zhi]||2].push(12); //咸池=12
 
     // 分配到12宫
     for(var i5=0;i5<12;i5++){
@@ -231,8 +240,13 @@ var ZiweiModule = {
         var sd=self.subData[p.ss[ss2]];if(!sd)continue;
         svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="11" fill="#666">'+sd.short+' '+sd.name+'</text>';cy+=14;
       }
-      // 杂星
-      var mt='';for(var mc=0;mc<p.xs.length;mc++){var xd=self.subData[p.xs[mc]+7];if(xd)mt+=xd.short+' ';}
+      // 杂星(含天哭天虚红鸾天喜天姚咸池)
+      var mt='';for(var mc=0;mc<p.xs.length;mc++){
+        var xd=null;
+        if(p.xs[mc]<=6)xd=self.subData[p.xs[mc]+7]; // 擎羊陀罗火星铃星空劫马
+        else xd=self.subData[p.xs[mc]+7]; // 天哭天虚红鸾天喜天姚咸池
+        if(xd)mt+=xd.short+' ';
+      }
       if(mt)svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="10" fill="#aaa">'+mt.trim()+'</text>';
     }
     svg+='</svg>';
