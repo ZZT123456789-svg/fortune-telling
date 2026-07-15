@@ -402,7 +402,9 @@ var BaziModule = {
     // 基本信息
     var infoHtml = '<div style=\"padding:0.5rem;background:var(--bg-card);border-radius:8px;margin-bottom:0.5rem;\">' +
       '<p><b>八字：</b>' + r.yearP.gan+r.yearP.zhi + ' ' + r.monthP.gan+r.monthP.zhi + ' ' + r.dayP.gan+r.dayP.zhi + ' ' + r.hourP.gan+r.hourP.zhi + '</p>' +
-      '<p><b>日主：</b>' + r.dayMaster + '（' + r.dmElement + '）&nbsp;<b>性别：</b>' + r.gender + '&nbsp;<b>生肖：</b>' + (self.shengXiao[r.yearP.zhiIdx]||'') + '&nbsp;<b>纳音：</b>' + (r.naYin||'') + '</p></div>';
+      '<p><b>日主：</b>' + r.dayMaster + '（' + r.dmElement + '）&nbsp;<b>性别：</b>' + r.gender + '&nbsp;<b>生肖：</b>' + (self.shengXiao[r.yearP.zhiIdx]||'') + '&nbsp;<b>纳音：</b>' + (r.naYin||'') + '</p>' +
+      '<p><b>🌞 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
+      '（校正 ' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分）</p></div>';
 
     // 五行条形图
     var wxBars = '', wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
