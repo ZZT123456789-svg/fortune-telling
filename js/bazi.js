@@ -200,10 +200,10 @@ var BaziModule = {
     return {gan: dp.gan, zhi: dp.zhi, ganIdx: dp.ganIdx, zhiIdx: dp.zhiIdx};
   },
 
-  /** 时柱 — 不换日，22-23=亥时，0-1=子时 */
+  /** 时柱 — 时辰=floor((hour+1)/2)%12 */
   _getHourPillar: function(dayGanIdx, hour) {
     var hourStartGan = [0, 2, 4, 6, 8];
-    var zhiIdx = Math.floor(hour / 2) % 12; // 22→11(亥) 23→11(亥) 0→0(子)
+    var zhiIdx = Math.floor((hour + 1) / 2) % 12; // 7→4(辰) 12→6(午)
     var ganIdx = (hourStartGan[dayGanIdx % 5] + zhiIdx) % 10;
     return {gan: this.tianGan[ganIdx], zhi: this.diZhi[zhiIdx], ganIdx: ganIdx, zhiIdx: zhiIdx};
   },

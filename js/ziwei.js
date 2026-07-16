@@ -83,7 +83,7 @@ var ZiweiModule = {
     // 农历转阳历
     if(calType==='lunar'){var sol=this._lunarToSolar(y,m,d);y=sol.y;m=sol.m;d=sol.d;}
 
-    var hz=Math.floor(h/2)%12, yG=this._yGZ(y);
+    var hz=Math.floor((h+1)/2)%12, yG=this._yGZ(y);
 
     // 1. 定命宫身宫
     var mingZhi=this._mingShenTable[(m-1+12)%12][hz];
