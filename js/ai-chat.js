@@ -32,7 +32,7 @@ var AIChat = {
     document.getElementById('aiChatWindow').classList.add('open');
     document.getElementById('aiFab').style.display = 'none';
     if (this.messages.length === 0) {
-      this._addMsg('assistant', '你好！我是AI命理助手。请先在命理模块中完成排盘或占卜，然后点"🤖 问AI"按钮来找我。');
+      this._addMsg('assistant', '你好！我是AI命理助手。每次提问消耗2积分。请先在命理模块中排盘或占卜，然后点"🤖 问AI"来找我。');
     }
     document.getElementById('aiChatInput').focus();
   },
@@ -47,8 +47,20 @@ var AIChat = {
     var input = document.getElementById('aiChatInput');
     var question = input.value.trim();
     if (!question) return;
+
+    // 检查积分（2积分一次）
+    if (Paywall.getBalance() < 2) {
+      alert('AI助手每次提问消耗2积分。\n当前积分不足，请先购买解读次数。');
+      Paywall.openShop();
+      return;
+    }
+
     input.value = '';
     input.disabled = true;
+
+    // 扣积分
+    Paywall.deduct();
+    Paywall.deduct();
 
     // 添加用户消息
     this._addMsg('user', question);
