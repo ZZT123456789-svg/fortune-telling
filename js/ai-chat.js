@@ -4,17 +4,36 @@
 var AIChat = {
   messages: [],
   open: false,
+  contextReady: false,
+
+  /** 从结果区打开AI对话（由模块调用） */
+  openWithContext: function(resultContainerId) {
+    this.messages = [];
+    this.contextReady = false;
+    // 抓取结果文字
+    var el = document.getElementById(resultContainerId);
+    if (el) {
+      var text = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().substring(0, 2000);
+      if (text.length > 100) {
+        this.messages.push({ role: 'user', content: '以下是我的命盘/占卜结果，请记住这些数据，等我提问：\n\n' + text });
+        this.contextReady = true;
+      }
+    }
+    this._show();
+  },
 
   toggle: function() {
-    this.open ? this.close() : this._show();
+    if (this.contextReady || this.messages.length > 0) { this._show(); }
+    else { alert('💡 请先完成排盘或占卜，在结果区点击"🤖 问AI"按钮即可。'); }
   },
 
   _show: function() {
     this.open = true;
     document.getElementById('aiChatWindow').classList.add('open');
     document.getElementById('aiFab').style.display = 'none';
-    // 自动注入当前结果上下文
-    this._injectContext();
+    if (this.messages.length === 0) {
+      this._addMsg('assistant', '你好！我是AI命理助手。请先在命理模块中完成排盘或占卜，然后点"🤖 问AI"按钮来找我。');
+    }
     document.getElementById('aiChatInput').focus();
   },
 
@@ -22,27 +41,6 @@ var AIChat = {
     this.open = false;
     document.getElementById('aiChatWindow').classList.remove('open');
     document.getElementById('aiFab').style.display = 'flex';
-  },
-
-  _injectContext: function() {
-    // 检测当前打开的模块，抓取其结果数据
-    var ctx = '';
-    var overlays = document.querySelectorAll('.tool-overlay.active');
-    if (!overlays.length) return;
-
-    // 抓取结果区域的文字
-    var resultEls = document.querySelectorAll('.result-container[style*="block"], [id$="Result"]:not([style*="none"])');
-    if (resultEls.length) {
-      var text = resultEls[0].innerText || resultEls[0].textContent || '';
-      text = text.replace(/\s+/g, ' ').trim().substring(0, 2000);
-      if (text.length > 100) {
-        ctx = '当前命盘/占卜结果摘要：\n' + text;
-        // 注入系统消息
-        if (this.messages.length === 0 || this.messages[0].role !== 'system') {
-          this.messages.unshift({ role: 'user', content: ctx + '\n\n请基于以上数据回答用户后续问题。' });
-        }
-      }
-    }
   },
 
   send: function() {

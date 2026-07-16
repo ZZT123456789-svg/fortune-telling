@@ -471,7 +471,8 @@ var BaziModule = {
         '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
-      '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+      '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>' +
+      '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">🤖 问AI</button>';
 
     // 滚动到结果
     setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);

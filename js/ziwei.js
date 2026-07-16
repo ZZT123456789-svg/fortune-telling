@@ -250,7 +250,8 @@ var ZiweiModule = {
       if(mt)svg+='<text x="'+(gx+6)+'" y="'+cy+'" font-size="10" fill="#aaa">'+mt.trim()+'</text>';
     }
     svg+='</svg>';
-    ctn.innerHTML=svg+'<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>';
+    ctn.innerHTML=svg+'<button class="btn-secondary" onclick="ZiweiModule.close()">🔙 返回</button>' +
+'<button class="btn-primary" onclick="AIChat.openWithContext(\'ziweiResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">🤖 问AI</button>';
     setTimeout(function(){ctn.scrollIntoView({behavior:'smooth',block:'start'});},200);
   }
 };
