@@ -710,7 +710,24 @@
   </div>
 
   <!-- ====== JS 引用 ====== -->
+  <!-- AI命理助手 -->
+  <div class="ai-chat-fab" id="aiFab" onclick="AIChat.toggle()">🤖</div>
+  <div class="ai-chat-window" id="aiChatWindow">
+    <div class="ai-chat-header">
+      <span>🤖 AI命理助手</span>
+      <button class="ai-chat-close" onclick="AIChat.close()">✕</button>
+    </div>
+    <div class="ai-chat-body" id="aiChatBody">
+      <div class="ai-msg assistant">你好！我是道问AI命理助手。排盘或占卜后，你可以问我关于结果的任何问题。</div>
+    </div>
+    <div class="ai-chat-input">
+      <input type="text" id="aiChatInput" placeholder="输入问题..." onkeydown="if(event.key==='Enter')AIChat.send()">
+      <button onclick="AIChat.send()">发送</button>
+    </div>
+  </div>
+
   <script src="js/paywall.js"></script>
+  <script src="js/ai-chat.js"></script>
   <script src="js/bazi-db.js"></script>
   <script src="js/bazi-classics.js"></script>
   <script src="js/lunar.js"></script>
