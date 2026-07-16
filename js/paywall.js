@@ -192,8 +192,7 @@ Paywall._checkPayment = function() {
         }
       })
       .catch(function(){
-        // 查询失败，降级为直接兑换（信任用户已支付）
-        self._doAutoRedeem(code);
+        if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⏳ 支付验证暂不可用，请稍后重试</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新验证</button>';
       });
   } else {
     this._doAutoRedeem(code);
