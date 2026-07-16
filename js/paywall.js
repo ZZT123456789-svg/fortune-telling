@@ -195,7 +195,8 @@ Paywall._checkPayment = function() {
         if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⏳ 支付验证暂不可用，请稍后重试</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新验证</button>';
       });
   } else {
-    this._doAutoRedeem(code);
+    if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⚠️ 未找到支付订单，请重新选择套餐支付</p>';
+    else alert('未找到支付订单，请重新支付。');
   }
 };
 
@@ -270,26 +271,16 @@ function showBuyContact(tier) {
   .catch(function(err) { if (loadEl) loadEl.remove(); alert('支付服务暂不可用，请稍后重试'); });
 }
 
-// ===== 支付返回自动兑换 =====
+// ===== 支付返回：仅跳回时提示，不自动兑换 =====
 (function() {
   var code = localStorage.getItem('daowen_pending_code');
   if (code) {
-    // 页面加载时检测到待兑换码，自动尝试兑换
+    // 不自动兑换，仅提示用户手动验证
     setTimeout(function() {
-      var result = Paywall.redeemCode(code.trim());
-      if (result.success) {
-        localStorage.removeItem('daowen_pending_code');
-        localStorage.removeItem('daowen_pending_order');
-        Paywall.refreshWalls();
-        Paywall._refreshModules();
-        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
-        alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
+      var stEl = document.getElementById('alipayStatus');
+      if (stEl) {
+        stEl.innerHTML = '<p style="color:var(--gold);margin:0;">📱 检测到待验证支付，请点击下方按钮验证</p>';
       }
-      // 如果兑换失败（码已被使用），说明之前已兑换过，删除残留
-      if (result.msg && result.msg.indexOf('已被使用') !== -1) {
-        localStorage.removeItem('daowen_pending_code');
-        localStorage.removeItem('daowen_pending_order');
-      }
-    }, 1000);
+    }, 500);
   }
 })();
