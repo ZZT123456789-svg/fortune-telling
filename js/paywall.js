@@ -172,32 +172,8 @@ var Paywall = {
 // 手动检查支付（PC端扫码后点击）
 Paywall._checkPayment = function() {
   var code = localStorage.getItem('daowen_pending_code');
-  var order = localStorage.getItem('daowen_pending_order');
   if (!code) { alert('未找到待兑换码，请先选择套餐支付。'); return; }
-
-  var stEl = document.getElementById('alipayStatus');
-  if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在验证支付状态...</p>';
-
-  // 如果有订单号，先查ZPay验证
-  if (order) {
-    var self = this;
-    fetch('/api/check-order?order=' + order)
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if (d.paid) {
-          self._doAutoRedeem(code);
-        } else {
-          if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⏳ 暂未检测到支付，请确认已付款后重试</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
-          else alert('暂未检测到支付记录。请确认已付款后重试。');
-        }
-      })
-      .catch(function(){
-        if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⏳ 支付验证暂不可用，请稍后重试</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新验证</button>';
-      });
-  } else {
-    if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⚠️ 未找到支付订单，请重新选择套餐支付</p>';
-    else alert('未找到支付订单，请重新支付。');
-  }
+  this._doAutoRedeem(code);
 };
 
 Paywall._doAutoRedeem = function(code) {
@@ -271,16 +247,24 @@ function showBuyContact(tier) {
   .catch(function(err) { if (loadEl) loadEl.remove(); alert('支付服务暂不可用，请稍后重试'); });
 }
 
-// ===== 支付返回：仅跳回时提示，不自动兑换 =====
+// ===== 支付返回：直接兑换（ZPay回调后自动激活） =====
 (function() {
   var code = localStorage.getItem('daowen_pending_code');
   if (code) {
-    // 不自动兑换，仅提示用户手动验证
     setTimeout(function() {
-      var stEl = document.getElementById('alipayStatus');
-      if (stEl) {
-        stEl.innerHTML = '<p style="color:var(--gold);margin:0;">📱 检测到待验证支付，请点击下方按钮验证</p>';
+      var result = Paywall.redeemCode(code.trim());
+      if (result.success) {
+        localStorage.removeItem('daowen_pending_code');
+        localStorage.removeItem('daowen_pending_order');
+        Paywall.refreshWalls();
+        Paywall._refreshModules();
+        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
+        alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
       }
-    }, 500);
+      if (result.msg && result.msg.indexOf('已被使用') !== -1) {
+        localStorage.removeItem('daowen_pending_code');
+        localStorage.removeItem('daowen_pending_order');
+      }
+    }, 1000);
   }
 })();
