@@ -20,8 +20,8 @@ var Paywall = {
   USED_CODES_KEY: 'daowen_used_codes',
 
   getBalance: function() { var b = localStorage.getItem(this.STORAGE_KEY); return b ? parseInt(b) : 0; },
-  addBalance: function(a) { var c = this.getBalance(); var bal = c + a; localStorage.setItem(this.STORAGE_KEY, bal); DaoWenAuth.saveBalance(bal); return bal; },
-  deduct: function() { var c = this.getBalance(); if (c <= 0) return false; var bal = c - 1; localStorage.setItem(this.STORAGE_KEY, bal); DaoWenAuth.saveBalance(bal); return true; },
+  addBalance: function(a) { var c = this.getBalance(); localStorage.setItem(this.STORAGE_KEY, c + a); return c + a; },
+  deduct: function() { var c = this.getBalance(); if (c <= 0) return false; localStorage.setItem(this.STORAGE_KEY, c - 1); return true; },
   hasBalance: function() { return this.getBalance() > 0; },
 
   redeemCode: function(code) {

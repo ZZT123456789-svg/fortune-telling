@@ -42,7 +42,6 @@
   <header class="header">
     <div class="header-top-right">
       <button class="redeem-btn" onclick="Paywall.openRedeem()">🎫 兑换码</button>
-      <button class="contact-btn" id="loginBtn" onclick="DaoWenAuth.openLogin()">👤 登录</button>
       <button class="contact-btn" id="contactBtn" onclick="toggleContact()">📧 联系我们</button>
       <div class="contact-popup" id="contactPopup">
         <button class="contact-close" onclick="toggleContact()">✕</button>
@@ -185,21 +184,6 @@
       <div class="tc-name">姓名分析</div>
       <div class="tc-desc">判断名字整体气质、读音顺口度和使用场景。</div>
       <div class="tc-tag">起名参考</div>
-    </div>
-  </div>
-
-  <!-- ====== 登录弹窗 ====== -->
-  <div class="tool-overlay" id="loginOverlay">
-    <div class="tool-modal">
-      <button class="modal-close" onclick="DaoWenAuth.closeLogin()">✕</button>
-      <h2 class="modal-title">👤 登录 / 注册</h2>
-      <p class="modal-desc">登录后积分云端同步，换设备不丢失</p>
-      <input type="email" id="loginEmail" class="form-input full" placeholder="邮箱地址">
-      <input type="password" id="loginPassword" class="form-input full" placeholder="密码（至少6位）">
-      <div class="btn-row">
-        <button class="btn-primary" onclick="DaoWenAuth.doLogin('signin')">🔑 登录</button>
-        <button class="btn-secondary" onclick="DaoWenAuth.doLogin('signup')">📝 注册</button>
-      </div>
     </div>
   </div>
 
@@ -742,7 +726,6 @@
     </div>
   </div>
 
-  <script src="js/supabase-auth.js"></script>
   <script src="js/paywall.js"></script>
   <script src="js/ai-chat.js"></script>
   <script src="js/bazi-db.js"></script>
