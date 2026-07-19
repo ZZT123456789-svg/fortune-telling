@@ -22,29 +22,36 @@ var DaoWenAuth = {
   },
 
   signUp: async function(email, password) {
-    var resp = await fetch(this.SUPABASE_URL + '/auth/v1/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': this.SUPABASE_KEY },
-      body: JSON.stringify({ email: email, password: password })
-    });
-    var data = await resp.json();
-    if (resp.ok && data.user) {
-      this.user = data.user; this.session = data.session;
-      localStorage.setItem('daowen_session', JSON.stringify({ user: data.user, session: data.session }));
-      this._updateUI();
-      return { success: true, msg: '注册成功！' };
+    try {
+      var resp = await fetch(this.SUPABASE_URL + '/auth/v1/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': this.SUPABASE_KEY },
+        body: JSON.stringify({ email: email, password: password })
+      });
+      var data = await resp.json();
+      // Supabase v1 signup returns access_token + user, not session
+      if (data.user) {
+        this.user = data.user;
+        if (data.access_token) this.session = { access_token: data.access_token };
+        localStorage.setItem('daowen_session', JSON.stringify({ user: data.user, session: this.session }));
+        this._updateUI();
+        return { success: true, msg: '注册成功！' };
+      }
+      return { success: false, msg: data.msg || '注册失败，请检查邮箱格式和密码长度' };
+    } catch(e) {
+      return { success: false, msg: '网络错误，请稍后重试' };
     }
-    return { success: false, msg: data.msg || '注册失败' };
   },
 
   signIn: async function(email, password) {
-    var resp = await fetch(this.SUPABASE_URL + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': this.SUPABASE_KEY },
-      body: JSON.stringify({ email: email, password: password })
-    });
-    var data = await resp.json();
-    if (resp.ok && data.access_token) {
+    try {
+      var resp = await fetch(this.SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': this.SUPABASE_KEY },
+        body: JSON.stringify({ email: email, password: password })
+      });
+      var data = await resp.json();
+    if (data.access_token) {
       var userResp = await fetch(this.SUPABASE_URL + '/auth/v1/user', {
         headers: { 'apikey': this.SUPABASE_KEY, 'Authorization': 'Bearer ' + data.access_token }
       });
@@ -55,6 +62,9 @@ var DaoWenAuth = {
       return { success: true, msg: '登录成功！' };
     }
     return { success: false, msg: data.error_description || '邮箱或密码错误' };
+    } catch(e) {
+      return { success: false, msg: '网络错误，请稍后重试' };
+    }
   },
 
   signOut: function() {
@@ -82,7 +92,7 @@ var DaoWenAuth = {
       this.closeLogin();
       if (typeof Paywall !== 'undefined') Paywall.refreshWalls();
       alert(result.msg);
-    } else { alert(result.msg); }
+    } else { alert('❌ ' + result.msg); }
   },
 
   _updateUI: function() {
