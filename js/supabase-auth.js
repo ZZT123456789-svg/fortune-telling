@@ -37,9 +37,9 @@ var DaoWenAuth = {
         this._updateUI();
         return { success: true, msg: '注册成功！' };
       }
-      return { success: false, msg: data.msg || '注册失败，请检查邮箱格式和密码长度' };
+      return { success: false, msg: data.msg || ('注册失败 HTTP' + resp.status + ': ' + JSON.stringify(data).substr(0,100)) };
     } catch(e) {
-      return { success: false, msg: '网络错误，请稍后重试' };
+      return { success: false, msg: '网络错误: ' + e.message };
     }
   },
 
@@ -75,7 +75,8 @@ var DaoWenAuth = {
 
   openLogin: function() {
     var overlay = document.getElementById('loginOverlay');
-    if (overlay) overlay.classList.add('active');
+    if (!overlay) { alert('登录弹窗未加载，请刷新页面'); return; }
+    overlay.classList.add('active');
   },
   closeLogin: function() {
     var overlay = document.getElementById('loginOverlay');
@@ -92,7 +93,7 @@ var DaoWenAuth = {
       this.closeLogin();
       if (typeof Paywall !== 'undefined') Paywall.refreshWalls();
       alert(result.msg);
-    } else { alert('❌ ' + result.msg); }
+    } else { alert('注册失败：' + (result.msg || '未知错误') + '\n\n如果是"Failed to fetch"，请检查网络连接。\n邮箱：' + email); }
   },
 
   _updateUI: function() {
