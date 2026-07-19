@@ -5,28 +5,28 @@
 
 /* --- CSS Variables --- */
 :root {
-  --bg-deep: #f5f0e8;
-  --bg-card: rgba(255,255,255,0.55);
-  --bg-input: rgba(255,255,255,0.8);
-  --gold: #8b6f3a;
-  --gold-light: #a08452;
-  --gold-pale: #b8944a;
-  --gold-dark: #5c4820;
-  --red: #c44;
-  --text: #2a2018;
-  --text-secondary: #6b5e4a;
-  --text-muted: #9a8a6a;
-  --border-subtle: rgba(0,0,0,0.06);
-  --border-medium: rgba(0,0,0,0.12);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --bg-deep: #050508;
+  --bg-card: rgba(20, 20, 30, 0.75);
+  --bg-input: rgba(30, 30, 40, 0.90);
+  --gold: #c9a56a;
+  --gold-light: #d4b87a;
+  --gold-pale: #e0c890;
+  --gold-dark: #8b6f3a;
+  --red: #d44;
+  --text: #ddd;
+  --text-secondary: #999;
+  --text-muted: #666;
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-medium: rgba(255,255,255,0.18);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
   --max-width: 700px;
-  --font-body: "PingFang SC", "Microsoft YaHei", "KaiTi", "STKaiti", sans-serif;
-  --font-display: "KaiTi", "STKaiti", "Noto Serif SC", serif;
-  --transition: 0.35s cubic-bezier(0.25,0.8,0.25,1.2);
-  --shadow-card: 0 2px 16px rgba(0,0,0,0.06);
-  --shadow-glow: 0 0 24px rgba(140,110,60,0.12);
+  --font-body: "KaiTi", "STKaiti", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-display: "KaiTi", "STKaiti", "Noto Serif SC", "Georgia", serif;
+  --transition: 0.3s ease;
+  --shadow-card: 0 4px 30px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 20px rgba(201,165,106,0.15);
 }
 
 /* --- Reset --- */
@@ -34,15 +34,12 @@
 html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
 body {
   font-family: var(--font-body);
-  background: #f5f0e8;
+  background: #050508;
   color: var(--text);
   min-height: 100vh;
   line-height: 1.7;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(180,160,130,0.2) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(160,140,110,0.15) 0%, transparent 60%);
 }
 
 /* ========== SPLASH - 水墨画风格 ========== */
@@ -2033,37 +2030,6 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   0% { transform: translateX(-100%); }
   100% { transform: translateX(500%); }
 }
-
-/* ========== iOS毛玻璃卡片+3D鼠标跟随时效 ========== */
-.tools-grid .tool-card {
-  background: rgba(255,255,255,0.45) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255,255,255,0.5) !important;
-  border-radius: 16px !important;
-  cursor: pointer !important;
-  transition: all 0.4s cubic-bezier(0.25,0.8,0.25,1.2) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-.tools-grid .tool-card::after {
-  content: '' !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(201,165,106,0.2) 0%, rgba(200,200,200,0.05) 40%, transparent 70%) !important;
-  opacity: 0 !important;
-  transition: opacity 0.4s !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-  border-radius: inherit !important;
-}
-.tools-grid .tool-card:hover::after { opacity: 1 !important; }
-.tools-grid .tool-card:hover {
-  border-color: rgba(201,165,106,0.6) !important;
-  transform: translateY(-6px) scale(1.02) !important;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04) !important;
-}
-.tools-grid .tool-card > * { position: relative !important; z-index: 1 !important; }
 
 /* ========== DISCLAIMER ========== */
 .disclaimer-section {
