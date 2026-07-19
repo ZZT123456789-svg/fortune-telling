@@ -84,6 +84,7 @@ var DaoWenAuth = {
   },
 
   doLogin: function(mode) {
+    alert('doLogin被调用, mode=' + mode); // 调试
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value.trim();
     if (!email || !password) { alert('请输入邮箱和密码'); return; }
@@ -119,12 +120,5 @@ var DaoWenAuth = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    DaoWenAuth.init();
-    // 手动绑定登录弹窗按钮事件（避免inline onclick问题）
-    var signinBtn = document.querySelector('#loginOverlay .btn-primary');
-    var signupBtn = document.querySelector('#loginOverlay .btn-secondary');
-    if (signinBtn) signinBtn.onclick = function() { DaoWenAuth.doLogin('signin'); };
-    if (signupBtn) signupBtn.onclick = function() { DaoWenAuth.doLogin('signup'); };
-  }, 500);
+  setTimeout(function() { DaoWenAuth.init(); }, 500);
 });
