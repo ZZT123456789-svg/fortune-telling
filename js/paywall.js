@@ -172,8 +172,31 @@ var Paywall = {
 // 手动检查支付（PC端扫码后点击）
 Paywall._checkPayment = function() {
   var code = localStorage.getItem('daowen_pending_code');
+  var order = localStorage.getItem('daowen_pending_order');
   if (!code) { alert('未找到待兑换码，请先选择套餐支付。'); return; }
-  this._doAutoRedeem(code);
+
+  var stEl = document.getElementById('alipayStatus');
+  if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在验证支付状态...</p>';
+
+  var self = this;
+  if (order) {
+    fetch('/api/check-order?order=' + order)
+      .then(function(r){return r.json();})
+      .then(function(d) {
+        if (d.paid) {
+          self._doAutoRedeem(code);
+        } else {
+          if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">❌ 未检测到支付记录，请确认已付款后重试</p><p style="font-size:0.8rem;color:var(--text-muted);">'+(d.msg||'')+'</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
+          else alert('❌ 未检测到支付记录。请确认已付款后重试。');
+        }
+      })
+      .catch(function() {
+        if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">❌ 支付验证暂不可用</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
+        else alert('❌ 验证服务暂不可用，请联系客服。');
+      });
+  } else {
+    if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⚠️ 未找到支付订单，请重新选择套餐支付</p>';
+  }
 };
 
 Paywall._doAutoRedeem = function(code) {
