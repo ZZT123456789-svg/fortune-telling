@@ -5,28 +5,28 @@
 
 /* --- CSS Variables --- */
 :root {
-  --bg-deep: #e8e2d6;
-  --bg-card: rgba(255, 252, 245, 0.78);
-  --bg-input: rgba(255, 252, 245, 0.90);
-  --gold: #8b6f3a;
-  --gold-light: #a08452;
-  --gold-pale: #5c4a28;
-  --gold-dark: #4a3a1e;
-  --red: #a8323a;
-  --text: #2a2218;
-  --text-secondary: #5c4e3a;
-  --text-muted: #8a7a60;
-  --border-subtle: rgba(100, 80, 50, 0.15);
-  --border-medium: rgba(100, 80, 50, 0.40);
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --bg-deep: #050508;
+  --bg-card: rgba(20, 20, 30, 0.75);
+  --bg-input: rgba(30, 30, 40, 0.90);
+  --gold: #c9a56a;
+  --gold-light: #d4b87a;
+  --gold-pale: #e0c890;
+  --gold-dark: #8b6f3a;
+  --red: #d44;
+  --text: #ddd;
+  --text-secondary: #999;
+  --text-muted: #666;
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-medium: rgba(255,255,255,0.18);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
   --max-width: 700px;
   --font-body: "KaiTi", "STKaiti", "Microsoft YaHei", "PingFang SC", sans-serif;
   --font-display: "KaiTi", "STKaiti", "Noto Serif SC", "Georgia", serif;
-  --transition: 0.28s ease;
-  --shadow-card: 0 4px 20px rgba(0,0,0,0.12);
-  --shadow-glow: 0 0 16px rgba(140,110,60,0.20);
+  --transition: 0.3s ease;
+  --shadow-card: 0 4px 30px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 20px rgba(201,165,106,0.15);
 }
 
 /* --- Reset --- */
@@ -34,15 +34,12 @@
 html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
 body {
   font-family: var(--font-body);
-  background: #e8e2d6;
+  background: #050508;
   color: var(--text);
   min-height: 100vh;
   line-height: 1.7;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(180,160,130,0.25) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 80%, rgba(160,150,130,0.2) 0%, transparent 60%);
 }
 
 /* ========== SPLASH - 水墨画风格 ========== */
@@ -1340,15 +1337,32 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
 }
 .tool-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 1.2rem 1rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.28s ease;
+  transition: all 0.35s cubic-bezier(0.25,0.8,0.25,1.2);
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 800px;
 }
+.tool-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(201,165,106,0.1) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tool-card:hover::before { opacity: 1; }
+.tool-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(201,165,106,0.1);
 .tool-card:hover {
   border-color: var(--gold);
   transform: translateY(-3px);
