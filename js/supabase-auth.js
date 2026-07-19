@@ -83,17 +83,24 @@ var DaoWenAuth = {
     if (overlay) overlay.classList.remove('active');
   },
 
-  doLogin: async function(mode) {
+  doLogin: function(mode) {
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value.trim();
     if (!email || !password) { alert('请输入邮箱和密码'); return; }
     if (password.length < 6) { alert('密码至少6位'); return; }
-    var result = mode === 'signup' ? await this.signUp(email, password) : await this.signIn(email, password);
-    if (result.success) {
-      this.closeLogin();
-      if (typeof Paywall !== 'undefined') Paywall.refreshWalls();
-      alert(result.msg);
-    } else { alert('注册失败：' + (result.msg || '未知错误') + '\n\n如果是"Failed to fetch"，请检查网络连接。\n邮箱：' + email); }
+    var self = this;
+    var promise = mode === 'signup' ? this.signUp(email, password) : this.signIn(email, password);
+    promise.then(function(result) {
+      if (result.success) {
+        self.closeLogin();
+        if (typeof Paywall !== 'undefined') Paywall.refreshWalls();
+        alert(result.msg);
+      } else {
+        alert('失败：' + (result.msg || '未知错误'));
+      }
+    }).catch(function(e) {
+      alert('网络错误：' + e.message);
+    });
   },
 
   _updateUI: function() {
