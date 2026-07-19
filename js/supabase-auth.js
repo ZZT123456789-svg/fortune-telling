@@ -84,6 +84,7 @@ var DaoWenAuth = {
   },
 
   doLogin: function(mode) {
+    alert('doLogin被调用, mode=' + mode); // 调试
     var email = document.getElementById('loginEmail').value.trim();
     var password = document.getElementById('loginPassword').value.trim();
     if (!email || !password) { alert('请输入邮箱和密码'); return; }
