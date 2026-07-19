@@ -4,7 +4,7 @@
  */
 
 
-// ============ 水墨水中太极 · 深黑背景 ============
+// ============ 混沌太极 · 水墨泼溅 · 巨物感 ============
 class StarBackground {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
@@ -99,80 +99,72 @@ class StarBackground {
   }
 
   animate() {
-    this.time += 0.01;
+    this.time += 0.012;
     var ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
     var cx = this.cx, cy = this.cy, minD = Math.min(w, h);
 
-    // 深黑底色 — 水墨拖尾
-    ctx.fillStyle = 'rgba(5,5,8,0.35)';
+    // 水墨纸纹 — 灰白基底+不规则墨迹
+    ctx.fillStyle = 'rgba(245,240,232,0.25)';
     ctx.fillRect(0, 0, w, h);
 
-    // === 水中涟漪层 ===
+    // === 水墨泼溅 — 随机大块墨迹 ===
     ctx.save();
-    for (var layer = 0; layer < 4; layer++) {
-      var amp = 20 + layer * 15;
-      var freq = 0.01 + layer * 0.005;
-      var spd = this.time * (0.4 + layer * 0.25);
-      var alpha = 0.015;
-
-      ctx.beginPath();
-      for (var x = 0; x <= w; x += 4) {
-        var y = cy + Math.sin(x*freq+spd)*amp + Math.sin(x*0.015+spd*1.5)*amp*0.4;
-        x === 0 ? ctx.moveTo(0,0) : ctx.lineTo(x, y);
-      }
-      ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
-      ctx.fillStyle = 'rgba(80,80,100,' + (alpha*1.5) + ')';
-      ctx.fill();
+    for (var s = 0; s < 5; s++) {
+      var sx = cx + Math.sin(this.time*0.3 + s*2.1) * minD*0.4;
+      var sy = cy + Math.cos(this.time*0.25 + s*1.7) * minD*0.3;
+      var sr = minD * (0.08 + s*0.04);
+      var grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+      grad.addColorStop(0, 'rgba(0,0,0,' + (0.04 + Math.sin(this.time+s)*0.02) + ')');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.02)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
 
-    // === 环形水波 ===
-    for (var i = 0; i < 6; i++) {
-      var br = minD * 0.15 + i * minD * 0.09;
-      var wr = br + Math.sin(this.time*0.4+i)*20;
-      ctx.beginPath(); ctx.arc(cx, cy, wr, 0, Math.PI*2);
-      ctx.strokeStyle = 'rgba(120,120,140,' + (0.06-i*0.008) + ')';
-      ctx.lineWidth = 1; ctx.stroke();
+    // === 旋转气流层（黑白双旋） ===
+    for (var l = 0; l < 3; l++) {
+      var spiralR = minD * (0.25 + l*0.15);
+      ctx.beginPath();
+      for (var a = 0; a < Math.PI*2; a += 0.05) {
+        var r = spiralR + Math.sin(a*3 + this.time*0.5 + l) * minD*0.1;
+        var px = cx + Math.cos(a + this.time*0.15) * r;
+        var py = cy + Math.sin(a + this.time*0.15) * r;
+        a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(' + (l===0?0:40) + ',' + (l===0?0:40) + ',' + (l===0?0:40) + ',' + (0.04-l*0.01) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
 
-    // === 鼠标涟漪 ===
-    for (var ri = this.ripples.length-1; ri >= 0; ri--) {
-      var rip = this.ripples[ri];
-      rip.r += 2;
-      rip.life -= 0.015;
-      if (rip.life <= 0) { this.ripples.splice(ri,1); continue; }
-      ctx.beginPath(); ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI*2);
-      ctx.strokeStyle = 'rgba(180,180,200,' + (rip.life*0.4) + ')';
-      ctx.lineWidth = 1.5; ctx.stroke();
-    }
-
-    // === 水墨太极（水中版）===
-    var taiChiR = minD * 0.18;
-    var rotAngle = this.time * 0.12; // 非常慢
+    // === 巨物太极（大尺寸、强对比） ===
+    var taiChiR = minD * 0.22;
+    var rotAngle = this.time * 0.1;
     this._drawInkTaiChi(ctx, cx, cy, taiChiR, rotAngle);
 
-    // === 外围水墨光圈 ===
-    for (var j = 0; j < 3; j++) {
-      var gr = taiChiR * (1.2 + j*0.25);
+    // === 外围双环（水墨笔触） ===
+    for (var j = 0; j < 4; j++) {
+      var gr = taiChiR * (1.15 + j*0.2);
       ctx.beginPath(); ctx.arc(cx, cy, gr, 0, Math.PI*2);
-      ctx.strokeStyle = 'rgba(100,100,120,' + (0.15-j*0.04) + ')';
-      ctx.lineWidth = 1.5 - j*0.3;
-      ctx.setLineDash([8+j*4, 12+j*6]);
+      ctx.strokeStyle = 'rgba(0,0,0,' + (0.12-j*0.025) + ')';
+      ctx.lineWidth = 2 - j*0.3;
+      ctx.setLineDash([12+j*6, 16+j*8]);
       ctx.stroke();
     }
     ctx.setLineDash([]);
 
-    // === 散落墨点 ===
-    for (var k = 0; k < 40; k++) {
+    // === 飞溅墨点 ===
+    for (var k = 0; k < 60; k++) {
       var seed = k * 137.5;
-      var orbR = taiChiR * 1.3 + (seed % minD * 0.25);
-      var pAngle = this.time * 0.08 + seed;
-      var px = cx + Math.cos(pAngle)*orbR;
-      var py = cy + Math.sin(pAngle)*orbR*0.65;
-      var pSize = 0.8 + (k%4)*0.6;
-      var alpha = 0.1 + Math.sin(this.time*0.6+k)*0.05;
+      var orbR = taiChiR * 1.2 + (seed % minD * 0.3);
+      var pAngle = this.time * 0.06 + seed;
+      var px = cx + Math.cos(pAngle)*orbR + Math.sin(this.time*0.4+k)*minD*0.05;
+      var py = cy + Math.sin(pAngle)*orbR*0.6 + Math.cos(this.time*0.35+k)*minD*0.04;
+      var pSize = 0.5 + (k%5)*0.7;
+      var alpha = 0.08 + Math.sin(this.time*0.5+k)*0.04;
       ctx.beginPath(); ctx.arc(px, py, pSize, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(150,150,180,' + Math.max(0,alpha) + ')';
+      ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0,alpha) + ')';
       ctx.fill();
     }
 
