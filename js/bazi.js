@@ -490,20 +490,9 @@ var BaziModule = {
     // 滚动到结果
     setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
 
-    // 排盘免费 + 解析付费
-    if (Paywall.hasBalance()) {
-      Paywall.deduct();
-      ctn.innerHTML = freeHtml + paidHtml;
-    } else {
-      ctn.innerHTML = freeHtml +
-        '<div style="text-align:center;padding:1rem;margin:0.5rem 0;background:rgba(0,0,0,0.04);border-radius:8px;border:1px dashed var(--border-subtle);">' +
-          '<p style="font-size:2rem;margin:0;">🔒</p>' +
-          '<p style="color:var(--text-secondary);font-weight:bold;margin:0.3rem 0;">完整命理解析</p>' +
-          '<p style="font-size:0.8rem;color:var(--text-muted);">旺衰判定 · 调候用神 · 十神布局 · 格局层次 · 大运走势 · 事业财运婚姻健康</p>' +
-          '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.5rem 2rem;margin-top:0.3rem;">🎫 购买解读次数</button>' +
-          '<p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.3rem;">已有兑换码？<a href=\"javascript:Paywall.openRedeem()\" style=\"color:var(--gold);\">点此兑换</a></p>' +
-        '</div>';
-    }
+    // 全付费墙
+    ctn.innerHTML = freeHtml;
+    Paywall.blockAll('baziResult');
     } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
   _renderDual: function(a, b, compat) {
