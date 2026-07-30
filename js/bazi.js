@@ -442,6 +442,17 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4>📜 《滴天髓》' + r.dayMaster + '体性</h4>' +
         '<p style=\"font-family:KaiTi,serif;font-size:1.05rem;color:var(--gold-pale);line-height:1.8;\">' + dts + '</p>' +
         '<p>' + dtsBH + '</p></div>' +
+      // 藏干表
+      (function(){
+        var hg='';
+        var zhiNames=['年支','月支','日支','时支'];
+        var allZhi=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi];
+        for (var zi=0;zi<4;zi++) {
+          var hidden = BaziClassics._zhiHidden(allZhi[zi]);
+          hg += '<tr><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+zhiNames[zi]+'</td><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+allZhi[zi]+'</td><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+hidden.map(function(h){return h+'('+(self._getShiShen(r.dayMaster,h)||'—')+')';}).join(' ')+'</td></tr>';
+        }
+        return '<div class=\"analysis-card\"><h4>📦 地支藏干</h4><table style=\"width:100%;font-size:0.82rem;\"><tr><th>位置</th><th>地支</th><th>藏干(十神)</th></tr>'+hg+'</table></div>';
+      })() +
       '<div class=\"analysis-card\"><h4>🔗 十神（以日主' + r.dayMaster + '为中心）</h4>' +
         '<table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div>' +
       '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
