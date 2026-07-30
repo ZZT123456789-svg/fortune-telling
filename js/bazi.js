@@ -246,10 +246,15 @@ var BaziModule = {
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     var trueHour = ts.hour;
 
-    // 日柱不换日（以0点为界），22-23均为亥时
-    var yearP = this._getYearPillar(year, month, day, trueHour);
-    var monthP = this._getMonthPillar(yearP.ganIdx, month, day, trueHour, year);
-    var dayP = this._getDayPillar(year, month, day);
+    // 子时换日：真太阳时≥23点，日柱算次日
+    var calcDay = day, calcMonth = month, calcYear = year;
+    if (trueHour >= 23) {
+      var nextDate = new Date(year, month - 1, day + 1);
+      calcYear = nextDate.getFullYear(); calcMonth = nextDate.getMonth() + 1; calcDay = nextDate.getDate();
+    }
+    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay, trueHour);
+    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay, trueHour, calcYear);
+    var dayP = this._getDayPillar(calcYear, calcMonth, calcDay);
     var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
 
     var dayMaster = dayP.gan;
