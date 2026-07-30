@@ -490,9 +490,15 @@ var BaziModule = {
     // 滚动到结果
     setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
 
-    // 全付费墙
-    ctn.innerHTML = freeHtml;
-    Paywall.blockAll('baziResult');
+    // 全付费墙：有余额显示内容+AI解读
+    if (Paywall.hasBalance()) {
+      Paywall.deduct();
+      ctn.innerHTML = freeHtml + paidHtml;
+      self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
+    } else {
+      ctn.innerHTML = freeHtml;
+      Paywall.blockAll('baziResult');
+    }
     } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
   _renderDual: function(a, b, compat) {
