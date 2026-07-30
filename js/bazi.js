@@ -697,7 +697,19 @@ var BaziModule = {
     h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4>📋 四柱逐位解读</h4>'+pA+'<p style=\"font-size:0.85rem;color:var(--text-secondary);\">'+zR+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>📊 旺衰判定</h4><p>日主<b>'+dm+'('+de+')</b>，生于<b>'+sz[mx]+'月</b>（'+mN+'季）。同元素'+bs.same+'个，生扶'+bs.sheng+'个。判定：<b style=\"color:var(--gold);font-size:1.2rem;\">'+bs.level+'</b></p><p>'+bs.desc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>🔗 十神布局</h4><table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>'+ssHtml+'</table><p style=\"margin-top:0.4rem;\">'+iA+'</p></div>';
-    h+='<div class=\"analysis-card\"><h4>⚖️ 调候与用神</h4><p>日主'+dm+'生于'+sz[mx]+'月，调候：<b>'+th.yongShen+'</b>。喜用神：'+bs.level.indexOf('强')>=0?'克泄耗为主。':'生扶为主。'+'</p></div>';
+    // 调候第一优先级（穷通宝鉴）
+    var tiaoHouFirst = th.yongShen ? th.yongShen.charAt(0) : '';
+    var tiaoHouName = {甲:'甲木',乙:'乙木',丙:'丙火',丁:'丁火',戊:'戊土',己:'己土',庚:'庚金',辛:'辛金',壬:'壬水',癸:'癸水'};
+    var tiaoHouDesc = '';
+    if (tiaoHouFirst && tiaoHouName[tiaoHouFirst]) {
+      tiaoHouDesc = '《穷通宝鉴》调候第一优先：<b>'+tiaoHouName[tiaoHouFirst]+'</b>（'+th.yongShen+'）。';
+      if (bs.level.indexOf('强')>=0) tiaoHouDesc += ' 日主身强，调候与克泄耗并行不悖。忌用与调候相反的元素。';
+      else tiaoHouDesc += ' 日主身弱，调候为主，兼顾扶身。';
+    } else {
+      tiaoHouDesc = '日主'+dm+'生于'+sz[mx]+'月，调候：'+th.yongShen+'。喜用神：'+(bs.level.indexOf('强')>=0?'克泄耗为主。':'生扶为主。');
+    }
+
+    h+='<div class=\"analysis-card\"><h4>⚖️ 调候与用神（穷通宝鉴·第一优先级）</h4><p>'+tiaoHouDesc+'</p></div>';
     h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4>🏛️ 子平法格局</h4><p>格局：<b style=\"color:var(--gold);font-size:1.1rem;\">'+gj.name+'</b></p><p>月令十神为<b>'+gj.ss+'</b>，格局层次：<b>'+gj.level+'</b> — '+gj.desc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>🏛️ 格局</h4><p>月令格局分析，层次：<b style=\"color:var(--gold);\">'+pt.level+'</b></p><p>'+pt.levelDesc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💼 事业</h4><p>'+ca+'</p><p style=\"font-size:0.85rem;\">🧭 方位：'+bd+' | 🏭 行业：'+ind+'</p></div>';
@@ -768,28 +780,43 @@ var BaziModule = {
     return {level: level, support: support, control: control, desc: desc, advice: advice};
   },
 
-  // ==== 喜用神判断 ====
+  // ==== 喜用神判断（调候优先于身强弱） ====
   _getFavorableElements: function(r, bodyStrength) {
-    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
-    var keMap = {木:'金',火:'水',土:'木',金:'火',水:'土'};
-
-    var favorable = [], unfavorable = [];
     var dm = r.dmElement;
+    var shengMap = {木:'水',火:'木',土:'火',金:'土',水:'金'};
+    var shengOut = {木:'火',火:'土',土:'金',金:'水',水:'木'};
+    var keOut = {木:'土',火:'金',土:'水',金:'木',水:'火'};
 
-    if (bodyStrength.level.indexOf('强') !== -1) {
-      // 身强喜克泄耗: 官杀(克我), 食伤(我生), 财星(我克)
-      favorable.push(keMap[dm]); // 官杀
-      var shengOut = {木:'火',火:'土',土:'金',金:'水',水:'木'};
-      favorable.push(shengOut[dm]); // 食伤
-      var keOut = {木:'土',火:'金',土:'水',金:'木',水:'火'};
-      favorable.push(keOut[dm]); // 财星
-    } else {
-      // 身弱喜生扶: 印星(生我), 比劫(同我)
-      favorable.push(shengMap[dm]); // 印星
-      favorable.push(dm); // 比劫
+    var favorable = [];
+
+    // 调候优先（从穷通宝鉴取）
+    var tiaoHouStr = BaziClassics.qiongTongBaoJian[(r.monthP.zhiIdx>=2?((r.monthP.zhiIdx-1)%12+1):(r.monthP.zhiIdx+11))]||{};
+    // Handle the month mapping - the getTiaoHou already handles this
+    var th = BaziClassics.getTiaoHou(r.dayMaster, r.monthP.zhiIdx >= 2 ? ((r.monthP.zhiIdx-1)%12+1) : (r.monthP.zhiIdx+11));
+    if (th && th.yongShen) {
+      // Parse tiaoHou priorities
+      var thChars = th.yongShen.split('');
+      var elemMap = {甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+      thChars.forEach(function(c) {
+        var e = elemMap[c];
+        if (e && favorable.indexOf(e) < 0) favorable.push(e);
+      });
     }
 
-    return {favorable: favorable, unfavorable: unfavorable};
+    // 身强弱补充
+    if (bodyStrength.level.indexOf('强') !== -1) {
+      // 克泄耗
+      [keOut[dm], shengOut[dm]].forEach(function(e) {
+        if (e && favorable.indexOf(e) < 0) favorable.push(e);
+      });
+    } else {
+      // 生扶
+      [shengMap[dm], dm].forEach(function(e) {
+        if (e && favorable.indexOf(e) < 0) favorable.push(e);
+      });
+    }
+
+    return {favorable: favorable, unfavorable: []};
   },
 
   // ==== 动态事业分析（基于实际十神+五行+旺衰） ====
