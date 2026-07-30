@@ -458,6 +458,8 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
+    var geju = this._getGeJu(r);
+
     // === AI深度解读(优先) 或 规则解读(降级) ===
     var paidHtml = '';
     if (Paywall.hasBalance()) {
