@@ -460,7 +460,7 @@ var BaziModule = {
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
     } else {
       // 规则解读(降级)
-      paidHtml = self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
+      paidHtml = self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     }
 
 
@@ -565,7 +565,7 @@ var BaziModule = {
   },
 
   /** 调用AI生成深度解读 */
-  _callAIReading: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na) {
+  _callAIReading: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj) {
     var self = this;
     var chart = {
       year: r.yearP.gan+r.yearP.zhi, month: r.monthP.gan+r.monthP.zhi,
@@ -597,17 +597,50 @@ var BaziModule = {
         container.innerHTML = '<div class="analysis-card" style="border-left:3px solid #7c3aed;"><h4>🤖 AI深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由Claude AI基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
       } else {
         // AI失败，降级到规则解读
-        container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na);
+        container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj);
       }
     })
     .catch(function(){
       var container = document.getElementById('aiReadingContainer');
-      if (container) container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na);
+      if (container) container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj);
     });
   },
 
+  /** 子平法格局判断（月令十神定格） */
+  _getGeJu: function(r) {
+    var dm=r.dayMaster, allG=[r.yearP.gan,r.monthP.gan,r.dayP.gan,r.hourP.gan];
+    var mG=allG[1]; // 月干
+    var mZ=r.monthP.zhi; // 月支
+    var mzIdx=r.monthP.zhiIdx;
+    var ss=this._getShiShen(dm, mG);
+
+    // 月令十神定格
+    var geju='', level='', desc='';
+    var gejuNames={正官:'正官格',七杀:'七杀格',正印:'正印格',偏印:'偏印格',食神:'食神格',伤官:'伤官格',正财:'正财格',偏财:'偏财格',比肩:'建禄格',劫财:'月刃格'};
+
+    if (ss&&gejuNames[ss]) geju=gejuNames[ss];
+    else geju='月令' + mZ + '格';
+
+    // 格局层次判断
+    var hasCai=allG.some(function(g){var s2=this._getShiShen(dm,g);return s2==='正财'||s2==='偏财';}.bind(this));
+    var hasGuan=allG.some(function(g){var s2=this._getShiShen(dm,g);return s2==='正官'||s2==='七杀';}.bind(this));
+    var hasYin=allG.some(function(g){var s2=this._getShiShen(dm,g);return s2==='正印'||s2==='偏印';}.bind(this));
+    var hasShiShang=allG.some(function(g){var s2=this._getShiShen(dm,g);return s2==='食神'||s2==='伤官';}.bind(this));
+
+    var score=0;
+    if (hasCai&&hasGuan) score+=2;
+    if (hasYin&&hasGuan) score+=1;
+    if (hasShiShang&&hasCai) score+=1;
+
+    if (score>=2) {level='上等';desc='格局清正，财官印食配合有情，人生层次较高，有成就大事业的基础。';}
+    else if (score>=1) {level='中等';desc='格局有成，但需大运配合方能发挥潜力。后天努力可以弥补先天不足。';}
+    else {level='平常';desc='格局一般，但平凡中见真章。找准适合自己的方向，厚积薄发。';}
+
+    return{name:geju,level:level,desc:desc,ss:ss,score:score};
+  },
+
   /** 生成独一无二的深层分析 */
-  _buildDeepAnalysis: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na) {
+  _buildDeepAnalysis: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj) {
     var sz=this.diZhi, mx=r.monthP.zhiIdx, allG=[r.yearP.gan,r.monthP.gan,r.dayP.gan,r.hourP.gan];
     var allZ=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi];
     var wx=r.wxCount, dm=r.dayMaster, de=r.dmElement;
@@ -665,6 +698,7 @@ var BaziModule = {
     h+='<div class=\"analysis-card\"><h4>📊 旺衰判定</h4><p>日主<b>'+dm+'('+de+')</b>，生于<b>'+sz[mx]+'月</b>（'+mN+'季）。同元素'+bs.same+'个，生扶'+bs.sheng+'个。判定：<b style=\"color:var(--gold);font-size:1.2rem;\">'+bs.level+'</b></p><p>'+bs.desc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>🔗 十神布局</h4><table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>'+ssHtml+'</table><p style=\"margin-top:0.4rem;\">'+iA+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>⚖️ 调候与用神</h4><p>日主'+dm+'生于'+sz[mx]+'月，调候：<b>'+th.yongShen+'</b>。喜用神：'+bs.level.indexOf('强')>=0?'克泄耗为主。':'生扶为主。'+'</p></div>';
+    h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4>🏛️ 子平法格局</h4><p>格局：<b style=\"color:var(--gold);font-size:1.1rem;\">'+gj.name+'</b></p><p>月令十神为<b>'+gj.ss+'</b>，格局层次：<b>'+gj.level+'</b> — '+gj.desc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>🏛️ 格局</h4><p>月令格局分析，层次：<b style=\"color:var(--gold);\">'+pt.level+'</b></p><p>'+pt.levelDesc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💼 事业</h4><p>'+ca+'</p><p style=\"font-size:0.85rem;\">🧭 方位：'+bd+' | 🏭 行业：'+ind+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💰 财运</h4><p>'+caT+'</p></div>';
