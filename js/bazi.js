@@ -442,6 +442,8 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4>📜 《滴天髓》' + r.dayMaster + '体性</h4>' +
         '<p style=\"font-family:KaiTi,serif;font-size:1.05rem;color:var(--gold-pale);line-height:1.8;\">' + dts + '</p>' +
         '<p>' + dtsBH + '</p></div>' +
+      '<div class=\"analysis-card\"><h4>🔗 十神（以日主' + r.dayMaster + '为中心）</h4>' +
+        '<table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div>' +
       '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
