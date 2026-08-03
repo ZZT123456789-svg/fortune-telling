@@ -67,6 +67,20 @@ var DaoWenAuth = {
     }
   },
 
+  resetPassword: function() {
+    var email = document.getElementById('loginEmail').value.trim();
+    if (!email) { alert('请先输入邮箱地址'); return; }
+    var self = this;
+    fetch(this.SUPABASE_URL + '/auth/v1/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': this.SUPABASE_KEY },
+      body: JSON.stringify({ email: email })
+    }).then(function(r){return r.json();}).then(function(d){
+      if (d.msg) alert('发送失败: ' + d.msg);
+      else alert('✅ 重置密码邮件已发送到 ' + email + '，请查收邮件。');
+    }).catch(function(){ alert('网络错误，请稍后重试。'); });
+  },
+
   signOut: function() {
     this.user = null; this.session = null;
     localStorage.removeItem('daowen_session');
