@@ -55,23 +55,18 @@ var Paywall = {
     var el = document.getElementById(containerId);
     if (!el) return;
     if (this.hasBalance()) { this.deduct(); return true; }
-
-    // 先清掉旧遮盖
     var old = el.querySelector('.paywall-block');
     if (old) old.remove();
-
+    el.style.position = 'relative';
     var block = document.createElement('div');
     block.className = 'paywall-block';
+    block.setAttribute('style','position:absolute;top:0;left:0;right:0;bottom:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
     block.innerHTML =
-      '<div style="text-align:center;padding:0.6rem 2rem 2rem 2rem;">' +
-        '<div style="font-size:3rem;">🔒</div>' +
-        '<p style="color:#fff;font-weight:bold;font-size:1.1rem;margin:0.3rem 0;">付费解读内容</p>' +
-        '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>' +
-        '<button class="btn-primary" onclick="Paywall.openShop()" style="width:auto;padding:0.6rem 2rem;margin-top:0.5rem;font-size:1rem;">🎫 购买解读次数</button>' +
-        '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>' +
-      '</div>';
-    el.style.position = 'relative';
-    el.style.minHeight = '180px';
+      '<div><div style="font-size:3rem;">🔒</div>'+
+      '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
+      '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
+      '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:0.6rem 2rem;margin-top:0.5rem;font-size:1rem;">🎫 购买解读次数</button>'+
+      '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:#c9a56a;">点此兑换</a></p></div>';
     el.appendChild(block);
     return false;
   },
