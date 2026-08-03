@@ -508,7 +508,7 @@ var BaziModule = {
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     } else {
       ctn.innerHTML = fullHtml +
-        '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.97);z-index:999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;border-radius:4px;min-height:200px;">'+
+        '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;">'+
           '<div><div style="font-size:3rem;">🔒</div>'+
           '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
           '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
