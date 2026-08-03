@@ -500,12 +500,22 @@ var BaziModule = {
     setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
 
     // 排盘免费 + AI深度解读付费
-    ctn.innerHTML = freeHtml + paidHtml;
+    // 全内容渲染 + 付费墙覆盖
+    var fullHtml = freeHtml + paidHtml;
     if (Paywall.hasBalance()) {
       Paywall.deduct();
+      ctn.innerHTML = fullHtml;
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     } else {
-      Paywall.blockAll('baziResult');
+      ctn.innerHTML = fullHtml +
+        '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;border-radius:4px;min-height:200px;">'+
+          '<div><div style="font-size:3rem;">🔒</div>'+
+          '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
+          '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
+          '<button class="btn-primary" onclick="Paywall.openShop()" style="margin-top:0.5rem;padding:0.6rem 2rem;">🎫 购买解读次数</button>'+
+          '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>'+
+          '</div></div>';
+      ctn.style.position = 'relative';
     }
     } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
