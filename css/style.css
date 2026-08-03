@@ -2012,6 +2012,14 @@ html { scrollbar-color: rgba(120,100,70,0.3) #e8e2d6; scrollbar-width: thin; }
   .ai-chat-window { width: calc(100vw - 2rem); right: 1rem; height: 60vh; }
 }
 
+/* ========== 骨架屏 ========== */
+.skeleton { background: linear-gradient(90deg, #eee 25%, #f5f0e8 50%, #eee 75%); background-size: 200% 100%; animation: skeletonPulse 1.5s ease-in-out infinite; border-radius: 4px; }
+@keyframes skeletonPulse { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+.skeleton-title { width: 60%; height: 22px; margin: 0.5rem auto; }
+.skeleton-row { width: 100%; height: 16px; margin: 0.4rem 0; }
+.skeleton-table { width: 100%; height: 120px; margin: 0.5rem 0; }
+.skeleton-card { width: 100%; height: 80px; margin: 0.5rem 0; }
+
 @keyframes loadingBar {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(500%); }

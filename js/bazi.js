@@ -378,6 +378,8 @@ var BaziModule = {
     var ctn = document.getElementById('baziResult');
     if (!ctn) { alert('排盘显示区域未找到，请刷新页面后重试'); return; }
     ctn.style.display = 'block';
+    // 骨架屏占位
+    ctn.innerHTML = '<div class=\"skeleton skeleton-title\"></div><div class=\"skeleton skeleton-table\"></div><div class=\"skeleton skeleton-table\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-row\"></div>';
 
     // 安全获取所有分析数据（任何一个出错都不影响排盘显示）
     var bodyStrength, favorableElements, careerAnalysis, bestDir, industries;
