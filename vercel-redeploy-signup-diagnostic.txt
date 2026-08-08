@@ -1,0 +1,1 @@
+Temporary deployment trigger for signup diagnostic rollout. Safe to remove after production updates.
