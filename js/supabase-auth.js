@@ -29,6 +29,7 @@ var DaoWenAuth = {
     if (this._initPromise) return this._initPromise;
     var self = this;
     this._initPromise = (async function() {
+      await self._loadRuntimeConfig();
       self._enhanceLoginUI();
       self._ensureAccountUI();
       self._bindLifecycle();
@@ -123,6 +124,28 @@ var DaoWenAuth = {
 
       return self._nativeFetch(input, requestInit);
     };
+  },
+
+  _loadRuntimeConfig: async function() {
+    try {
+      var resp = await fetch('/api/auth-config', {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      });
+      if (!resp.ok) throw new Error('auth-config HTTP ' + resp.status);
+      var data = await resp.json();
+      if (!data || !data.url || !data.anonKey) throw new Error('auth-config incomplete');
+      this.SUPABASE_URL = String(data.url).replace(/\/$/, '');
+      this.SUPABASE_KEY = String(data.anonKey);
+      this.CONFIG_SOURCE = data.source || 'vercel';
+      this.PROJECT_REF = data.projectRef || '';
+      console.info('[DaoWenAuth] Supabase config:', this.PROJECT_REF || 'unknown', this.CONFIG_SOURCE);
+      return true;
+    } catch (e) {
+      console.warn('[DaoWenAuth] 运行时 Supabase 配置读取失败，使用内置兜底配置:', e && e.message ? e.message : e);
+      return false;
+    }
   },
 
   _request: async function(path, options) {
@@ -281,13 +304,19 @@ var DaoWenAuth = {
         this._clearSession(false);
         this._updateUI();
         this._toggleResendVerification(true);
+        if (ambiguousExisting) {
+          return {
+            success: false,
+            existing: true,
+            signupState: true,
+            msg: '这个邮箱可能已经注册过。本次输入的新密码不会覆盖旧账号密码；请使用原密码登录，或点“忘记密码”重置。'
+          };
+        }
         return {
           success: true,
           pending: true,
-          ambiguous: ambiguousExisting,
-          msg: ambiguousExisting
-            ? '注册请求已处理，但没有建立可立即登录的新会话。若这个邮箱以前注册过，本次输入的密码不会覆盖原密码；请使用原密码登录，或点“忘记密码”重置。若是首次注册，请先检查验证邮件。'
-            : '注册成功，当前账号正在等待邮箱验证。注册后不能直接登录，请先打开验证邮件完成确认；验证完成后再登录。'
+          ambiguous: false,
+          msg: '注册成功，但账号还需要完成邮箱验证。请先打开验证邮件，确认后再登录。'
         };
       }
 
@@ -349,7 +378,7 @@ var DaoWenAuth = {
             msg: '这是刚注册、尚待邮箱验证的账号，不能立即登录。请先打开验证邮件完成确认，然后再点击登录。'
           };
         }
-        return { success: false, msg: this._friendlyError(result.data, '邮箱或密码错误') };
+        return { success: false, msg: this._friendlyError(result.data, '无法登录：若刚注册请先完成邮箱验证；若以前注册过，请使用原密码或点“忘记密码”重置。') };
       }
 
       this.session = result.data;
@@ -770,7 +799,7 @@ var DaoWenAuth = {
     var code = String((data && (data.code || data.error_code)) || '').toLowerCase();
     var raw = String((data && (data.msg || data.message || data.error_description || data.error)) || '').toLowerCase();
     if (code === 'email_not_confirmed' || raw.indexOf('email not confirmed') !== -1) return '邮箱尚未验证，请先查看验证邮件';
-    if (code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1) return '邮箱或密码错误';
+    if (code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1) return '无法登录：若刚注册请先完成邮箱验证；若该邮箱以前注册过，请使用原密码或点“忘记密码”重置。';
     if (raw.indexOf('user already registered') !== -1) return '该邮箱已注册，请直接登录';
     if (raw.indexOf('password') !== -1 && raw.indexOf('least') !== -1) return '密码长度不符合要求';
     if (raw.indexOf('rate') !== -1 || raw.indexOf('too many') !== -1) return '操作过于频繁，请稍后再试';

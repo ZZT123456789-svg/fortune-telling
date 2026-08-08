@@ -1,7 +1,13 @@
 const crypto = require('crypto');
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://ebdnkgfilnvfkkdvqrzu.supabase.co').replace(/\/$/, '');
-const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
+const FALLBACK_SUPABASE_URL = 'https://ebdnkgfilnvfkkdvqrzu.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6ImViZG5rZ2ZpbG52ZmtrZHZxcnp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTAxODEsImV4cCI6MjA5OTc4NjE4MX0.l3saO79tS6KOjI1w78QWWrkamO0OY8IGh38i1Yjy2Ro';
+const ENV_SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
+const ENV_SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
+const HAS_PUBLIC_SUPABASE_ENV = !!(ENV_SUPABASE_URL && ENV_SUPABASE_ANON_KEY);
+const SUPABASE_URL = (HAS_PUBLIC_SUPABASE_ENV ? ENV_SUPABASE_URL : FALLBACK_SUPABASE_URL).replace(/\/$/, '');
+const SUPABASE_ANON_KEY = HAS_PUBLIC_SUPABASE_ENV ? ENV_SUPABASE_ANON_KEY : FALLBACK_SUPABASE_ANON_KEY;
+const SUPABASE_CONFIG_SOURCE = HAS_PUBLIC_SUPABASE_ENV ? 'vercel-env' : 'repo-fallback';
 const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
 function noStore(res) {
@@ -106,6 +112,8 @@ function parseFormLike(input) {
 
 module.exports = {
   SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  SUPABASE_CONFIG_SOURCE,
   noStore,
   getBearer,
   readJson,
