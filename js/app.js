@@ -518,7 +518,7 @@ function installDaoDismissSplash() {
     setTimeout(() => {
       if (el && el.parentNode) el.parentNode.removeChild(el);
       document.body.classList.add('dao-entered');
-}, delay);
+    }, delay);
   };
 }
 
@@ -568,5 +568,4 @@ function initDaoUI() {
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
   initDaoUI();
-  initPremiumMaterialUI();
 });
