@@ -10,6 +10,7 @@ var DaoWenAuth = {
   SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViZG5rZ2ZpbG52ZmtrZHZxcnp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTAxODEsImV4cCI6MjA5OTc4NjE4MX0.l3saO79tS6KOjI1w78QWWrkamO0OY8IGh38i1Yjy2Ro',
   STORAGE_KEY: 'daowen_session_v2',
   LEGACY_STORAGE_KEY: 'daowen_session',
+  PENDING_EMAIL_KEY: 'daowen_pending_email_verification_v1',
   user: null,
   session: null,
   _busy: false,
@@ -269,14 +270,22 @@ var DaoWenAuth = {
 
       // 开启邮箱确认时，Supabase 会返回 user 但没有 access_token。
       if (data.user && !data.access_token) {
+        this._markPendingEmail(email);
         this._clearSession(false);
         this._updateUI();
-        return { success: true, pending: true, msg: '注册申请已提交，请到邮箱完成验证后再登录。' };
+        this._toggleResendVerification(true);
+        return {
+          success: true,
+          pending: true,
+          msg: '注册成功，但邮箱尚未验证。请先到邮箱点击“确认注册”链接；没收到邮件可点击下方“重新发送验证邮件”。'
+        };
       }
 
       if (data.access_token) {
         this.session = data;
         this.user = data.user || await this._fetchUser(data.access_token);
+        this._clearPendingEmail(email);
+        this._toggleResendVerification(false);
         this._saveSession();
         this._updateUI();
         this._emitAuthChanged();
@@ -299,6 +308,19 @@ var DaoWenAuth = {
         body: JSON.stringify({ email: email, password: password })
       });
       if (!result.ok || !result.data.access_token) {
+        var code = String((result.data && (result.data.code || result.data.error_code)) || '').toLowerCase();
+        var raw = String((result.data && (result.data.msg || result.data.message || result.data.error_description || result.data.error)) || '').toLowerCase();
+        var notConfirmed = code === 'email_not_confirmed' || raw.indexOf('email not confirmed') !== -1;
+        if (notConfirmed) {
+          this._markPendingEmail(email);
+          this._toggleResendVerification(true);
+          return { success: false, needsVerification: true, msg: '账号已经注册，但邮箱还没有验证。请先打开验证邮件完成确认；没收到可重新发送验证邮件。' };
+        }
+        var invalidCredentials = code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1;
+        if (invalidCredentials && this._isPendingEmail(email)) {
+          this._toggleResendVerification(true);
+          return { success: false, needsVerification: true, msg: '邮箱或密码暂时无法验证。如果这是刚注册的账号，请先完成邮箱验证；没收到邮件可重新发送。' };
+        }
         return { success: false, msg: this._friendlyError(result.data, '邮箱或密码错误') };
       }
 
@@ -307,6 +329,8 @@ var DaoWenAuth = {
         this.session.expires_at = Math.floor(Date.now() / 1000) + Number(this.session.expires_in);
       }
       this.user = result.data.user || await this._fetchUser(result.data.access_token);
+      this._clearPendingEmail(email);
+      this._toggleResendVerification(false);
       if (!this.user) {
         this._clearSession(false);
         return { success: false, msg: '登录凭证验证失败，请重新登录' };
@@ -318,6 +342,76 @@ var DaoWenAuth = {
       return { success: true, msg: '登录成功' };
     } catch (e) {
       return { success: false, msg: '网络错误，请稍后重试' };
+    }
+  },
+
+  _markPendingEmail: function(email) {
+    email = String(email || '').trim().toLowerCase();
+    if (!this._validEmail(email)) return;
+    try {
+      localStorage.setItem(this.PENDING_EMAIL_KEY, JSON.stringify({ email: email, at: Date.now() }));
+    } catch (e) {}
+  },
+
+  _getPendingEmail: function() {
+    try {
+      var raw = localStorage.getItem(this.PENDING_EMAIL_KEY);
+      if (!raw) return '';
+      var data = JSON.parse(raw);
+      if (!data || !data.email || !data.at || Date.now() - Number(data.at) > 48 * 60 * 60 * 1000) {
+        localStorage.removeItem(this.PENDING_EMAIL_KEY);
+        return '';
+      }
+      return String(data.email).toLowerCase();
+    } catch (e) {
+      try { localStorage.removeItem(this.PENDING_EMAIL_KEY); } catch (_) {}
+      return '';
+    }
+  },
+
+  _isPendingEmail: function(email) {
+    return this._getPendingEmail() === String(email || '').trim().toLowerCase();
+  },
+
+  _clearPendingEmail: function(email) {
+    var pending = this._getPendingEmail();
+    if (!email || !pending || pending === String(email).trim().toLowerCase()) {
+      try { localStorage.removeItem(this.PENDING_EMAIL_KEY); } catch (e) {}
+    }
+  },
+
+  _toggleResendVerification: function(show) {
+    var wrap = document.getElementById('loginResendVerifyWrap');
+    if (wrap) wrap.style.display = show ? 'block' : 'none';
+  },
+
+  resendVerification: async function() {
+    var emailEl = document.getElementById('loginEmail');
+    var email = emailEl && emailEl.value ? emailEl.value.trim().toLowerCase() : this._getPendingEmail();
+    if (!this._validEmail(email)) {
+      this._setStatus('请先输入注册时使用的邮箱地址', 'error');
+      return;
+    }
+
+    this._setBusy(true);
+    this._setStatus('正在重新发送验证邮件…', 'info');
+    try {
+      var redirectTo = this._baseRedirectUrl();
+      var result = await this._request('/auth/v1/resend?redirect_to=' + encodeURIComponent(redirectTo), {
+        method: 'POST',
+        body: JSON.stringify({ type: 'signup', email: email })
+      });
+      if (!result.ok) {
+        this._setStatus(this._friendlyError(result.data, '重新发送失败，请稍后再试'), 'error');
+        return;
+      }
+      this._markPendingEmail(email);
+      this._toggleResendVerification(true);
+      this._setStatus('验证邮件已重新发送，请检查收件箱和垃圾邮件。', 'success');
+    } catch (e) {
+      this._setStatus('网络错误，请稍后重试', 'error');
+    } finally {
+      this._setBusy(false);
     }
   },
 
@@ -477,6 +571,8 @@ var DaoWenAuth = {
       this._clearSession(false);
       return false;
     }
+    this._clearPendingEmail(this.user && this.user.email);
+    this._toggleResendVerification(false);
     this._saveSession();
     this._updateUI();
     this._emitAuthChanged();
@@ -610,9 +706,10 @@ var DaoWenAuth = {
   },
 
   _friendlyError: function(data, fallback) {
+    var code = String((data && (data.code || data.error_code)) || '').toLowerCase();
     var raw = String((data && (data.msg || data.message || data.error_description || data.error)) || '').toLowerCase();
-    if (raw.indexOf('invalid login credentials') !== -1) return '邮箱或密码错误';
-    if (raw.indexOf('email not confirmed') !== -1) return '邮箱尚未验证，请先查看验证邮件';
+    if (code === 'email_not_confirmed' || raw.indexOf('email not confirmed') !== -1) return '邮箱尚未验证，请先查看验证邮件';
+    if (code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1) return '邮箱或密码错误';
     if (raw.indexOf('user already registered') !== -1) return '该邮箱已注册，请直接登录';
     if (raw.indexOf('password') !== -1 && raw.indexOf('least') !== -1) return '密码长度不符合要求';
     if (raw.indexOf('rate') !== -1 || raw.indexOf('too many') !== -1) return '操作过于频繁，请稍后再试';
@@ -721,6 +818,16 @@ var DaoWenAuth = {
       oldForgot.removeAttribute('href');
       oldForgot.style.cursor = 'pointer';
     }
+
+    var resendWrap = document.createElement('div');
+    resendWrap.id = 'loginResendVerifyWrap';
+    resendWrap.style.display = this._getPendingEmail() ? 'block' : 'none';
+    resendWrap.style.margin = '0.65rem 0 0.2rem';
+    resendWrap.innerHTML = '<button type="button" class="btn-secondary" id="loginResendVerifyBtn" style="width:100%">重新发送验证邮件</button>';
+    if (row) modal.insertBefore(resendWrap, row);
+    else modal.appendChild(resendWrap);
+    var resendBtn = document.getElementById('loginResendVerifyBtn');
+    if (resendBtn) resendBtn.onclick = function() { DaoWenAuth.resendVerification(); };
 
     var status = document.createElement('div');
     status.id = 'loginStatus';
