@@ -1,0 +1,43 @@
+name: Restore pre-skeleton splash
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-pre-skeleton-splash.yml'
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore original splash timing
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('js/app.js')
+          s = p.read_text(encoding='utf-8')
+          old1 = "window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 1500);"
+          old2 = "const delay = fast ? 100 : 420;"
+          if old1 not in s:
+              raise SystemExit('Current splash timer signature not found')
+          if old2 not in s:
+              raise SystemExit('Current splash fade signature not found')
+          s = s.replace(old1, "window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);", 1)
+          s = s.replace(old2, "const delay = fast ? 120 : 760;", 1)
+          s = s.replace('约 2.6 秒自动进入。\n    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);', '约 2.6 秒自动进入。\n    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Validate no skeleton transition
+        run: |
+          node --check js/app.js
+          ! grep -q "DaoSkeleton" js/app.js
+          ! grep -q "installSkeletonTransitions" js/app.js
+          ! grep -q "showDaoSkeleton" js/app.js
+          grep -q "setTimeout(() => window.dismissSplash(), 2600)" js/app.js
+          grep -q "const delay = fast ? 120 : 760;" js/app.js
+      - name: Commit restoration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/app.js
+          git commit -m "ui: 恢复骨架屏前的水墨开场节奏 [restore-splash]"
+          git push
