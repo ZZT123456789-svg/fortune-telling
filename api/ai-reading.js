@@ -1,84 +1,76 @@
-/**
- * AI深度解读 — DeepSeek生成八字命理分析
- * 环境变量: DEEPSEEK_API_KEY
- */
-const https = require('https');
+/** AI八字深度解读：登录 + 服务端原子扣 1 次 + 失败自动退款 */
+const { noStore, readJson, verifyUser, serviceRpc, randomRequestId } = require('./_lib');
+const { callDeepSeek } = require('./_deepseek');
 
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+const COST = 1;
 
-  var apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'AI服务未配置' });
-
-  try {
-    var body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    var chart = body.chart;
-    if (!chart) return res.status(400).json({ error: '缺少八字数据' });
-
-    var prompt = buildPrompt(chart);
-    var result = await callDeepSeek(apiKey, prompt);
-    res.json({ success: true, content: result });
-  } catch (e) {
-    console.error('AI error:', e.message);
-    res.status(500).json({ error: 'AI服务暂不可用' });
-  }
-};
+function safeText(v, max) {
+  return String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max || 300);
+}
 
 function buildPrompt(c) {
-  return '你是一位精通《滴天髓》《穷通宝鉴》《子平真诠》的命理师。请为以下八字写出个性化、有深度的命理分析。\n\n' +
-    '八字：' + c.year + ' ' + c.month + ' ' + c.day + ' ' + c.hour + '\n' +
-    '日主：' + c.dm + '（五行' + c.de + '）\n' +
-    '性别：' + c.gender + ' 生肖：' + c.sx + '\n' +
-    '五行分布：' + JSON.stringify(c.wx) + '\n' +
-    '十神：' + JSON.stringify(c.ss) + '\n' +
-    '身强弱：' + c.strength + '\n' +
-    '调候用神：' + c.tiaoHou + '\n' +
-    '格局：' + c.pattern + '\n' +
-    '大运：' + JSON.stringify(c.dayun) + '\n\n' +
-    '请按以下结构输出（每段150-300字，用口语化中文）：\n\n' +
-    '## 命格总览\n用通俗的话概括这个八字的格局和人生基调。\n\n' +
-    '## 事业财运\n具体分析事业方向和财运走势。\n\n' +
-    '## 感情婚姻\n根据日支夫妻宫和十神分析感情特点。\n\n' +
-    '## 健康提示\n根据五行偏旺偏弱给出健康建议。\n\n' +
-    '## 人生建议\n给命主2-3条切实可行的建议。\n\n' +
-    '要求：引用具体干支，每条结论有命理依据，风格平实易懂。';
+  const wx = JSON.stringify(c.wx || {}).slice(0, 1000);
+  const ss = JSON.stringify(c.ss || []).slice(0, 1000);
+  const dayun = JSON.stringify(c.dayun || []).slice(0, 2000);
+  return '你是一位熟悉《滴天髓》《穷通宝鉴》《子平真诠》的传统命理文化解读助手。请只依据以下结构化八字数据进行解释，不补造缺失的出生信息。\n\n' +
+    '八字：' + safeText(c.year) + ' ' + safeText(c.month) + ' ' + safeText(c.day) + ' ' + safeText(c.hour) + '\n' +
+    '日主：' + safeText(c.dm) + '（五行' + safeText(c.de) + '）\n' +
+    '性别：' + safeText(c.gender) + ' 生肖：' + safeText(c.sx) + '\n' +
+    '五行分布：' + wx + '\n十神：' + ss + '\n身强弱：' + safeText(c.strength) +
+    '\n调候用神：' + safeText(c.tiaoHou) + '\n格局：' + safeText(c.pattern, 600) + '\n大运：' + dayun + '\n\n' +
+    '按“命格总览、事业财运、感情婚姻、健康提示、人生建议”分段输出。每条结论说明依据；保持文化体验性质，不把推断说成确定事实。健康内容只做一般生活方式提示，不作诊断。';
 }
 
-function callDeepSeek(apiKey, prompt) {
-  return new Promise(function(resolve, reject) {
-    var data = JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2000,
-      temperature: 0.7
-    });
+module.exports = async function handler(req, res) {
+  noStore(res);
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
-    var req = https.request({
-      hostname: 'api.deepseek.com',
-      path: '/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Length': Buffer.byteLength(data)
+  let debitId = '';
+  let user = null;
+  try {
+    user = await verifyUser(req);
+    if (!user) return res.status(401).json({ success: false, code: 'AUTH_REQUIRED', error: '请先登录账号' });
+
+    const body = await readJson(req);
+    const chart = body.chart;
+    if (!chart || typeof chart !== 'object' || Array.isArray(chart)) {
+      return res.status(400).json({ success: false, error: '缺少八字数据' });
+    }
+    if (JSON.stringify(chart).length > 12000) {
+      return res.status(413).json({ success: false, error: '八字数据过大' });
+    }
+
+    debitId = randomRequestId('ai-reading');
+    const debit = await serviceRpc('api_consume_credits', {
+      p_user_id: user.id,
+      p_amount: COST,
+      p_reason: 'ai-reading',
+      p_request_id: debitId
+    });
+    if (!debit || debit.success !== true) {
+      if (debit && debit.code === 'INSUFFICIENT') {
+        return res.status(402).json({ success: false, code: 'INSUFFICIENT', error: '解读次数不足', balance: Number(debit.balance || 0), cost: COST });
       }
-    }, function(response) {
-      var body = '';
-      response.on('data', function(chunk) { body += chunk; });
-      response.on('end', function() {
-        try {
-          var json = JSON.parse(body);
-          if (json.error) reject(new Error(json.error.message));
-          else resolve(json.choices[0].message.content);
-        } catch(e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
+      return res.status(409).json({ success: false, error: '扣费失败，请刷新余额后重试' });
+    }
+
+    const prompt = buildPrompt(chart);
+    const content = await callDeepSeek([{ role: 'user', content: prompt }], { maxTokens: 2200, temperature: 0.65 });
+    return res.status(200).json({ success: true, content, cost: COST, balance: Number(debit.balance || 0) });
+  } catch (e) {
+    if (user && debitId) {
+      try {
+        await serviceRpc('api_refund_credits', {
+          p_user_id: user.id,
+          p_amount: COST,
+          p_request_id: debitId,
+          p_reason: 'ai-reading-failure'
+        });
+      } catch (refundErr) {
+        console.error('[ai-reading] refund failed:', refundErr.message);
+      }
+    }
+    console.error('[ai-reading]', e.message);
+    return res.status(503).json({ success: false, error: 'AI 服务暂不可用，本次已自动退回次数' });
+  }
+};

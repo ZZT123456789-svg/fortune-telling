@@ -1,21 +1,20 @@
 /**
- * AI命理助手 — 浮窗对话
+ * AI命理助手 — 安全版浮窗对话
+ * 每次请求由 /api/ai-chat 在服务端验证登录并扣 2 次；前端不再自行判断或扣余额。
  */
 var AIChat = {
   messages: [],
   open: false,
   contextReady: false,
 
-  /** 从结果区打开AI对话（由模块调用） */
   openWithContext: function(resultContainerId) {
     this.messages = [];
     this.contextReady = false;
-    // 抓取结果文字
     var el = document.getElementById(resultContainerId);
     if (el) {
       var text = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().substring(0, 2000);
       if (text.length > 100) {
-        this.messages.push({ role: 'user', content: '以下是我的命盘/占卜结果，请记住这些数据，等我提问：\n\n' + text });
+        this.messages.push({ role: 'user', content: '以下是我的命盘/占卜结果，请只依据这些数据回答后续问题：\n\n' + text });
         this.contextReady = true;
       }
     }
@@ -23,75 +22,108 @@ var AIChat = {
   },
 
   toggle: function() {
-    if (this.contextReady || this.messages.length > 0) { this._show(); }
-    else { alert('💡 请先完成排盘或占卜，在结果区点击"🤖 问AI"按钮即可。'); }
+    if (this.contextReady || this.messages.length > 0) this._show();
+    else alert('💡 请先完成排盘或占卜，再从结果区点击“🤖 问AI”。');
   },
 
   _show: function() {
     this.open = true;
-    document.getElementById('aiChatWindow').classList.add('open');
-    document.getElementById('aiFab').style.display = 'none';
+    var win = document.getElementById('aiChatWindow');
+    var fab = document.getElementById('aiFab');
+    if (win) win.classList.add('open');
+    if (fab) fab.style.display = 'none';
     if (this.messages.length === 0) {
-      this._addMsg('assistant', '你好！我是AI命理助手。请先在命理模块中完成排盘或占卜，然后点"🤖 问AI"按钮来找我。');
+      this._addMsg('assistant', '你好！我是道问 AI 助手。请先完成排盘或占卜，再从结果区带着数据来提问。每次对话会由服务端扣除 2 次解读额度。');
     }
-    document.getElementById('aiChatInput').focus();
+    var input = document.getElementById('aiChatInput');
+    if (input) input.focus();
   },
 
   close: function() {
     this.open = false;
-    document.getElementById('aiChatWindow').classList.remove('open');
-    document.getElementById('aiFab').style.display = 'flex';
+    var win = document.getElementById('aiChatWindow');
+    var fab = document.getElementById('aiFab');
+    if (win) win.classList.remove('open');
+    if (fab) fab.style.display = 'flex';
   },
 
-  send: function() {
+  send: async function() {
     var input = document.getElementById('aiChatInput');
+    if (!input) return;
     var question = input.value.trim();
     if (!question) return;
+
+    if (!window.DaoWenAuth || !DaoWenAuth.user || !DaoWenAuth.user.id) {
+      this._addMsg('assistant', '🔐 AI 助手需要先登录账号。');
+      if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+      return;
+    }
+    if (window.Paywall && Paywall._balanceLoaded && Paywall.getBalance() < 2) {
+      this._addMsg('assistant', '🎫 当前解读次数不足。AI 助手每次需要 2 次额度。');
+      Paywall.openShop();
+      return;
+    }
+
     input.value = '';
     input.disabled = true;
-
-    // 添加用户消息
     this._addMsg('user', question);
     this.messages.push({ role: 'user', content: question });
+    var loadId = this._addMsg('assistant', '⏳ 正在生成解读...');
 
-    // 添加加载提示
-    var loadId = this._addMsg('assistant', '⏳ 思考中...');
+    try {
+      var resp = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: this.messages.slice(-10) })
+      });
+      var data = {};
+      try { data = await resp.json(); } catch (e) {}
 
-    var self = this;
-    fetch('/api/ai-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: self.messages.slice(-10) })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      // 移除加载提示
       var loadEl = document.getElementById(loadId);
       if (loadEl) loadEl.remove();
 
-      if (data.success) {
-        self._addMsg('assistant', data.content);
-        self.messages.push({ role: 'assistant', content: data.content });
+      if (resp.status === 401 || data.code === 'AUTH_REQUIRED') {
+        this._addMsg('assistant', '🔐 登录状态已失效，请重新登录后再试。');
+        if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+      } else if (resp.status === 402 || data.code === 'INSUFFICIENT') {
+        this._addMsg('assistant', '🎫 解读次数不足。AI 助手每次需要 2 次额度。');
+        if (window.Paywall) {
+          Paywall._setBalance(Number(data.balance || 0));
+          Paywall.openShop();
+        }
+      } else if (resp.ok && data.success) {
+        this._addMsg('assistant', data.content);
+        this.messages.push({ role: 'assistant', content: data.content });
+        if (window.Paywall) {
+          if (data.balance != null) Paywall._setBalance(Number(data.balance));
+          else Paywall.syncBalance(true).catch(function() {});
+        }
       } else {
-        self._addMsg('assistant', '❌ AI服务暂不可用，请稍后重试。\n请确认已在 Vercel 配置 ANTHROPIC_API_KEY。');
+        this._addMsg('assistant', '❌ ' + (data.error || 'AI 服务暂不可用，本次不会重复扣费。'));
+        if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
       }
+    } catch (e) {
+      var pending = document.getElementById(loadId);
+      if (pending) pending.remove();
+      if (e && e.code === 'AUTH_REQUIRED') {
+        this._addMsg('assistant', '🔐 请先登录账号。');
+        if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+      } else {
+        this._addMsg('assistant', '❌ 网络错误，请稍后重试。');
+      }
+      if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
+    } finally {
       input.disabled = false;
       input.focus();
-      // 滚动到底部
       var body = document.getElementById('aiChatBody');
       if (body) body.scrollTop = body.scrollHeight;
-    })
-    .catch(function() {
-      var loadEl = document.getElementById(loadId);
-      if (loadEl) loadEl.remove();
-      self._addMsg('assistant', '❌ 网络错误，请稍后重试。');
-      input.disabled = false;
-    });
+    }
   },
 
   _addMsg: function(role, text) {
     var body = document.getElementById('aiChatBody');
-    var id = 'msg_' + Date.now();
+    if (!body) return '';
+    var id = 'msg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     var div = document.createElement('div');
     div.id = id;
     div.className = 'ai-msg ' + role;

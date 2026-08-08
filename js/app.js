@@ -1,255 +1,268 @@
-﻿/**
- * 命理大全 — 主应用控制器
- * 负责导航切换、星空背景、全局状态管理
+/**
+ * 道问 — 主应用控制器
+ * 中国水墨 / 八卦视觉版
+ *
+ * 保留原文件对外 API：StarBackground、AppController、typewriter、
+ * typewriterHTML、showEl、hideEl、randomInt、randomPick、shuffle、
+ * todayStr、createRipple、initAddressCascade、toggleContact、copyContact。
+ * 不改支付、登录、命理排盘或 AI 业务逻辑。
  */
 
-
-// ============ 旋转八卦 + 水流动态背景 ============
+// ============ 水墨八卦动态背景 ============
 class StarBackground {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
+    if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
     this.time = 0;
+    this.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    this.reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    this.running = !document.hidden;
+    this.lastFrame = 0;
+    this.frameId = null;
     this.resize();
-    this.animate();
-    window.addEventListener('resize', () => this.resize());
+    this._initInkDrops();
+    this.animate(0);
+    window.addEventListener('resize', () => this.resize(), { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      this.running = !document.hidden;
+      if (this.running && !this.reduceMotion) this.animate(performance.now());
+    });
   }
 
   resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.cx = this.canvas.width / 2;
-    this.cy = this.canvas.height / 2;
+    if (!this.canvas) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.canvas.width = Math.floor(w * this.dpr);
+    this.canvas.height = Math.floor(h * this.dpr);
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.width = w;
+    this.height = h;
+    this.cx = w * 0.5;
+    this.cy = h * 0.48;
   }
 
-  /** 绘制阴阳太极 */
+  _initInkDrops() {
+    const count = window.innerWidth < 620 ? 10 : 18;
+    this.inkDrops = Array.from({ length: count }, (_, i) => ({
+      x: ((i * 73) % 101) / 101,
+      y: ((i * 41 + 17) % 97) / 97,
+      r: 0.8 + (i % 5) * 0.55,
+      a: 0.018 + (i % 4) * 0.009,
+      drift: 0.12 + (i % 6) * 0.035
+    }));
+  }
+
+  _drawPaperWash(ctx, w, h) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(244, 238, 225, 0.13)';
+    ctx.fillRect(0, 0, w, h);
+
+    const washes = [
+      [w * 0.10, h * 0.22, w * 0.34, h * 0.13, 0.030],
+      [w * 0.88, h * 0.52, w * 0.31, h * 0.16, 0.026],
+      [w * 0.46, h * 0.90, w * 0.42, h * 0.11, 0.022]
+    ];
+    washes.forEach(([x, y, rx, ry, alpha], i) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+      g.addColorStop(0, `rgba(33, 35, 30, ${alpha + Math.sin(this.time * 0.32 + i) * 0.006})`);
+      g.addColorStop(0.55, `rgba(54, 52, 45, ${alpha * 0.52})`);
+      g.addColorStop(1, 'rgba(54, 52, 45, 0)');
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, ry / rx);
+      ctx.translate(-x, -y);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, rx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  _drawMountains(ctx, w, h) {
+    const base = h * 0.88;
+    const layers = [
+      { y: base, amp: h * 0.095, alpha: 0.055, blur: 0 },
+      { y: base + h * 0.035, amp: h * 0.070, alpha: 0.038, blur: 0 }
+    ];
+
+    layers.forEach((layer, li) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, layer.y);
+      const step = Math.max(34, w / 18);
+      for (let x = 0; x <= w + step; x += step) {
+        const n1 = Math.sin(x * 0.009 + li * 1.4) * 0.45;
+        const n2 = Math.sin(x * 0.021 + 0.8 + li) * 0.20;
+        const peak = Math.max(0, Math.sin(x * 0.0048 + li * 2.2));
+        const y = layer.y - layer.amp * (0.45 + peak * 0.78 + n1 + n2);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(29, 31, 27, ${layer.alpha})`;
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
   _drawTaiChi(ctx, cx, cy, r, angle) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
+    ctx.globalAlpha = 0.34;
 
-    // 大圆
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a1a1a';
+    ctx.fillStyle = '#20221d';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(180,180,180,0.5)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
 
-    // 白色半圆（右）
     ctx.beginPath();
     ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2);
-    ctx.fillStyle = '#e8e8e8';
+    ctx.fillStyle = '#eee7d8';
     ctx.fill();
 
-    // 黑色半圆（左）
-    ctx.beginPath();
-    ctx.arc(0, 0, r, Math.PI / 2, -Math.PI / 2);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fill();
-
-    // 上小圆（黑）+ 黑中白点
     ctx.beginPath();
     ctx.arc(0, -r / 2, r / 2, 0, Math.PI * 2);
-    ctx.fillStyle = '#e8e8e8';
+    ctx.fillStyle = '#eee7d8';
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(0, -r / 2, r / 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a1a1a';
+    ctx.arc(0, -r / 2, r / 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#20221d';
     ctx.fill();
 
-    // 下小圆（白）+ 白中黑点
     ctx.beginPath();
     ctx.arc(0, r / 2, r / 2, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a1a1a';
+    ctx.fillStyle = '#20221d';
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(0, r / 2, r / 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#e8e8e8';
+    ctx.arc(0, r / 2, r / 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#eee7d8';
     ctx.fill();
 
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(44, 43, 37, .50)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
     ctx.restore();
   }
 
-  /** 绘制一个卦爻 */
   _drawTrigram(ctx, cx, cy, trigram, angle, baguaR) {
-    // trigram: 3-element array, 1=yang(solid), 0=yin(broken)
-    const barWidth = baguaR * 0.12;
-    const barHeight = baguaR * 0.025;
-    const gap = baguaR * 0.04;
-    const totalH = barHeight * 3 + gap * 2 + barHeight * 4; // 3 bars + gaps
+    const barWidth = Math.max(13, baguaR * 0.17);
+    const barHeight = Math.max(2, baguaR * 0.020);
+    const gapY = barHeight * 2.9;
+    const dist = baguaR * 1.20;
 
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
-
-    // 移动到八卦圈位置
-    const dist = baguaR * 0.68;
     ctx.translate(0, -dist);
+    ctx.fillStyle = 'rgba(43, 41, 34, .40)';
 
     for (let i = 0; i < 3; i++) {
-      const y = (i - 1) * (barHeight + gap + barHeight);
-      if (trigram[i] === 1) {
-        // 阳爻：实线
-        ctx.fillStyle = 'rgba(220,220,220,0.6)';
+      const y = (i - 1) * gapY;
+      if (trigram[i]) {
         ctx.fillRect(-barWidth / 2, y, barWidth, barHeight);
       } else {
-        // 阴爻：两段短线
-        const segW = barWidth * 0.35;
-        ctx.fillStyle = 'rgba(220,220,220,0.6)';
+        const segW = barWidth * 0.38;
         ctx.fillRect(-barWidth / 2, y, segW, barHeight);
         ctx.fillRect(barWidth / 2 - segW, y, segW, barHeight);
       }
     }
-
     ctx.restore();
   }
 
-  animate() {
-    this.time += 0.008;
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const cx = this.cx;
-    const cy = this.cy;
-    const minDim = Math.min(w, h);
-
-    // 浅色覆盖产生拖尾（水墨纸纹）
-    ctx.fillStyle = 'rgba(232, 226, 214, 0.28)';
-    ctx.fillRect(0, 0, w, h);
-
-    // === 水流波纹 ===
-    ctx.save();
-    for (let layer = 0; layer < 3; layer++) {
-      const amp = 18 + layer * 12;
-      const freq = 0.012 + layer * 0.004;
-      const speed = this.time * (0.6 + layer * 0.3);
-      const alpha = 0.04 + layer * 0.02;
-
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      for (let x = 0; x <= w; x += 4) {
-        const y1 = cy + Math.sin(x * freq + speed) * amp + Math.sin(x * 0.02 + speed * 1.3) * amp * 0.5;
-        if (x === 0) ctx.moveTo(x, 0);
-        ctx.lineTo(x, y1);
-      }
-      ctx.lineTo(w, h);
-      ctx.lineTo(0, h);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(140,130,115,${alpha * 1.8})`;
-      ctx.fill();
-
-      // 反向波纹
-      ctx.beginPath();
-      ctx.moveTo(0, h);
-      for (let x = 0; x <= w; x += 4) {
-        const y2 = cy + Math.sin(x * freq - speed * 0.7) * amp * 0.8 + Math.cos(x * 0.015 - speed) * amp * 0.4;
-        ctx.lineTo(x, y2);
-      }
-      ctx.lineTo(w, 0);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(120,110,95,${alpha * 1.2})`;
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // === 环形水波 ===
-    const ringCount = 5;
-    for (let i = 0; i < ringCount; i++) {
-      const baseR = minDim * 0.18 + i * minDim * 0.1;
-      const waveR = baseR + Math.sin(this.time * 0.5 + i) * 15;
-      ctx.beginPath();
-      ctx.arc(cx, cy, waveR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(100,85,65,${0.08 - i * 0.012})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-    }
-
-    // === 旋转太极图 ===
-    const baguaR = minDim * 0.2; // 八卦半径
-    const rotationAngle = this.time * 0.3; // 缓慢旋转
-    this._drawTaiChi(ctx, cx, cy, baguaR, rotationAngle);
-
-    // === 八卦外圈 ===
-    ctx.beginPath();
-    ctx.arc(cx, cy, baguaR * 1.05, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(90,75,55,0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, baguaR * 0.68, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(90,75,55,0.25)';
-    ctx.lineWidth = 0.5;
-    ctx.setLineDash([4, 8]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // === 八个卦象 ===
-    // 先天八卦：乾兑离震 巽坎艮坤
+  _drawBagua(ctx, cx, cy, r) {
+    const rotation = this.time * 0.055;
     const trigrams = [
-      [1, 1, 1], // ☰ 乾 (top)
-      [0, 1, 1], // ☱ 兑
-      [1, 0, 1], // ☲ 离
-      [0, 0, 1], // ☳ 震
-      [1, 1, 0], // ☴ 巽
-      [0, 1, 0], // ☵ 坎
-      [1, 0, 0], // ☶ 艮
-      [0, 0, 0]  // ☷ 坤
+      [1, 1, 1], [0, 1, 1], [1, 0, 1], [0, 0, 1],
+      [0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]
     ];
 
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i - Math.PI / 2 + rotationAngle * 0.3;
-      this._drawTrigram(ctx, cx, cy, trigrams[i], angle, baguaR);
-    }
-
-    // 卦名已删除 — 保持画面干净
-
-    // === 散落粒子（水墨感） ===
-    const particleCount = 35;
-    for (let i = 0; i < particleCount; i++) {
-      const seed = i * 137.5;
-      const orbitR = baguaR * 1.2 + (seed % minDim * 0.3);
-      const pAngle = this.time * 0.15 + seed;
-      const px = cx + Math.cos(pAngle) * orbitR;
-      const py = cy + Math.sin(pAngle) * orbitR * 0.7;
-      const pSize = 1 + (i % 3) * 0.8;
-      const alpha = 0.15 + Math.sin(this.time * 0.8 + i) * 0.1;
-
+    ctx.save();
+    ctx.globalAlpha = 0.46;
+    [0.86, 1.06, 1.36].forEach((m, i) => {
       ctx.beginPath();
-      ctx.arc(px, py, pSize, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${180 + (i % 40)},${180 + (i % 40)},${190 + (i % 30)},${Math.max(0, alpha)})`;
-      ctx.fill();
-    }
+      ctx.arc(cx, cy, r * m, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(65, 55, 41, ${0.18 - i * 0.035})`;
+      ctx.lineWidth = i === 1 ? 1.2 : 0.65;
+      if (i === 2) ctx.setLineDash([3, 9]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+    ctx.restore();
 
-    requestAnimationFrame(() => this.animate());
+    this._drawTaiChi(ctx, cx, cy, r * 0.58, -rotation * 0.66);
+    for (let i = 0; i < 8; i++) {
+      const angle = -Math.PI / 2 + i * Math.PI / 4 + rotation;
+      this._drawTrigram(ctx, cx, cy, trigrams[i], angle, r);
+    }
+  }
+
+  _drawInkDrops(ctx, w, h) {
+    ctx.save();
+    this.inkDrops.forEach((p, i) => {
+      const x = (p.x * w + Math.sin(this.time * p.drift + i) * 10 + w) % w;
+      const y = (p.y * h + Math.cos(this.time * p.drift * 0.7 + i) * 7 + h) % h;
+      ctx.beginPath();
+      ctx.arc(x, y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(45, 43, 37, ${p.a})`;
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  animate(timestamp) {
+    if (!this.ctx || !this.canvas || !this.running) return;
+    timestamp = Number(timestamp || 0);
+    // 背景是氛围层，不需要 60fps；约 30fps 足够，降低手机耗电与发热。
+    if (!this.reduceMotion && timestamp && this.lastFrame && timestamp - this.lastFrame < 33) {
+      this.frameId = requestAnimationFrame(t => this.animate(t));
+      return;
+    }
+    this.lastFrame = timestamp;
+    this.time += this.reduceMotion ? 0 : 0.014;
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+
+    ctx.clearRect(0, 0, w, h);
+    this._drawPaperWash(ctx, w, h);
+    this._drawMountains(ctx, w, h);
+    this._drawInkDrops(ctx, w, h);
+
+    const r = Math.min(w, h) * (w < 620 ? 0.16 : 0.195);
+    this._drawBagua(ctx, this.cx, this.cy, r);
+
+    if (this.reduceMotion) return;
+    this.frameId = requestAnimationFrame(t => this.animate(t));
   }
 }
 
-// ============ 导航控制器 (简化版) ============
+// ============ 主应用 ============
 class AppController {
   constructor() {
     this.init();
   }
-
   init() {
-    // 星空背景
     new StarBackground('starCanvas');
   }
 }
 
 // ============ 全局工具函数 ============
-
-/** 打字机效果 */
 function typewriter(element, text, speed = 50, callback) {
   let i = 0;
   element.textContent = '';
   const timer = setInterval(() => {
     if (i < text.length) {
-      element.textContent += text.charAt(i);
-      i++;
+      element.textContent += text.charAt(i++);
     } else {
       clearInterval(timer);
       if (callback) callback();
@@ -258,31 +271,26 @@ function typewriter(element, text, speed = 50, callback) {
   return timer;
 }
 
-/** HTML 安全的打字机效果 */
 function typewriterHTML(element, htmlParts, speed = 50, callback) {
-  // htmlParts: [{type:'text', content:'...'}, {type:'html', content:'...'}]
-  let partIdx = 0, charIdx = 0;
-  const container = element;
-  container.innerHTML = '';
-
+  let partIdx = 0;
+  let charIdx = 0;
+  element.innerHTML = '';
   const timer = setInterval(() => {
     if (partIdx >= htmlParts.length) {
       clearInterval(timer);
       if (callback) callback();
       return;
     }
-
     const part = htmlParts[partIdx];
     if (part.type === 'text') {
       if (charIdx < part.content.length) {
-        container.textContent += part.content.charAt(charIdx);
-        charIdx++;
+        element.appendChild(document.createTextNode(part.content.charAt(charIdx++)));
       } else {
         partIdx++;
         charIdx = 0;
       }
-    } else if (part.type === 'html') {
-      container.innerHTML += part.content;
+    } else {
+      element.insertAdjacentHTML('beforeend', part.content);
       partIdx++;
       charIdx = 0;
     }
@@ -290,29 +298,24 @@ function typewriterHTML(element, htmlParts, speed = 50, callback) {
   return timer;
 }
 
-/** 显示元素 */
 function showEl(id) {
   const el = typeof id === 'string' ? document.getElementById(id) : id;
   if (el) el.style.display = 'block';
 }
 
-/** 隐藏元素 */
 function hideEl(id) {
   const el = typeof id === 'string' ? document.getElementById(id) : id;
   if (el) el.style.display = 'none';
 }
 
-/** 随机整数 [min, max] */
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/** 随机选择数组元素 */
 function randomPick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/** Fisher-Yates 洗牌 */
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -322,46 +325,39 @@ function shuffle(arr) {
   return a;
 }
 
-/** 获取今天的日期字符串 YYYY-MM-DD */
 function todayStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// ============ 滴水涟漪点击反馈 ============
+// ============ 水墨点击涟漪 ============
 function createRipple(x, y) {
-  // 创建3层涟漪，模拟水滴效果
-  const colors = ['rgba(201,169,110,0.7)', 'rgba(212,165,116,0.5)', 'rgba(180,150,110,0.35)'];
-  const delays = [0, 80, 160]; // 每层间隔出现
-
-  for (let i = 0; i < 3; i++) {
+  const colors = [
+    'rgba(134, 98, 43, .42)',
+    'rgba(157, 48, 41, .25)',
+    'rgba(50, 48, 41, .15)'
+  ];
+  colors.forEach((color, i) => {
     setTimeout(() => {
       const ripple = document.createElement('div');
       ripple.className = 'ripple-effect';
       ripple.style.left = x + 'px';
       ripple.style.top = y + 'px';
-      ripple.style.border = `2px solid ${colors[i]}`;
-      ripple.style.boxShadow = `0 0 ${6 + i * 3}px ${colors[i]}`;
+      ripple.style.border = `1px solid ${color}`;
+      ripple.style.boxShadow = `0 0 ${4 + i * 2}px ${color}`;
       document.body.appendChild(ripple);
-
-      // 动画结束后移除
-      ripple.addEventListener('animationend', () => {
-        ripple.remove();
-      });
-    }, delays[i]);
-  }
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+      setTimeout(() => ripple.remove(), 1200);
+    }, i * 70);
+  });
 }
 
-// 监听所有可交互元素的点击
 document.addEventListener('click', (e) => {
   const target = e.target;
-  // 检查是否为可交互元素
-  const isInteractive = target.closest('button, .nav-tab, .mini-card, .slot-card, .quiz-option-btn, .stick-tube, select, input[type="submit"]');
-  if (isInteractive) {
-    createRipple(e.clientX, e.clientY);
-  }
-  // 点击覆盖层背景关闭（排除paywall弹窗）
-  if (target.classList.contains('tool-overlay') && !target.id.includes('paywall')) {
+  const isInteractive = target.closest('button, .tool-card, .nav-tab, .mini-card, .slot-card, .quiz-option-btn, .stick-tube, select, input[type="submit"]');
+  if (isInteractive) createRipple(e.clientX, e.clientY);
+
+  if (target.classList && target.classList.contains('tool-overlay') && !target.id.includes('paywall')) {
     target.classList.remove('active');
   }
 });
@@ -371,82 +367,205 @@ function initAddressCascade(prefix) {
   const provinceSel = document.getElementById(prefix + 'Province');
   const citySel = document.getElementById(prefix + 'City');
   const districtSel = document.getElementById(prefix + 'District');
-  if (!provinceSel || !citySel || !districtSel) return;
+  if (!provinceSel || !citySel || !districtSel || typeof CHINA_ADDRESS === 'undefined') return;
 
-  // 填充省份
-  const provinces = Object.keys(CHINA_ADDRESS);
-  provinces.forEach(p => {
+  Object.keys(CHINA_ADDRESS).forEach(p => {
+    if ([...provinceSel.options].some(o => o.value === p)) return;
     const opt = document.createElement('option');
     opt.value = p;
     opt.textContent = p;
     provinceSel.appendChild(opt);
   });
 
-  // 省份变化 -> 更新城市
   provinceSel.addEventListener('change', () => {
     const province = provinceSel.value;
     citySel.innerHTML = '<option value="">市/区</option>';
     districtSel.innerHTML = '<option value="">县/区</option>';
-
-    if (province && CHINA_ADDRESS[province]) {
-      const cities = Object.keys(CHINA_ADDRESS[province]);
-      cities.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
-        citySel.appendChild(opt);
-      });
-    }
+    if (!province || !CHINA_ADDRESS[province]) return;
+    Object.keys(CHINA_ADDRESS[province]).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      citySel.appendChild(opt);
+    });
   });
 
-  // 城市变化 -> 更新区县
   citySel.addEventListener('change', () => {
     const province = provinceSel.value;
     const city = citySel.value;
     districtSel.innerHTML = '<option value="">县/区</option>';
-
-    if (province && city && CHINA_ADDRESS[province] && CHINA_ADDRESS[province][city]) {
-      const districts = CHINA_ADDRESS[province][city];
-      districts.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = d;
-        districtSel.appendChild(opt);
-      });
-    }
+    if (!province || !city || !CHINA_ADDRESS[province] || !CHINA_ADDRESS[province][city]) return;
+    CHINA_ADDRESS[province][city].forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      districtSel.appendChild(opt);
+    });
   });
 }
 
 // ============ 联系我们 ============
 function toggleContact(e) {
-  var popup = document.getElementById('contactPopup');
+  const popup = document.getElementById('contactPopup');
   if (popup) popup.classList.toggle('show');
   if (e) e.stopPropagation();
 }
+
 function copyContact(text, btn) {
+  const feedback = () => {
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copy-success');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('copy-success');
+    }, 1500);
+  };
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() {
-      var orig = btn.textContent;
-      btn.textContent = '✅ 复制成功';
-      btn.style.color = '#3cb371';
-      setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1500);
-    });
+    navigator.clipboard.writeText(text).then(feedback).catch(() => fallbackCopy(text, feedback));
   } else {
-    // Fallback
-    var ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch(e) {}
-    document.body.removeChild(ta);
-    var orig = btn.textContent;
-    btn.textContent = '✅ 复制成功';
-    btn.style.color = '#3cb371';
-    setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1500);
+    fallbackCopy(text, feedback);
   }
+}
+
+function fallbackCopy(text, callback) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  ta.remove();
+  if (callback) callback();
+}
+
+// ============ 入场动画与整体微交互 ============
+function enhanceDaoSplash() {
+  const splash = document.getElementById('splashOverlay');
+  if (!splash || splash.dataset.daoEnhanced === '1') return;
+  splash.dataset.daoEnhanced = '1';
+  splash.setAttribute('role', 'button');
+  splash.setAttribute('tabindex', '0');
+  splash.setAttribute('aria-label', '进入道问');
+
+  const center = splash.querySelector('.splash-center');
+  if (center) {
+    const ring = document.createElement('div');
+    ring.className = 'dao-splash-trigrams';
+    ring.setAttribute('aria-hidden', 'true');
+    const symbols = ['☰', '☱', '☲', '☳', '☷', '☵', '☶', '☴'];
+    symbols.forEach((symbol, index) => {
+      const item = document.createElement('span');
+      item.className = 'dao-splash-trigram';
+      item.textContent = symbol;
+      item.style.setProperty('--dao-angle', `${index * 45}deg`);
+      item.style.setProperty('--dao-angle-neg', `${index * -45}deg`);
+      ring.appendChild(item);
+    });
+    center.insertBefore(ring, center.firstChild);
+  }
+
+  const seal = document.createElement('div');
+  seal.className = 'dao-splash-seal';
+  seal.setAttribute('aria-hidden', 'true');
+  seal.innerHTML = '道<br>问';
+  splash.appendChild(seal);
+
+  const progress = document.createElement('div');
+  progress.className = 'dao-splash-progress';
+  progress.setAttribute('aria-hidden', 'true');
+  progress.innerHTML = '<span></span>';
+  splash.appendChild(progress);
+
+  const hint = splash.querySelector('.splash-hint');
+  if (hint) hint.textContent = '轻触进入 · 将自动开启';
+
+  splash.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.dismissSplash();
+    }
+  });
+
+  let seen = false;
+  try { seen = sessionStorage.getItem('daowen_splash_seen') === '1'; } catch (e) {}
+  if (seen) {
+    splash.classList.add('dao-splash-returning');
+    setTimeout(() => window.dismissSplash(true), 90);
+  } else {
+    // 保留品牌入场感，但不强迫用户必须点击；约 2.6 秒自动进入。
+    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);
+  }
+}
+
+function installDaoDismissSplash() {
+  window.dismissSplash = function (fast) {
+    const el = document.getElementById('splashOverlay');
+    if (!el || el.classList.contains('fade-out')) return;
+    if (window.__daoSplashTimer) {
+      clearTimeout(window.__daoSplashTimer);
+      window.__daoSplashTimer = null;
+    }
+    try { sessionStorage.setItem('daowen_splash_seen', '1'); } catch (e) {}
+    if (fast) el.classList.add('dao-splash-fast');
+    el.classList.add('fade-out');
+    const canvas = document.getElementById('starCanvas');
+    if (canvas) canvas.style.zIndex = '0';
+    const delay = fast ? 120 : 760;
+    setTimeout(() => {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      document.body.classList.add('dao-entered');
+    }, delay);
+  };
+}
+
+function makeToolCardsAccessible() {
+  document.querySelectorAll('.tool-card[onclick]').forEach(card => {
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+}
+
+function addRevealMotion() {
+  const targets = document.querySelectorAll('.section-header, .tool-card, .disclaimer-box');
+  if (!targets.length) return;
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    targets.forEach(el => el.classList.add('dao-reveal-visible'));
+    return;
+  }
+  targets.forEach(el => el.classList.add('dao-reveal'));
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('dao-reveal-visible');
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.07, rootMargin: '0px 0px -6% 0px' });
+  targets.forEach(el => io.observe(el));
+}
+
+function initDaoUI() {
+  installDaoDismissSplash();
+  enhanceDaoSplash();
+  makeToolCardsAccessible();
+  addRevealMotion();
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.classList.add('dao-header-action');
+  document.documentElement.classList.add('dao-ink-theme-ready');
 }
 
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
-  // 主应用 - 星空背景
   window.app = new AppController();
+  initDaoUI();
 });

@@ -1,42 +1,172 @@
 /**
- * 道问付费墙 — 兑换码 + 紧凑付费提示
+ * 道问付费系统 — 服务端权威余额版
+ *
+ * 安全原则：
+ * 1. 浏览器不保存权威余额，不包含兑换码数据库。
+ * 2. 兑换、购买、扣费均由登录用户 + Vercel API + Supabase 原子事务完成。
+ * 3. localStorage 只保存“待确认订单号”，从不作为到账或余额依据。
  */
 var Paywall = {
-  _codeDB: {
-    'DAOWEN-A3K7':3,'DAOWEN-B2M9':3,'DAOWEN-C5N8':3,'DAOWEN-D1P6':3,'DAOWEN-E4Q2':3,
-    'DAOWEN-F8R1':3,'DAOWEN-G3S5':3,'DAOWEN-H7T9':3,'DAOWEN-J2U4':3,'DAOWEN-K6V8':3,
-    'DAOWEN-L9W3':3,'DAOWEN-M4X7':3,'DAOWEN-N1Y5':3,'DAOWEN-P5Z2':3,'DAOWEN-Q8A6':3,
-    'DAOWEN-R3B9':10,'DAOWEN-S7C4':10,'DAOWEN-T2D8':10,'DAOWEN-U6E1':10,'DAOWEN-V1F5':10,
-    'DAOWEN-W9G3':10,'DAOWEN-X4H7':10,'DAOWEN-Y8J2':10,'DAOWEN-Z3K6':10,'DAOWEN-A7L1':10,
-    'DAOWEN-B5M4':20,'DAOWEN-C8N9':20,'DAOWEN-D2P3':20,'DAOWEN-E6Q7':20,'DAOWEN-F1R2':20,
-    'DAOWEN-G9S6':20,'DAOWEN-H4T1':20,'DAOWEN-J8U5':20,'DAOWEN-K3V9':20,'DAOWEN-L7W4':20,
-    // 在线购买生成的码
-    'DW-A1K3':3,'DW-B2M9':3,'DW-C5N8':3,'DW-D1P6':3,'DW-E4Q2':3,
-    'DW-F8R1':3,'DW-G3S5':3,'DW-H7T9':3,'DW-J2U4':3,'DW-K6V8':3,
-    'DW-R3B9':10,'DW-S7C4':10,'DW-T2D8':10,'DW-U6E1':10,'DW-V1F5':10,
-    'DW-B5M4':20,'DW-C8N9':20,'DW-D2P3':20,'DW-E6Q7':20,'DW-F1R2':20
-  },
-  STORAGE_KEY: 'daowen_balance',
-  USED_CODES_KEY: 'daowen_used_codes',
+  _balance: 0,
+  _balanceLoaded: false,
+  _syncPromise: null,
+  _consumeQueue: Promise.resolve(),
+  _suppressNextDeduct: false,
+  PENDING_ORDER_KEY: 'daowen_pending_order_v2',
 
-  getBalance: function() { var b = localStorage.getItem(this.STORAGE_KEY); return b ? parseInt(b) : 0; },
-  addBalance: function(a) { var c = this.getBalance(); localStorage.setItem(this.STORAGE_KEY, c + a); return c + a; },
-  deduct: function() { var c = this.getBalance(); if (c <= 0) return false; localStorage.setItem(this.STORAGE_KEY, c - 1); return true; },
-  hasBalance: function() { return this.getBalance() > 0; },
-
-  redeemCode: function(code) {
-    code = code.trim().toUpperCase();
-    var used = JSON.parse(localStorage.getItem(this.USED_CODES_KEY) || '[]');
-    if (used.indexOf(code) !== -1) return {success:false, msg:'此兑换码已被使用'};
-    var amount = this._codeDB[code];
-    if (!amount) return {success:false, msg:'无效的兑换码'};
-    used.push(code);
-    localStorage.setItem(this.USED_CODES_KEY, JSON.stringify(used));
-    this.addBalance(amount);
-    return {success:true, msg:'兑换成功！获得 ' + amount + ' 次解读', amount:amount};
+  _isLoggedIn: function() {
+    return !!(window.DaoWenAuth && DaoWenAuth.user && DaoWenAuth.user.id);
   },
 
-  /** 紧凑付费条（不遮盖内容，放在结果顶部） */
+  _requireLogin: function(message) {
+    if (this._isLoggedIn()) return true;
+    alert(message || '此功能需要先登录账号。');
+    if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+    return false;
+  },
+
+  _json: async function(resp) {
+    var data = {};
+    try { data = await resp.json(); } catch (e) {}
+    if (!resp.ok) {
+      var err = new Error(data.error || data.msg || ('请求失败 (' + resp.status + ')'));
+      err.status = resp.status;
+      err.data = data;
+      throw err;
+    }
+    return data || {};
+  },
+
+  _setBalance: function(value) {
+    var n = Number(value);
+    this._balance = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    this._balanceLoaded = true;
+    this._renderBalance();
+    return this._balance;
+  },
+
+  _renderBalance: function() {
+    var value = this._balanceLoaded ? this._balance : '—';
+    var ids = ['pwTopBalance', 'navBalance', 'userBalance'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value;
+    });
+    document.querySelectorAll('[data-daowen-balance]').forEach(function(el) {
+      el.textContent = value;
+    });
+  },
+
+  getBalance: function() {
+    return this._balanceLoaded ? this._balance : 0;
+  },
+
+  hasBalance: function(amount) {
+    amount = Math.max(1, Number(amount || 1));
+    return this._isLoggedIn() && this._balanceLoaded && this._balance >= amount;
+  },
+
+  syncBalance: function(force) {
+    var self = this;
+    if (!this._isLoggedIn()) {
+      this._balance = 0;
+      this._balanceLoaded = true;
+      this._renderBalance();
+      return Promise.resolve(0);
+    }
+    if (this._syncPromise && !force) return this._syncPromise;
+
+    this._syncPromise = fetch('/api/balance', { method: 'GET', cache: 'no-store' })
+      .then(function(resp) { return self._json(resp); })
+      .then(function(data) {
+        self._setBalance(data.balance);
+        self.refreshWalls();
+        return self._balance;
+      })
+      .catch(function(err) {
+        console.warn('[Paywall] 余额同步失败:', err.message);
+        if (err.status === 401) self._setBalance(0);
+        throw err;
+      })
+      .finally(function() { self._syncPromise = null; });
+    return this._syncPromise;
+  },
+
+  /**
+   * 兼容旧模块的同步接口。真正扣费由服务端 /api/consume-credit 完成。
+   * 对“客户端本地生成的付费内容”，这只能保护余额，不能阻止高级用户改 JS 绕过界面。
+   */
+  deduct: function(amount, reason) {
+    amount = Math.max(1, Math.floor(Number(amount || 1)));
+    if (!this.hasBalance(amount)) return false;
+
+    // 某些已迁移到“服务端自行扣费”的旧流程可使用此标记避免双扣。
+    if (this._suppressNextDeduct) {
+      this._suppressNextDeduct = false;
+      this._setBalance(Math.max(0, this._balance - amount));
+      setTimeout(function() { Paywall.syncBalance(true).catch(function() {}); }, 500);
+      return true;
+    }
+
+    this._setBalance(this._balance - amount); // 只用于即时 UI，服务端仍是最终权威
+    var requestId = 'web:' + Date.now() + ':' + Math.random().toString(36).slice(2, 12);
+    var self = this;
+    this._consumeQueue = this._consumeQueue.then(function() {
+      return fetch('/api/consume-credit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amount, reason: reason || 'premium-content', requestId: requestId })
+      }).then(function(resp) { return self._json(resp); })
+        .then(function(data) {
+          self._setBalance(data.balance);
+          return data;
+        })
+        .catch(function(err) {
+          console.warn('[Paywall] 服务端扣费失败:', err.message);
+          self.syncBalance(true).catch(function() {});
+          return null;
+        });
+    });
+    return true;
+  },
+
+  /** 已废弃：前端不得自行增加余额。 */
+  addBalance: function() {
+    console.warn('[Paywall] addBalance 已禁用：余额只能由服务端支付/兑换/管理员事务增加。');
+    return this.getBalance();
+  },
+
+  redeemCode: async function(code) {
+    if (!this._requireLogin('兑换码必须绑定账号，请先登录。')) {
+      return { success: false, msg: '请先登录账号' };
+    }
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return { success: false, msg: '请输入兑换码' };
+    if (code.length > 80) return { success: false, msg: '兑换码格式不正确' };
+
+    try {
+      var resp = await fetch('/api/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      var data = await this._json(resp);
+      if (data.success) {
+        this._setBalance(data.balance);
+        return {
+          success: true,
+          msg: data.msg || ('兑换成功，获得 ' + Number(data.amount || data.credits || 0) + ' 次解读'),
+          amount: Number(data.amount || data.credits || 0),
+          balance: this.getBalance()
+        };
+      }
+      return { success: false, msg: data.msg || '兑换失败' };
+    } catch (err) {
+      var msg = err && err.data && (err.data.msg || err.data.error);
+      return { success: false, msg: msg || err.message || '兑换服务暂不可用' };
+    }
+  },
+
   showCompact: function(containerId) {
     var el = document.getElementById(containerId);
     if (!el || this.hasBalance()) return false;
@@ -45,244 +175,266 @@ var Paywall = {
     var bar = document.createElement('div');
     bar.id = 'pw_bar';
     bar.className = 'paywall-bar';
-    bar.innerHTML = '🔒 完整解读需购买次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" style="background:var(--gold);color:#fff;border:none;padding:0.4rem 1rem;border-radius:6px;cursor:pointer;font-weight:bold;font-size:0.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:0.8rem;">兑换码</a>';
+    var loginText = this._isLoggedIn() ? '' : ' · <a href="javascript:DaoWenAuth.openLogin()" style="color:var(--gold);">先登录</a>';
+    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>' + loginText;
     el.insertBefore(bar, el.firstChild);
     return true;
   },
 
-  /** 强力遮盖：无余额完全黑掉内容，只显示购买按钮 */
   blockAll: function(containerId) {
     var el = document.getElementById(containerId);
-    if (!el) return;
-    if (this.hasBalance()) { this.deduct(); return true; }
+    if (!el) return false;
+    if (this.hasBalance()) { this.deduct(1, 'premium-content'); return true; }
     var old = el.querySelector('.paywall-block');
     if (old) old.remove();
     el.style.position = 'relative';
     var block = document.createElement('div');
     block.className = 'paywall-block';
-    block.setAttribute('style','position:absolute;top:0;left:0;right:0;bottom:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
-    block.innerHTML =
-      '<div><div style="font-size:3rem;">🔒</div>'+
-      '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
-      '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
-      '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:0.6rem 2rem;margin-top:0.5rem;font-size:1rem;">🎫 购买解读次数</button>'+
-      '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:#c9a56a;">点此兑换</a></p></div>';
+    block.setAttribute('style', 'position:absolute;inset:0;background:rgba(17,17,15,.96);z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
+    block.innerHTML = '<div><div style="font-size:3rem;">🔒</div>' +
+      '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>' +
+      '<p style="color:#aaa;font-size:.85rem;">登录并拥有解读次数后解锁</p>' +
+      '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:.6rem 2rem;margin-top:.5rem;">🎫 购买解读次数</button>' +
+      '<p style="color:#999;font-size:.76rem;margin-top:.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p></div>';
     el.appendChild(block);
     return false;
   },
 
-  /** 渲染后检查：有余额扣1+展开，无余额隐藏分析卡片+显示紧凑条 */
   checkCover: function(containerId) {
     var el = document.getElementById(containerId);
     if (this.hasBalance()) {
-      this.deduct();
-      // 展开所有分析卡片
-      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = ''; }); }
+      this.deduct(1, 'premium-content');
+      if (el) el.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = ''; });
       return true;
-    } else {
-      // 隐藏分析卡片，只显示免费部分
-      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = 'none'; }); }
-      this.showCompact(containerId);
-      return false;
     }
+    if (el) el.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = 'none'; });
+    this.showCompact(containerId);
+    return false;
   },
 
   tryAccess: function(containerId, callback) {
     var el = document.getElementById(containerId);
     if (this.hasBalance()) {
-      this.deduct();
-      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = ''; }); }
+      this.deduct(1, 'premium-content');
+      if (el) el.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = ''; });
       if (callback) callback();
       return true;
-    } else {
-      if (callback) callback();
-      if (el) { var cards = el.querySelectorAll('.analysis-card'); cards.forEach(function(c) { c.style.display = 'none'; }); }
-      this.showCompact(containerId);
-      return false;
     }
+    if (callback) callback();
+    if (el) el.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = 'none'; });
+    this.showCompact(containerId);
+    return false;
   },
 
   refreshWalls: function() {
+    this._renderBalance();
     if (this.hasBalance()) {
-      document.querySelectorAll('.paywall-bar').forEach(function(b) { b.remove(); });
-      document.querySelectorAll('.paywall-block').forEach(function(b) { b.remove(); });
+      document.querySelectorAll('.paywall-bar,.paywall-block').forEach(function(b) { b.remove(); });
       document.querySelectorAll('.analysis-card').forEach(function(c) { c.style.display = ''; });
     }
   },
 
-  /** 兑换后刷新已打开模块 */
   _refreshModules: function() {
-    // 刷新所有已缓存的结果
-    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) {
-      BaziModule._renderSingle(BaziModule._lastResult);
-    }
-    if (typeof ZiweiModule !== 'undefined' && ZiweiModule._lastChart && ZiweiModule._renderSVG) {
-      ZiweiModule._renderSVG(ZiweiModule._lastChart, ZiweiModule._lastSiHua, ZiweiModule._lastY, ZiweiModule._lastM, ZiweiModule._lastD, ZiweiModule._lastH, ZiweiModule._lastGender, ZiweiModule._lastYGZ, ZiweiModule._lastJu);
-    }
+    // 只刷新付费墙，不主动重新运行 AI/排盘，避免兑换后发生额外扣费。
     this.refreshWalls();
-    // 重新检查所有模块的付费墙
-    document.querySelectorAll('.paywall-block').forEach(function(b){b.remove();});
-    document.querySelectorAll('.paywall-bar').forEach(function(b){b.remove();});
   },
 
   openShop: function() {
+    if (!this._requireLogin('购买次数会绑定到账号，请先登录。')) return;
     var o = document.getElementById('paywallShopOverlay');
-    if (o) { this._closeAllOthers(o); o.style.zIndex = '9999'; o.classList.add('active'); }
+    if (o) {
+      this._closeAllOthers(o);
+      o.style.zIndex = '9999';
+      o.classList.add('active');
+      this._resetShopView();
+    }
+    this.syncBalance().catch(function() {});
   },
+
   closeShop: function() {
     var o = document.getElementById('paywallShopOverlay');
     if (o) { o.classList.remove('active'); o.style.zIndex = ''; }
+    this._resetShopView();
   },
+
   openRedeem: function() {
+    if (!this._requireLogin('兑换码必须绑定到账号，请先登录。')) return;
     var o = document.getElementById('paywallRedeemOverlay');
     if (o) { this._closeAllOthers(o); o.style.zIndex = '9999'; o.classList.add('active'); }
-    var b = document.getElementById('pwTopBalance'); if (b) b.textContent = this.getBalance();
+    var input = document.getElementById('redeemCodeInput');
+    if (input) input.placeholder = '输入兑换码';
+    this._renderBalance();
+    this.syncBalance().catch(function() {});
   },
+
   closeRedeem: function() {
     var o = document.getElementById('paywallRedeemOverlay');
     if (o) { o.classList.remove('active'); o.style.zIndex = ''; }
     this.refreshWalls();
   },
+
   _closeAllOthers: function(except) {
     document.querySelectorAll('.tool-overlay.active').forEach(function(el) {
       if (el !== except) { el.classList.remove('active'); el.style.zIndex = ''; }
     });
   },
 
-  doRedeem: function() {
-    var input = document.getElementById('redeemCodeInput'); if (!input) return;
-    var code = input.value.trim(); if (!code) { alert('请输入兑换码'); return; }
-    var result = this.redeemCode(code);
+  doRedeem: async function() {
+    var input = document.getElementById('redeemCodeInput');
+    var resultEl = document.getElementById('redeemResult');
+    if (!input) return;
+    var code = input.value.trim();
+    if (!code) { alert('请输入兑换码'); return; }
+
+    var btn = document.querySelector('#paywallRedeemOverlay .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 验证中...'; }
+    if (resultEl) resultEl.innerHTML = '';
+
+    var result = await this.redeemCode(code);
     if (result.success) {
-      document.getElementById('redeemResult').innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ ' + result.msg + '</p><p style="color:var(--text-secondary);">当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
+      if (resultEl) resultEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">✅ ' + this._escape(result.msg) + '</p><p>当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
       input.value = '';
       this.refreshWalls();
       this._refreshModules();
     } else {
-      document.getElementById('redeemResult').innerHTML = '<p style="color:#c44;">❌ ' + result.msg + '</p>';
+      if (resultEl) resultEl.innerHTML = '<p style="color:#a33;">❌ ' + this._escape(result.msg) + '</p>';
     }
-  }
-};
+    if (btn) { btn.disabled = false; btn.textContent = '✅ 兑换'; }
+  },
 
-// 手动检查支付（PC端扫码后点击）
-Paywall._checkPayment = function() {
-  var code = localStorage.getItem('daowen_pending_code');
-  var order = localStorage.getItem('daowen_pending_order');
-  if (!code) { alert('未找到待兑换码，请先选择套餐支付。'); return; }
+  _escape: function(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  },
 
-  var stEl = document.getElementById('alipayStatus');
-  if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在验证支付状态...</p>';
+  _resetShopView: function() {
+    var overlay = document.getElementById('paywallShopOverlay');
+    if (!overlay) return;
+    var grid = overlay.querySelector('.shop-grid');
+    if (grid) grid.style.display = '';
+    var ids = ['alipayPayPanel', 'alipayLoading'];
+    ids.forEach(function(id) { var el = document.getElementById(id); if (el) el.remove(); });
+  },
 
-  var self = this;
-  if (order) {
-    fetch('/api/check-order?order=' + order)
-      .then(function(r){return r.json();})
-      .then(function(d) {
-        if (d.paid) {
-          self._doAutoRedeem(code);
-        } else {
-          if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">❌ 未检测到支付记录，请确认已付款后重试</p><p style="font-size:0.8rem;color:var(--text-muted);">'+(d.msg||'')+'</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
-          else alert('❌ 未检测到支付记录。请确认已付款后重试。');
-        }
-      })
-      .catch(function() {
-        if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">❌ 支付验证暂不可用</p><button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">🔄 重新检查</button>';
-        else alert('❌ 验证服务暂不可用，请联系客服。');
-      });
-  } else {
-    if (stEl) stEl.innerHTML = '<p style="color:#e80;margin:0;">⚠️ 未找到支付订单，请重新选择套餐支付</p>';
-  }
-};
+  _postToZPay: function(action, params) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    form.target = '_self';
+    form.style.display = 'none';
+    Object.keys(params || {}).forEach(function(k) {
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = k;
+      input.value = String(params[k]);
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  },
 
-Paywall._doAutoRedeem = function(code) {
-  var result = this.redeemCode(code.trim());
-  var stEl = document.getElementById('alipayStatus');
-  if (result.success) {
-    localStorage.removeItem('daowen_pending_code');
-    localStorage.removeItem('daowen_pending_order');
-    this.refreshWalls();
-    this._refreshModules();
-    if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
-    if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;font-size:1rem;">✅ 支付已验证！' + result.amount + '次解读已到账，内容已解锁</p>';
-    else alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
-  } else {
-    if (result.msg.indexOf('已被使用') !== -1) {
-      if (stEl) stEl.innerHTML = '<p style="color:#3cb371;font-weight:bold;">✅ 次数已到账！</p>';
-      else alert('✅ 次数已到账！');
-    } else {
-      if (stEl) stEl.innerHTML = '<p style="color:#c44;">❌ '+result.msg+'</p>';
-      else alert('❌ ' + result.msg);
+  _checkPayment: async function(silent) {
+    if (!this._requireLogin('查询订单需要先登录。')) return false;
+    var order = localStorage.getItem(this.PENDING_ORDER_KEY);
+    if (!order) {
+      if (!silent) alert('未找到待确认订单，请重新选择套餐。');
+      return false;
     }
+
+    var stEl = document.getElementById('alipayStatus');
+    if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在由服务端核对支付状态...</p>';
+    try {
+      var resp = await fetch('/api/check-order?order=' + encodeURIComponent(order), { method: 'GET', cache: 'no-store' });
+      var data = await this._json(resp);
+      if (data.paid) {
+        localStorage.removeItem(this.PENDING_ORDER_KEY);
+        await this.syncBalance(true);
+        this.refreshWalls();
+        if (stEl) stEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">✅ 支付已验证，' + Number(data.credits || 0) + ' 次解读已到账。当前余额：' + this.getBalance() + '</p>';
+        if (!silent && !stEl) alert('✅ 支付成功，次数已到账。');
+        return true;
+      }
+      if (stEl) stEl.innerHTML = '<p style="color:#a66;">暂未检测到支付成功。</p><button class="btn-primary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.4rem 1.2rem;">🔄 重新检查</button>';
+      else if (!silent) alert('暂未检测到支付成功，请确认付款后重试。');
+      return false;
+    } catch (err) {
+      if (stEl) stEl.innerHTML = '<p style="color:#a33;">❌ ' + this._escape(err.message || '支付验证暂不可用') + '</p><button class="btn-primary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.4rem 1.2rem;">🔄 重新检查</button>';
+      else if (!silent) alert('支付验证暂不可用，请稍后重试。');
+      return false;
+    }
+  },
+
+  _resumePendingPayment: function() {
+    var order = localStorage.getItem(this.PENDING_ORDER_KEY);
+    if (!order || !this._isLoggedIn()) return;
+    setTimeout(function() { Paywall._checkPayment(true).catch(function() {}); }, 900);
   }
 };
 
-// ===== 购买套餐 → 调用API → 跳转/二维码 =====
-function showBuyContact(tier) {
-  var prices = {3:'¥4.9',10:'¥9.9',20:'¥19.9'};
-  var counts = {3:3,10:10,20:20};
-  var shopContent = document.querySelector('#paywallShopOverlay .tool-modal');
-  shopContent.querySelector('.shop-grid').style.display = 'none';
-  var old = document.getElementById('alipayQR'); if (old) old.remove();
+/** 套餐点击入口：订单绑定当前登录用户，支付成功直接入账，不再返回兑换码。 */
+async function showBuyContact(tier) {
+  if (!Paywall._requireLogin('购买次数会绑定到账号，请先登录。')) return;
+  var overlay = document.getElementById('paywallShopOverlay');
+  var shopContent = overlay && overlay.querySelector('.tool-modal');
+  if (!shopContent) return;
+  var grid = shopContent.querySelector('.shop-grid');
+  if (grid) grid.style.display = 'none';
+  var old = document.getElementById('alipayPayPanel'); if (old) old.remove();
+  var loading = document.createElement('div');
+  loading.id = 'alipayLoading';
+  loading.innerHTML = '<p style="text-align:center;padding:1rem;">⏳ 正在创建安全订单...</p>';
+  shopContent.appendChild(loading);
 
-  var loadEl = document.createElement('div'); loadEl.id = 'alipayLoading';
-  loadEl.innerHTML = '<p style="text-align:center;padding:1rem;">⏳ 正在生成支付...</p>';
-  shopContent.appendChild(loadEl);
+  try {
+    var resp = await fetch('/api/alipay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier: tier })
+    });
+    var data = await Paywall._json(resp);
+    if (loading) loading.remove();
 
-  fetch('/api/alipay', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({tier:tier}) })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (loadEl) loadEl.remove();
-    if (data.error) { alert(data.error); return; }
+    localStorage.setItem(Paywall.PENDING_ORDER_KEY, data.outTradeNo);
 
-    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    var qrDiv = document.createElement('div'); qrDiv.id = 'alipayQR';
-    qrDiv.style.cssText = 'text-align:center;padding:1rem;';
+    var panel = document.createElement('div');
+    panel.id = 'alipayPayPanel';
+    panel.style.cssText = 'text-align:center;padding:1rem;';
+    panel.innerHTML =
+      '<p style="color:var(--gold);font-weight:bold;font-size:1.05rem;">订单已创建</p>' +
+      '<p style="font-size:.9rem;color:var(--text-secondary);">' + Number(data.count || 0) + ' 次解读 · ¥' + Paywall._escape(data.amount) + '</p>' +
+      '<p style="font-size:.8rem;color:var(--text-muted);">支付会绑定当前登录账号；到账以服务端验签结果为准。</p>' +
+      '<button id="zpaySubmitBtn" class="btn-primary" style="width:auto;padding:.65rem 2rem;">📱 前往支付宝支付</button>' +
+      '<div id="alipayStatus" style="margin-top:.8rem;"></div>' +
+      '<button class="btn-secondary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.45rem 1.2rem;margin-top:.5rem;">🔄 已支付，检查到账</button>' +
+      '<button class="btn-secondary" onclick="Paywall._resetShopView()" style="width:auto;padding:.45rem 1.2rem;margin-top:.5rem;margin-left:.4rem;">返回套餐</button>';
+    shopContent.appendChild(panel);
 
-    // 存储待验证的订单信息
-    localStorage.setItem('daowen_pending_code', data.code);
-    localStorage.setItem('daowen_pending_order', data.outTradeNo);
-
-    var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(data.payUrl);
-    var payBtn = isMobile
-      ? '<a href="' + data.payUrl + '" class="btn-primary" style="display:inline-block;width:auto;padding:0.6rem 2rem;text-decoration:none;font-size:1.1rem;">📱 点击支付 ¥' + data.amount + '</a>'
-      : '<img src="' + qrImgUrl + '" style="width:220px;height:220px;border-radius:8px;border:2px solid var(--border-subtle);">';
-
-    qrDiv.innerHTML =
-      '<p style="color:var(--gold);font-weight:bold;font-size:1.1rem;">' + (isMobile ? '📱 点击支付 ¥' + data.amount : '📱 扫码支付 ¥' + data.amount) + '</p>' +
-      payBtn +
-      '<p style="font-size:0.9rem;color:var(--text-secondary);margin:0.3rem 0;">' + data.count + '次解读 · ¥' + data.amount + '</p>' +
-      '<p style="font-size:0.82rem;color:var(--text-muted);">支付完成后<b>无需任何操作</b>，次数自动到账</p>' +
-      '<div id="alipayStatus" style="margin-top:0.6rem;padding:0.5rem;background:rgba(201,169,110,0.08);border-radius:8px;text-align:center;">' +
-        '<p style="font-size:0.85rem;color:var(--gold);margin:0;">⏳ 等待支付完成...</p>' +
-        '<button class="btn-primary" onclick="Paywall._checkPayment()" style="width:auto;padding:0.4rem 1.5rem;margin-top:0.4rem;font-size:0.9rem;">✅ 我已完成支付</button>' +
-      '</div>';
-
-    if (isMobile) setTimeout(function() { window.location.href = data.payUrl; }, 800);
-
-    qrDiv.innerHTML += '<button class="btn-secondary" onclick="var e=document.getElementById(\'alipayQR\');if(e)e.remove();document.querySelector(\'#paywallShopOverlay .shop-grid\').style.display=\'flex\';" style="margin-top:0.3rem;">🔙 返回</button>';
-    shopContent.appendChild(qrDiv);
-  })
-  .catch(function(err) { if (loadEl) loadEl.remove(); alert('支付服务暂不可用，请稍后重试'); });
+    var payBtn = document.getElementById('zpaySubmitBtn');
+    if (payBtn) payBtn.onclick = function() {
+      Paywall._postToZPay(data.payAction, data.payParams || {});
+    };
+  } catch (err) {
+    if (loading) loading.remove();
+    if (grid) grid.style.display = '';
+    alert(err.message || '支付创建失败，请稍后重试');
+  }
 }
 
-// ===== 支付返回：直接兑换（ZPay回调后自动激活） =====
-(function() {
-  var code = localStorage.getItem('daowen_pending_code');
-  if (code) {
-    setTimeout(function() {
-      var result = Paywall.redeemCode(code.trim());
-      if (result.success) {
-        localStorage.removeItem('daowen_pending_code');
-        localStorage.removeItem('daowen_pending_order');
-        Paywall.refreshWalls();
-        Paywall._refreshModules();
-        if (typeof BaziModule !== 'undefined' && BaziModule._lastResult) BaziModule._renderSingle(BaziModule._lastResult);
-        alert('✅ 支付成功！' + result.amount + ' 次解读已到账。');
-      }
-      if (result.msg && result.msg.indexOf('已被使用') !== -1) {
-        localStorage.removeItem('daowen_pending_code');
-        localStorage.removeItem('daowen_pending_order');
-      }
-    }, 1000);
+window.addEventListener('daowen:auth-changed', function(e) {
+  var loggedIn = !!(e.detail && e.detail.user && e.detail.user.id);
+  if (!loggedIn) {
+    Paywall._setBalance(0);
+    return;
   }
-})();
+  Paywall.syncBalance(true).then(function() { Paywall._resumePendingPayment(); }).catch(function() {});
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  var input = document.getElementById('redeemCodeInput');
+  if (input) input.placeholder = '输入兑换码';
+  Paywall._renderBalance();
+  if (Paywall._isLoggedIn()) {
+    Paywall.syncBalance(true).then(function() { Paywall._resumePendingPayment(); }).catch(function() {});
+  }
+});

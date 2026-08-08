@@ -1,69 +1,72 @@
-/**
- * AI命理助手 — DeepSeek对话接口
- * 环境变量: DEEPSEEK_API_KEY
- */
-const https = require('https');
+/** AI命理助手：登录 + 服务端原子扣 2 次 + 失败自动退款 */
+const { noStore, readJson, verifyUser, serviceRpc, randomRequestId } = require('./_lib');
+const { callDeepSeek } = require('./_deepseek');
+
+const COST = 2;
+
+function cleanMessages(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  let total = 0;
+  for (const item of input.slice(-10)) {
+    if (!item || (item.role !== 'user' && item.role !== 'assistant')) continue;
+    const content = String(item.content || '').trim().slice(0, 4000);
+    if (!content) continue;
+    total += content.length;
+    if (total > 12000) break;
+    out.push({ role: item.role, content });
+  }
+  return out;
+}
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  noStore(res);
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
-  var apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'AI服务未配置，请在Vercel设置DEEPSEEK_API_KEY' });
-
+  let debitId = '';
+  let user = null;
   try {
-    var body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    var messages = body.messages;
-    if (!messages || !messages.length) return res.status(400).json({ error: '缺少消息' });
+    user = await verifyUser(req);
+    if (!user) return res.status(401).json({ success: false, code: 'AUTH_REQUIRED', error: '请先登录账号' });
 
-    // 注入系统提示
-    var fullMessages = [
-      { role: 'system', content: '你是道问网站的AI命理助手，精通八字、紫微斗数、六爻、塔罗等东方命理。回答简洁专业，用口语化中文。基于用户提供的命盘数据回答问题，不要编造数据中没有的信息。' },
-      { role: 'system', content: '你是一个热情但专业的玄学AI，帮助用户深度理解他们的命盘、运势、事业发展、感情婚姻等。每次回答结尾可以根据情况给一个温暖的鼓励。' }
-    ].concat(messages.slice(-10));
+    const body = await readJson(req);
+    const messages = cleanMessages(body.messages);
+    if (!messages.length) return res.status(400).json({ success: false, error: '缺少有效消息' });
 
-    var result = await callDeepSeek(apiKey, fullMessages);
-    res.json({ success: true, content: result });
+    debitId = randomRequestId('ai-chat');
+    const debit = await serviceRpc('api_consume_credits', {
+      p_user_id: user.id,
+      p_amount: COST,
+      p_reason: 'ai-chat',
+      p_request_id: debitId
+    });
+    if (!debit || debit.success !== true) {
+      if (debit && debit.code === 'INSUFFICIENT') {
+        return res.status(402).json({ success: false, code: 'INSUFFICIENT', error: '解读次数不足', balance: Number(debit.balance || 0), cost: COST });
+      }
+      return res.status(409).json({ success: false, error: '扣费失败，请刷新余额后重试' });
+    }
+
+    const fullMessages = [
+      { role: 'system', content: '你是“道问”的传统文化命理辅助解读助手。只能依据用户给出的命盘、卦象或牌面信息做文化性解释，不编造用户未提供的命盘数据。用清晰、克制的中文回答；涉及医学、法律、投资等重要事项时明确提示不能替代专业建议。' }
+    ].concat(messages);
+
+    const content = await callDeepSeek(fullMessages, { maxTokens: 1200, temperature: 0.7 });
+    return res.status(200).json({ success: true, content, cost: COST, balance: Number(debit.balance || 0) });
   } catch (e) {
-    console.error('AI error:', e.message);
-    res.status(500).json({ error: 'AI服务暂不可用: ' + e.message });
+    if (user && debitId) {
+      try {
+        await serviceRpc('api_refund_credits', {
+          p_user_id: user.id,
+          p_amount: COST,
+          p_request_id: debitId,
+          p_reason: 'ai-chat-failure'
+        });
+      } catch (refundErr) {
+        console.error('[ai-chat] refund failed:', refundErr.message);
+      }
+    }
+    console.error('[ai-chat]', e.message);
+    return res.status(503).json({ success: false, error: 'AI 服务暂不可用，本次已自动退回次数' });
   }
 };
-
-function callDeepSeek(apiKey, messages) {
-  return new Promise(function(resolve, reject) {
-    var data = JSON.stringify({
-      model: 'deepseek-chat',
-      messages: messages,
-      max_tokens: 1000,
-      temperature: 0.7
-    });
-
-    var req = https.request({
-      hostname: 'api.deepseek.com',
-      path: '/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Length': Buffer.byteLength(data)
-      }
-    }, function(response) {
-      var body = '';
-      response.on('data', function(chunk) { body += chunk; });
-      response.on('end', function() {
-        try {
-          var json = JSON.parse(body);
-          if (json.error) reject(new Error(json.error.message));
-          else resolve(json.choices[0].message.content);
-        } catch(e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}

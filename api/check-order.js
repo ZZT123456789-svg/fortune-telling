@@ -1,51 +1,80 @@
-/**
- * ZPay 订单状态查询 — 验证用户是否真实支付
- */
-const https = require('https');
-const crypto = require('crypto');
+const {
+  noStore,
+  verifyUser,
+  serviceRpc,
+  moneyToCents
+} = require('./_lib');
+
+async function queryZPay(orderNo) {
+  const zpid = String(process.env.ZPAY_PID || '').trim();
+  const zkey = String(process.env.ZPAY_KEY || '').trim();
+  if (!zpid || !zkey) throw new Error('ZPay not configured');
+
+  const url = 'https://zpayz.cn/api.php?act=order&pid=' + encodeURIComponent(zpid) +
+    '&key=' + encodeURIComponent(zkey) + '&out_trade_no=' + encodeURIComponent(orderNo);
+  const resp = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'DaoWen/2.0' } });
+  if (!resp.ok) throw new Error('ZPay query HTTP ' + resp.status);
+  const data = await resp.json();
+  return data || {};
+}
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin','*');
-  if (req.method==='OPTIONS') return res.status(200).end();
-
-  var outTradeNo = (req.query && req.query.order) || '';
-  if (!outTradeNo) return res.status(400).json({paid:false,msg:'缺少订单号'});
-
-  var zkey = (process.env.ZPAY_KEY||'').trim();
-  var zpid = (process.env.ZPAY_PID||'').trim();
-  if (!zkey||!zpid) return res.status(500).json({paid:false,msg:'支付配置未完成'});
-
-  // ZPay 查询参数+签名
-  var params = { pid: zpid, out_trade_no: outTradeNo };
-  var keys = Object.keys(params).sort();
-  var signStr = keys.map(function(k){return k+'='+params[k];}).join('&')+zkey;
-  params.sign = crypto.createHash('md5').update(signStr,'utf8').digest('hex').toLowerCase();
+  noStore(res);
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    var result = await new Promise(function(resolve, reject) {
-      var qs = keys.map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&') + '&sign='+encodeURIComponent(params.sign);
-      var rq = https.get('https://api.z-pay.cn/query.php?'+qs, { headers:{'User-Agent':'DaoWen/1.0'} }, function(rp) {
-        var body='';
-        rp.on('data',function(c){body+=c;});
-        rp.on('end',function(){resolve(body);});
-      });
-      rq.on('error', reject);
-      rq.setTimeout(8000, function(){ rq.destroy(); reject(new Error('timeout')); });
-    });
+    const user = await verifyUser(req);
+    if (!user) return res.status(401).json({ success: false, paid: false, error: '请先登录' });
 
-    // ZPay 返回的文本中包含 status 或 trade_status 表示支付状态
-    var paid = false;
-    if (result.indexOf('TRADE_SUCCESS')!==-1 || result.indexOf('success')!==-1 ||
-        result.indexOf('paid')!==-1 || result.indexOf('SUCCESS')!==-1 ||
-        (result.indexOf('status')!==-1 && result.indexOf('1')!==-1)) {
-      paid = true;
+    const orderNo = String((req.query && req.query.order) || '').trim();
+    if (!/^\d{10,32}$/.test(orderNo)) {
+      return res.status(400).json({ success: false, paid: false, error: '订单号无效' });
     }
 
-    // 如果返回太长，截取关键部分
-    var shortResult = result.substring(0, 300);
-    res.json({ paid: paid, msg: paid?'支付已确认':'暂未检测到支付记录', debug: shortResult });
-  } catch(e) {
-    // 查询超时或失败，返回未支付
-    res.json({ paid: false, msg: '支付验证暂不可用，请稍后重试或联系客服' });
+    let local = await serviceRpc('api_payment_status', { p_user_id: user.id, p_order_no: orderNo });
+    if (!local || local.found !== true) {
+      return res.status(404).json({ success: false, paid: false, error: '未找到该订单' });
+    }
+    if (local.paid === true) {
+      return res.status(200).json({ success: true, paid: true, credits: Number(local.credits || 0) });
+    }
+
+    // 回调可能丢失：按 ZPay 官方订单查询接口进行服务端补查。
+    const provider = await queryZPay(orderNo);
+    const providerPaid = Number(provider.code) === 1 && Number(provider.status) === 1;
+    if (!providerPaid) {
+      return res.status(200).json({ success: true, paid: false, msg: '暂未检测到支付成功' });
+    }
+
+    if (String(provider.out_trade_no || '') !== orderNo) {
+      return res.status(400).json({ success: false, paid: false, error: '支付订单校验失败' });
+    }
+    if (provider.pid != null && String(provider.pid) !== String(process.env.ZPAY_PID || '').trim()) {
+      return res.status(400).json({ success: false, paid: false, error: '商户信息校验失败' });
+    }
+
+    const paidCents = moneyToCents(provider.money);
+    if (!Number.isFinite(paidCents) || paidCents !== Number(local.amount_cents)) {
+      return res.status(400).json({ success: false, paid: false, error: '支付金额校验失败' });
+    }
+
+    const completed = await serviceRpc('api_complete_payment', {
+      p_order_no: orderNo,
+      p_trade_no: String(provider.trade_no || ''),
+      p_money_cents: paidCents
+    });
+    if (!completed || completed.success !== true) {
+      return res.status(500).json({ success: false, paid: false, error: '到账处理失败' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      paid: true,
+      credits: Number(completed.credits || local.credits || 0),
+      balance: Number(completed.balance || 0)
+    });
+  } catch (e) {
+    console.error('[check-order]', e.message);
+    return res.status(503).json({ success: false, paid: false, error: '支付验证暂不可用，请稍后重试' });
   }
 };
