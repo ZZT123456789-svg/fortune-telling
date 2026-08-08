@@ -497,7 +497,7 @@ function enhanceDaoSplash() {
     setTimeout(() => window.dismissSplash(true), 90);
   } else {
     // 保留品牌入场感，但不强迫用户必须点击；约 2.6 秒自动进入。
-    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 1500);
+    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);
   }
 }
 
@@ -514,7 +514,7 @@ function installDaoDismissSplash() {
     el.classList.add('fade-out');
     const canvas = document.getElementById('starCanvas');
     if (canvas) canvas.style.zIndex = '0';
-    const delay = fast ? 100 : 420;
+    const delay = fast ? 120 : 760;
     setTimeout(() => {
       if (el && el.parentNode) el.parentNode.removeChild(el);
       document.body.classList.add('dao-entered');
