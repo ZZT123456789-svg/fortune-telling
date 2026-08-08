@@ -1,0 +1,60 @@
+name: Apply DaoWen bundle
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[apply-daowen-bundle]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Reconstruct and verify bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d .pushparts
+          test -f .pushparts/part-009b
+          find .pushparts -maxdepth 1 -type f -name 'part-*' -print0 | sort -z | xargs -0 cat > /tmp/daowen-payload.b64
+          base64 -d /tmp/daowen-payload.b64 > /tmp/daowen-payload.tar.gz
+          echo "b375f6eacf364061ceb10fd1f13aa07eeaf6730cdf94a272d703139cd577e3e8  /tmp/daowen-payload.tar.gz" | sha256sum -c -
+          tar -tzf /tmp/daowen-payload.tar.gz
+          tar -xzf /tmp/daowen-payload.tar.gz -C .
+
+      - name: Validate JavaScript and config
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in js/*.js api/*.js; do node --check "$f" >/dev/null; done
+          node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8'))"
+          test -s css/style.css
+          test -s sql/secure-credits.sql
+          grep -q "var DaoWenAuth" js/supabase-auth.js
+          grep -q "var Paywall" js/paywall.js
+          grep -q "ZiweiModule" js/ziwei.js
+
+      - name: Commit integrated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .pushparts
+          rm -f .github/workflows/apply-daowen-bundle.yml
+          git config user.name "DaoWen Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat: 完善登录、UI与积分安全 [apply-daowen-bundle]"
+          git push origin HEAD:main
