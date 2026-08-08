@@ -1,0 +1,95 @@
+name: Remove skeleton transition
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  remove:
+    if: ${{ !contains(github.event.head_commit.message, '[remove-skeleton-transition]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Remove full-screen skeleton transition
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          app_path = Path('js/app.js')
+          css_path = Path('css/style.css')
+          app = app_path.read_text(encoding='utf-8-sig')
+          css = css_path.read_text(encoding='utf-8-sig')
+
+          # 1) 取消入场结束后的全屏骨架屏。
+          app = re.sub(
+              r"\n\s*if \(window\.DaoSkeleton\) \{\s*\n\s*window\.DaoSkeleton\.show\([^\n]+\);\s*\n\s*\}\s*",
+              "\n",
+              app,
+              count=1,
+          )
+
+          # 2) 取消首页功能卡点击时的骨架过渡监听。
+          app = re.sub(r"\n\s*installSkeletonTransitions\(\);", "", app)
+
+          # 3) 删除 DaoSkeleton 过渡实现，但保留真正业务模块自己的 loading/skeleton。
+          marker = '// ============ 宣纸骨架屏过渡 ============'
+          startup = '// ============ 启动应用 ============'
+          if marker in app:
+              start = app.index(marker)
+              end = app.find(startup, start)
+              if end == -1:
+                  raise SystemExit('找不到骨架屏代码后的启动标记，停止修改')
+              app = app[:start].rstrip() + '\n\n' + app[end:]
+
+          # 4) 删除独立的 dao-skeleton 全屏过渡样式区；保留旧 .skeleton 业务加载样式。
+          first = css.find('.dao-skeleton-overlay')
+          premium = css.find('道问 · Premium System V3')
+          if first != -1 and premium != -1 and first < premium:
+              start = css.rfind('/*', 0, first)
+              end = css.rfind('/*', 0, premium)
+              if start != -1 and end != -1 and end > start:
+                  css = css[:start].rstrip() + '\n\n' + css[end:]
+
+          # 5) Premium V3 中可能残留的骨架样式不会再有 DOM，但直接隐藏可防旧缓存/旧脚本短暂创建。
+          css += '''\n\n/* 骨架过渡已取消：防止旧缓存脚本短暂创建全屏遮罩 */\n#daoSkeletonOverlay, .dao-skeleton-overlay { display: none !important; }\n'''
+
+          app_path.write_text(app, encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
+          PY
+
+      - name: Validate removal
+        shell: bash
+        run: |
+          node --check js/app.js
+          ! grep -q "DaoSkeleton.show" js/app.js
+          ! grep -q "installSkeletonTransitions();" js/app.js
+          ! grep -q "const DaoSkeleton" js/app.js
+          python3 - <<'PY'
+          from pathlib import Path
+          css = Path('css/style.css').read_text(encoding='utf-8')
+          assert css.count('{') == css.count('}'), 'CSS braces are not balanced'
+          print('Skeleton transition removed; JS/CSS checks passed.')
+          PY
+
+      - name: Commit removal
+        shell: bash
+        run: |
+          rm -f .github/workflows/remove-skeleton-transition.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/app.js css/style.css .github/workflows/remove-skeleton-transition.yml
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "ui: 取消骨架屏过渡动画 [remove-skeleton-transition]"
+          git push
