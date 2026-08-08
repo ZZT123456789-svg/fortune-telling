@@ -23,6 +23,7 @@ var DaoWenAuth = {
   _initPromise: null,
   _lifecycleBound: false,
   _accountUIReady: false,
+  _recentSignup: null,
 
   init: function() {
     if (this._initPromise) return this._initPromise;
@@ -269,21 +270,31 @@ var DaoWenAuth = {
       if (!result.ok) return { success: false, msg: this._friendlyError(data, '注册失败，请稍后重试') };
 
       // 开启邮箱确认时，Supabase 会返回 user 但没有 access_token。
+      // 对已经存在的已确认账号，Supabase 可能为了防止账号枚举返回模糊/伪造 user；
+      // 常见特征是 identities 为空。此时“再次注册”不会覆盖原账号密码。
       if (data.user && !data.access_token) {
-        this._markPendingEmail(email);
+        var identities = Array.isArray(data.user.identities) ? data.user.identities : null;
+        var ambiguousExisting = !!(identities && identities.length === 0);
+        var pendingReason = ambiguousExisting ? 'existing_or_ambiguous' : 'awaiting_confirmation';
+        this._markPendingEmail(email, pendingReason);
+        this._recentSignup = { email: email, at: Date.now(), reason: pendingReason };
         this._clearSession(false);
         this._updateUI();
         this._toggleResendVerification(true);
         return {
           success: true,
           pending: true,
-          msg: '注册成功，但邮箱尚未验证。请先到邮箱点击“确认注册”链接；没收到邮件可点击下方“重新发送验证邮件”。'
+          ambiguous: ambiguousExisting,
+          msg: ambiguousExisting
+            ? '注册请求已处理，但没有建立可立即登录的新会话。若这个邮箱以前注册过，本次输入的密码不会覆盖原密码；请使用原密码登录，或点“忘记密码”重置。若是首次注册，请先检查验证邮件。'
+            : '注册成功，当前账号正在等待邮箱验证。注册后不能直接登录，请先打开验证邮件完成确认；验证完成后再登录。'
         };
       }
 
       if (data.access_token) {
         this.session = data;
         this.user = data.user || await this._fetchUser(data.access_token);
+        this._recentSignup = null;
         this._clearPendingEmail(email);
         this._toggleResendVerification(false);
         this._saveSession();
@@ -317,9 +328,26 @@ var DaoWenAuth = {
           return { success: false, needsVerification: true, msg: '账号已经注册，但邮箱还没有验证。请先打开验证邮件完成确认；没收到可重新发送验证邮件。' };
         }
         var invalidCredentials = code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1;
-        if (invalidCredentials && this._isPendingEmail(email)) {
+        var pendingState = this._getPendingState(email);
+        var recentSignup = this._recentSignup && this._recentSignup.email === email && Date.now() - Number(this._recentSignup.at || 0) < 30 * 60 * 1000
+          ? this._recentSignup
+          : null;
+        var signupState = pendingState || recentSignup;
+        if (invalidCredentials && signupState) {
           this._toggleResendVerification(true);
-          return { success: false, needsVerification: true, msg: '邮箱或密码暂时无法验证。如果这是刚注册的账号，请先完成邮箱验证；没收到邮件可重新发送。' };
+          if (signupState.reason === 'existing_or_ambiguous') {
+            return {
+              success: false,
+              signupState: true,
+              msg: '这次注册没有生成可立即登录的新账号密码。若该邮箱以前注册过，请使用原密码；不确定原密码时请点“忘记密码”重置。若是首次注册，请先完成邮箱验证。'
+            };
+          }
+          return {
+            success: false,
+            needsVerification: true,
+            signupState: true,
+            msg: '这是刚注册、尚待邮箱验证的账号，不能立即登录。请先打开验证邮件完成确认，然后再点击登录。'
+          };
         }
         return { success: false, msg: this._friendlyError(result.data, '邮箱或密码错误') };
       }
@@ -329,6 +357,7 @@ var DaoWenAuth = {
         this.session.expires_at = Math.floor(Date.now() / 1000) + Number(this.session.expires_in);
       }
       this.user = result.data.user || await this._fetchUser(result.data.access_token);
+      this._recentSignup = null;
       this._clearPendingEmail(email);
       this._toggleResendVerification(false);
       if (!this.user) {
@@ -336,6 +365,7 @@ var DaoWenAuth = {
         return { success: false, msg: '登录凭证验证失败，请重新登录' };
       }
       this._saveSession();
+      this._restoreLoginActions();
       this._updateUI();
       this._emitAuthChanged();
       this._startRefreshTimer();
@@ -345,11 +375,15 @@ var DaoWenAuth = {
     }
   },
 
-  _markPendingEmail: function(email) {
+  _markPendingEmail: function(email, reason) {
     email = String(email || '').trim().toLowerCase();
     if (!this._validEmail(email)) return;
     try {
-      localStorage.setItem(this.PENDING_EMAIL_KEY, JSON.stringify({ email: email, at: Date.now() }));
+      localStorage.setItem(this.PENDING_EMAIL_KEY, JSON.stringify({
+        email: email,
+        at: Date.now(),
+        reason: reason || 'awaiting_confirmation'
+      }));
     } catch (e) {}
   },
 
@@ -369,6 +403,20 @@ var DaoWenAuth = {
     }
   },
 
+  _getPendingState: function(email) {
+    email = String(email || '').trim().toLowerCase();
+    if (!this._validEmail(email)) return null;
+    try {
+      var raw = localStorage.getItem(this.PENDING_EMAIL_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || String(data.email || '').toLowerCase() !== email || !data.at || Date.now() - Number(data.at) > 48 * 60 * 60 * 1000) return null;
+      return { email: email, at: Number(data.at), reason: data.reason || 'awaiting_confirmation' };
+    } catch (e) {
+      return null;
+    }
+  },
+
   _isPendingEmail: function(email) {
     return this._getPendingEmail() === String(email || '').trim().toLowerCase();
   },
@@ -377,6 +425,7 @@ var DaoWenAuth = {
     var pending = this._getPendingEmail();
     if (!email || !pending || pending === String(email).trim().toLowerCase()) {
       try { localStorage.removeItem(this.PENDING_EMAIL_KEY); } catch (e) {}
+      if (!email || !this._recentSignup || this._recentSignup.email === String(email).trim().toLowerCase()) this._recentSignup = null;
     }
   },
 
@@ -542,7 +591,18 @@ var DaoWenAuth = {
         setTimeout(function() { self.closeLogin(); }, 450);
         if (typeof Paywall !== 'undefined' && Paywall.refreshWalls) Paywall.refreshWalls();
       } else if (result.success && result.pending) {
-        this._setStatus(result.msg, 'success');
+        this._setStatus(result.msg, result.ambiguous ? 'info' : 'success');
+        var row = document.getElementById('loginNormalActions');
+        if (row) {
+          var buttons = row.querySelectorAll('button');
+          if (buttons[0]) buttons[0].textContent = result.ambiguous ? '使用原密码登录' : '验证后登录';
+          if (buttons[1]) {
+            buttons[1].textContent = result.ambiguous ? '忘记密码' : '重新发送验证邮件';
+            buttons[1].onclick = result.ambiguous
+              ? function() { DaoWenAuth.resetPassword(); }
+              : function() { DaoWenAuth.resendVerification(); };
+          }
+        }
       } else {
         this._setStatus(result.msg || '操作失败', 'error');
       }
@@ -571,6 +631,7 @@ var DaoWenAuth = {
       this._clearSession(false);
       return false;
     }
+    this._recentSignup = null;
     this._clearPendingEmail(this.user && this.user.email);
     this._toggleResendVerification(false);
     this._saveSession();
@@ -717,6 +778,14 @@ var DaoWenAuth = {
     return fallback || '操作失败';
   },
 
+  _restoreLoginActions: function() {
+    var row = document.getElementById('loginNormalActions');
+    if (!row) return;
+    var buttons = row.querySelectorAll('button');
+    if (buttons[0]) { buttons[0].textContent = '登录'; buttons[0].onclick = function() { DaoWenAuth.doLogin('signin'); }; }
+    if (buttons[1]) { buttons[1].textContent = '注册账号'; buttons[1].onclick = function() { DaoWenAuth.doLogin('signup'); }; }
+  },
+
   _setBusy: function(flag) {
     this._busy = !!flag;
     var buttons = document.querySelectorAll('#loginOverlay button');
@@ -772,6 +841,12 @@ var DaoWenAuth = {
       email.setAttribute('autocomplete', 'email');
       email.setAttribute('inputmode', 'email');
       email.setAttribute('aria-label', '邮箱地址');
+      var authSelf = this;
+      email.addEventListener('input', function() {
+        var current = String(email.value || '').trim().toLowerCase();
+        var recent = authSelf._recentSignup && authSelf._recentSignup.email === current;
+        if (!recent && !authSelf._isPendingEmail(current)) authSelf._restoreLoginActions();
+      });
     }
     if (password) {
       password.placeholder = '密码（注册至少 8 位）';
