@@ -2,57 +2,56 @@ name: Fix signup diagnostic
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - '.github/workflows/fix-signup-diagnostic.yml'
+      - .github/workflows/fix-signup-diagnostic.yml
 
 permissions:
   contents: write
 
 jobs:
-  fix-signup-diagnostic:
+  fix_signup_diagnostic:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Apply signup diagnostic patch
-        shell: python
+      - name: Apply patch
         run: |
+          python - <<'PY'
           from pathlib import Path
-
           path = Path('js/supabase-auth.js')
           text = path.read_text(encoding='utf-8')
-
           old = "if (!result.ok) return { success: false, msg: this._friendlyError(data, '注册失败，请稍后重试') };"
           new = "if (!result.ok) return { success: false, msg: this._signupDiagnostic(data, result.status) };"
           if old not in text:
               raise SystemExit('signup failure anchor not found')
           text = text.replace(old, new, 1)
-
           anchor = "  _friendlyError: function(data, fallback) {"
-          helper = r'''  _signupDiagnostic: function(data, status) {
-    var friendly = this._friendlyError(data, '注册失败，请稍后重试');
-    var code = String((data && (data.code || data.error_code)) || '').trim();
-    var technical = code || ('HTTP_' + String(status || 'unknown'));
-    return friendly + '（错误码：' + technical + '）';
-  },
+          helper = """  _signupDiagnostic: function(data, status) {
+            var friendly = this._friendlyError(data, '注册失败，请稍后重试');
+            var code = String((data && (data.code || data.error_code)) || '').trim();
+            var technical = code || ('HTTP_' + String(status || 'unknown'));
+            return friendly + '（错误码：' + technical + '）';
+          },
 
-'''
+          """
           if anchor not in text:
               raise SystemExit('friendly error anchor not found')
           text = text.replace(anchor, helper + anchor, 1)
-
           path.write_text(text, encoding='utf-8')
+          PY
 
-      - name: Validate JavaScript
+      - name: Validate
         run: |
           node --check js/supabase-auth.js
           grep -q "_signupDiagnostic" js/supabase-auth.js
           grep -q "错误码：" js/supabase-auth.js
 
-      - name: Commit fix
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
