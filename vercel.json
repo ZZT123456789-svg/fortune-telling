@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "daowen",
   "buildCommand": "",
@@ -8,6 +9,11 @@
   "github": {
     "enabled": true,
     "autoJobCancelation": true
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
   },
   "headers": [
     {
