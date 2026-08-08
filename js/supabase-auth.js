@@ -290,7 +290,7 @@ var DaoWenAuth = {
       });
       var data = result.data;
 
-      if (!result.ok) return { success: false, msg: this._friendlyError(data, '注册失败，请稍后重试') };
+      if (!result.ok) return { success: false, msg: this._signupDiagnostic(data, result.status) };
 
       // 开启邮箱确认时，Supabase 会返回 user 但没有 access_token。
       // 对已经存在的已确认账号，Supabase 可能为了防止账号枚举返回模糊/伪造 user；
@@ -794,6 +794,13 @@ var DaoWenAuth = {
   _validEmail: function(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
   },
+
+  _signupDiagnostic: function(data, status) {
+  var friendly = this._friendlyError(data, '注册失败，请稍后重试');
+  var code = String((data && (data.code || data.error_code)) || '').trim();
+  var technical = code || ('HTTP_' + String(status || 'unknown'));
+  return friendly + '（错误码：' + technical + '）';
+},
 
   _friendlyError: function(data, fallback) {
     var code = String((data && (data.code || data.error_code)) || '').toLowerCase();
