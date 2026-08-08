@@ -497,7 +497,7 @@ function enhanceDaoSplash() {
     setTimeout(() => window.dismissSplash(true), 90);
   } else {
     // 保留品牌入场感，但不强迫用户必须点击；约 2.6 秒自动进入。
-    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 2600);
+    window.__daoSplashTimer = setTimeout(() => window.dismissSplash(), 1500);
   }
 }
 
@@ -514,10 +514,13 @@ function installDaoDismissSplash() {
     el.classList.add('fade-out');
     const canvas = document.getElementById('starCanvas');
     if (canvas) canvas.style.zIndex = '0';
-    const delay = fast ? 120 : 760;
+    const delay = fast ? 100 : 420;
     setTimeout(() => {
       if (el && el.parentNode) el.parentNode.removeChild(el);
       document.body.classList.add('dao-entered');
+      if (window.DaoSkeleton) {
+        window.DaoSkeleton.show('page', fast ? '正在恢复道问…' : '正在铺开命理卷轴…', fast ? 220 : 380);
+      }
     }, delay);
   };
 }
@@ -558,10 +561,108 @@ function initDaoUI() {
   installDaoDismissSplash();
   enhanceDaoSplash();
   makeToolCardsAccessible();
+  installSkeletonTransitions();
   addRevealMotion();
   const loginBtn = document.getElementById('loginBtn');
   if (loginBtn) loginBtn.classList.add('dao-header-action');
   document.documentElement.classList.add('dao-ink-theme-ready');
+}
+
+
+// ============ 宣纸骨架屏过渡 ============
+const DaoSkeleton = {
+  overlay: null,
+  _hideTimer: null,
+
+  ensure() {
+    if (this.overlay && document.body.contains(this.overlay)) return this.overlay;
+    const el = document.createElement('div');
+    el.id = 'daoSkeletonOverlay';
+    el.className = 'dao-skeleton-overlay';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `
+      <div class="dao-skeleton-shell" role="status" aria-live="polite">
+        <div class="dao-skeleton-topline">
+          <span class="dao-skeleton-seal">道</span>
+          <div class="dao-skeleton-heading">
+            <span class="dao-skeleton-bar w-36"></span>
+            <span class="dao-skeleton-bar w-22 soft"></span>
+          </div>
+          <span class="dao-skeleton-pill"></span>
+        </div>
+        <div class="dao-skeleton-nav">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="dao-skeleton-paper">
+          <div class="dao-skeleton-title-row">
+            <span class="dao-skeleton-disc"></span>
+            <div>
+              <span class="dao-skeleton-bar w-48"></span>
+              <span class="dao-skeleton-bar w-64 soft"></span>
+            </div>
+          </div>
+          <div class="dao-skeleton-grid">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="dao-skeleton-lines">
+            <span class="w-92"></span><span class="w-76"></span><span class="w-84"></span>
+          </div>
+        </div>
+        <p class="dao-skeleton-label">正在铺开命理卷轴…</p>
+      </div>`;
+    document.body.appendChild(el);
+    this.overlay = el;
+    return el;
+  },
+
+  show(mode, label, duration) {
+    const el = this.ensure();
+    if (this._hideTimer) clearTimeout(this._hideTimer);
+    this._hideTimer = null;
+    el.dataset.mode = mode || 'page';
+    const labelEl = el.querySelector('.dao-skeleton-label');
+    if (labelEl) labelEl.textContent = label || '正在准备内容…';
+    el.classList.remove('is-leaving');
+    el.classList.add('is-visible');
+    el.setAttribute('aria-hidden', 'false');
+    document.body.setAttribute('aria-busy', 'true');
+    if (duration !== 0) {
+      this._hideTimer = setTimeout(() => this.hide(), Number(duration || 360));
+    }
+    return el;
+  },
+
+  hide() {
+    const el = this.overlay;
+    if (!el) return;
+    if (this._hideTimer) clearTimeout(this._hideTimer);
+    this._hideTimer = null;
+    el.classList.add('is-leaving');
+    document.body.removeAttribute('aria-busy');
+    setTimeout(() => {
+      if (!this.overlay) return;
+      this.overlay.classList.remove('is-visible', 'is-leaving');
+      this.overlay.setAttribute('aria-hidden', 'true');
+    }, 190);
+  }
+};
+
+window.DaoSkeleton = DaoSkeleton;
+window.showDaoSkeleton = (label, duration) => DaoSkeleton.show('result', label, duration || 0);
+window.hideDaoSkeleton = () => DaoSkeleton.hide();
+
+function installSkeletonTransitions() {
+  if (document.documentElement.dataset.daoSkeletonReady === '1') return;
+  document.documentElement.dataset.daoSkeletonReady = '1';
+
+  // 功能卡采用“先骨架、后内容”的轻过渡。原 onclick 仍立即执行，骨架只覆盖约 0.3 秒，不阻塞业务逻辑。
+  document.addEventListener('click', e => {
+    const card = e.target && e.target.closest ? e.target.closest('.tool-card[onclick]') : null;
+    if (!card || document.getElementById('splashOverlay')) return;
+    const titleEl = card.querySelector('.tool-title, .tool-card-title, h3, strong');
+    const title = titleEl ? titleEl.textContent.trim() : '';
+    DaoSkeleton.show('module', title ? `正在展开「${title}」…` : '正在展开内容…', 320);
+  }, true);
 }
 
 // ============ 启动应用 ============
