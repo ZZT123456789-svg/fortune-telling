@@ -665,8 +665,42 @@ function installSkeletonTransitions() {
   }, true);
 }
 
+
+
+// ============ Premium material micro-interactions ============
+function initPremiumMaterialUI() {
+  document.documentElement.classList.add('dao-premium-ui');
+
+  if (!document.getElementById('daoTextureLayer')) {
+    const texture = document.createElement('div');
+    texture.id = 'daoTextureLayer';
+    texture.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(texture);
+  }
+
+  const finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (finePointer) {
+    document.querySelectorAll('.tool-card').forEach(card => {
+      card.addEventListener('pointermove', e => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+      }, { passive: true });
+      card.addEventListener('pointerleave', () => {
+        card.style.removeProperty('--spot-x');
+        card.style.removeProperty('--spot-y');
+      }, { passive: true });
+    });
+  }
+
+  document.querySelectorAll('button').forEach(btn => {
+    if (!btn.hasAttribute('type') && !btn.closest('form')) btn.setAttribute('type', 'button');
+  });
+}
+
 // ============ 启动应用 ============
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
   initDaoUI();
+  initPremiumMaterialUI();
 });

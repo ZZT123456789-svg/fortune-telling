@@ -870,14 +870,14 @@ var DaoWenAuth = {
     var btn = document.getElementById('loginBtn');
     if (!btn) return;
     if (this.user && this.user.id) {
-      var name = (this.user.email || '已登录').split('@')[0];
-      btn.textContent = '◉ ' + name;
+      btn.textContent = '我的账号';
       btn.setAttribute('title', '打开账号中心 · ' + (this.user.email || ''));
+      btn.setAttribute('aria-label', '打开我的账号');
       btn.onclick = function() { DaoWenAuth.openAccount(); };
       btn.classList.add('is-logged-in');
       this._updateAccountUI();
     } else {
-      btn.textContent = '账号登录';
+      btn.textContent = '登录';
       btn.removeAttribute('title');
       btn.onclick = function() { DaoWenAuth.openLogin(); };
       btn.classList.remove('is-logged-in');
