@@ -11,6 +11,8 @@ var DaoWenAuth = {
   STORAGE_KEY: 'daowen_session_v2',
   LEGACY_STORAGE_KEY: 'daowen_session',
   PENDING_EMAIL_KEY: 'daowen_pending_email_verification_v1',
+  REFRESH_LOCK_KEY: 'daowen_auth_refresh_lock_v1',
+  REQUEST_TIMEOUT: 12000,
   user: null,
   session: null,
   _busy: false,
@@ -24,6 +26,10 @@ var DaoWenAuth = {
   _lifecycleBound: false,
   _accountUIReady: false,
   _recentSignup: null,
+  _refreshPromise: null,
+  _lastAuthRequestStatus: 0,
+  _lastRefreshStatus: 0,
+  _tabId: 'dw-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2),
 
   init: function() {
     if (this._initPromise) return this._initPromise;
@@ -150,20 +156,29 @@ var DaoWenAuth = {
 
   _request: async function(path, options) {
     options = options || {};
-    var headers = options.headers || {};
+    var requestOptions = Object.assign({}, options);
+    var headers = Object.assign({}, options.headers || {});
     headers.apikey = this.SUPABASE_KEY;
     if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    options.headers = headers;
-    var resp = await fetch(this.SUPABASE_URL + path, options);
-    var data = null;
-    try { data = await resp.json(); } catch (e) { data = {}; }
-    return { ok: resp.ok, status: resp.status, data: data || {} };
+    requestOptions.headers = headers;
+
+    var controller = typeof AbortController !== 'undefined' && !requestOptions.signal ? new AbortController() : null;
+    var timer = controller ? setTimeout(function() { controller.abort(); }, this.REQUEST_TIMEOUT) : null;
+    if (controller) requestOptions.signal = controller.signal;
+    try {
+      var resp = await fetch(this.SUPABASE_URL + path, requestOptions);
+      var data = null;
+      try { data = await resp.json(); } catch (e) { data = {}; }
+      return { ok: resp.ok, status: resp.status, data: data || {} };
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   },
 
   _loadStoredSession: function() {
-    var raw = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem(this.LEGACY_STORAGE_KEY);
-    if (!raw) return false;
     try {
+      var raw = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem(this.LEGACY_STORAGE_KEY);
+      if (!raw) return false;
       var parsed = JSON.parse(raw);
       this.session = parsed.session || null;
       this.user = parsed.user || null;
@@ -180,19 +195,56 @@ var DaoWenAuth = {
 
   _saveSession: function() {
     if (!this.session || !this.session.access_token) return;
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
-      session: this.session,
-      user: this.user,
-      saved_at: Date.now()
-    }));
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+        session: this.session,
+        user: this.user,
+        saved_at: Date.now()
+      }));
+    } catch (e) {
+      console.warn('[DaoWenAuth] 浏览器无法持久保存登录状态:', e && e.message ? e.message : e);
+    }
   },
 
   _clearSession: function(emit) {
     this.user = null;
     this.session = null;
-    localStorage.removeItem(this.STORAGE_KEY);
-    localStorage.removeItem(this.LEGACY_STORAGE_KEY);
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+      localStorage.removeItem(this.LEGACY_STORAGE_KEY);
+    } catch (e) {}
     if (emit !== false) this._emitAuthChanged();
+  },
+
+  _readStoredSessionSnapshot: function() {
+    try {
+      var raw = localStorage.getItem(this.STORAGE_KEY) || localStorage.getItem(this.LEGACY_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  _acquireRefreshLock: function() {
+    var now = Date.now();
+    try {
+      var existing = JSON.parse(localStorage.getItem(this.REFRESH_LOCK_KEY) || 'null');
+      if (existing && existing.owner !== this._tabId && Number(existing.expires || 0) > now) return false;
+      var candidate = { owner: this._tabId, expires: now + this.REQUEST_TIMEOUT + 5000 };
+      localStorage.setItem(this.REFRESH_LOCK_KEY, JSON.stringify(candidate));
+      var confirmed = JSON.parse(localStorage.getItem(this.REFRESH_LOCK_KEY) || 'null');
+      return !!(confirmed && confirmed.owner === this._tabId);
+    } catch (e) {
+      // localStorage 不可用时仍允许当前标签刷新，至少保证单窗口登录可用。
+      return true;
+    }
+  },
+
+  _releaseRefreshLock: function() {
+    try {
+      var existing = JSON.parse(localStorage.getItem(this.REFRESH_LOCK_KEY) || 'null');
+      if (!existing || existing.owner === this._tabId) localStorage.removeItem(this.REFRESH_LOCK_KEY);
+    } catch (e) {}
   },
 
   _jwtExpiry: function(token) {
@@ -215,42 +267,90 @@ var DaoWenAuth = {
   },
 
   _refreshSession: async function() {
+    if (this._refreshPromise) return this._refreshPromise;
     if (!this.session || !this.session.refresh_token) return false;
-    var result = await this._request('/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST',
-      body: JSON.stringify({ refresh_token: this.session.refresh_token })
-    });
-    if (!result.ok || !result.data.access_token) return false;
-    this.session = result.data;
-    if (!this.session.expires_at && this.session.expires_in) {
-      this.session.expires_at = Math.floor(Date.now() / 1000) + Number(this.session.expires_in);
+    var self = this;
+    this._refreshPromise = (async function() {
+      var originalRefreshToken = self.session.refresh_token;
+      var originalAccessToken = self.session.access_token;
+      var ownsLock = self._acquireRefreshLock();
+
+      if (!ownsLock) {
+        // Supabase refresh token 通常只能使用一次。等待另一个标签页完成刷新，避免多窗口互相挤掉登录。
+        for (var i = 0; i < 52; i++) {
+          await new Promise(function(resolve) { setTimeout(resolve, 250); });
+          var stored = self._readStoredSessionSnapshot();
+          if (stored && stored.session && stored.session.access_token &&
+              (stored.session.refresh_token !== originalRefreshToken || stored.session.access_token !== originalAccessToken)) {
+            self.session = stored.session;
+            self.user = stored.user || stored.session.user || self.user;
+            self._lastRefreshStatus = 200;
+            return true;
+          }
+        }
+        ownsLock = self._acquireRefreshLock();
+        if (!ownsLock) return false;
+      }
+
+      try {
+        self._lastRefreshStatus = 0;
+        var result = await self._request('/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST',
+          body: JSON.stringify({ refresh_token: originalRefreshToken })
+        });
+        self._lastRefreshStatus = result.status;
+        if (!result.ok || !result.data.access_token) return false;
+        var refreshedSession = result.data;
+        if (!refreshedSession.expires_at && refreshedSession.expires_in) {
+          refreshedSession.expires_at = Math.floor(Date.now() / 1000) + Number(refreshedSession.expires_in);
+        }
+        var user = await self._fetchUser(refreshedSession.access_token);
+        if (!user) return false;
+        // 只有令牌和用户都验证成功后才替换当前会话，避免网络中断留下半登录状态。
+        self.session = refreshedSession;
+        self.user = user;
+        self._saveSession();
+        self._emitAuthChanged();
+        return true;
+      } finally {
+        self._releaseRefreshLock();
+      }
+    })();
+
+    try {
+      return await this._refreshPromise;
+    } finally {
+      this._refreshPromise = null;
     }
-    var user = await this._fetchUser(this.session.access_token);
-    if (!user) return false;
-    this.user = user;
-    this._saveSession();
-    this._emitAuthChanged();
-    return true;
   },
 
   _fetchUser: async function(token) {
     if (!token) return null;
+    this._lastAuthRequestStatus = 0;
     var result = await this._request('/auth/v1/user', {
       method: 'GET',
       headers: { Authorization: 'Bearer ' + token }
     });
+    this._lastAuthRequestStatus = result.status;
     return result.ok && result.data && result.data.id ? result.data : null;
   },
 
-  _ensureSession: async function(forceVerify) {
+  _ensureSession: async function(forceVerify, persist) {
     if (!this.session || !this.session.access_token) {
       this._clearSession(false);
       return false;
     }
 
     if (this._needsRefresh()) {
-      var refreshed = await this._refreshSession();
+      var refreshed = false;
+      try {
+        refreshed = await this._refreshSession();
+      } catch (e) {
+        // 短暂断网或请求超时不应直接删除仍可恢复的本地会话。
+        return !!this.user;
+      }
       if (!refreshed) {
+        if (this._lastRefreshStatus === 0 || this._lastRefreshStatus >= 500) return !!this.user;
         this._clearSession();
         this._updateUI();
         return false;
@@ -259,15 +359,25 @@ var DaoWenAuth = {
     }
 
     if (forceVerify || !this.user || !this.user.id) {
-      var user = await this._fetchUser(this.session.access_token);
+      var user = null;
+      try {
+        user = await this._fetchUser(this.session.access_token);
+      } catch (e) {
+        return !!this.user;
+      }
       if (!user) {
-        if (this.session.refresh_token && await this._refreshSession()) return true;
+        if (this._lastAuthRequestStatus === 0 || this._lastAuthRequestStatus >= 500) return !!this.user;
+        try {
+          if (this.session.refresh_token && await this._refreshSession()) return true;
+        } catch (e) {
+          return !!this.user;
+        }
         this._clearSession();
         this._updateUI();
         return false;
       }
       this.user = user;
-      this._saveSession();
+      if (persist !== false) this._saveSession();
     }
     return true;
   },
@@ -293,7 +403,8 @@ var DaoWenAuth = {
       if (!result.ok) {
         var signupCode = String((data && (data.code || data.error_code)) || '').toLowerCase();
         var signupRaw = String((data && (data.msg || data.message || data.error_description || data.error)) || '').toLowerCase();
-        var alreadyRegistered = signupCode === 'user_already_exists' || signupCode === 'user_already_registered' || signupRaw.indexOf('already registered') !== -1 || signupRaw.indexOf('already exists') !== -1;
+        var authEmailConflict = signupCode === '23505' || signupRaw.indexOf('users_email_partial_key') !== -1;
+        var alreadyRegistered = signupCode === 'user_already_exists' || signupCode === 'user_already_registered' || authEmailConflict || signupRaw.indexOf('already registered') !== -1 || signupRaw.indexOf('already exists') !== -1;
         if (alreadyRegistered) {
           this._markPendingEmail(email, 'existing_or_ambiguous');
           this._recentSignup = { email: email, at: Date.now(), reason: 'existing_or_ambiguous' };
@@ -343,8 +454,12 @@ var DaoWenAuth = {
       }
 
       if (data.access_token) {
+        var signupUser = data.user || await this._fetchUser(data.access_token);
+        if (!signupUser) {
+          return { success: false, msg: '注册凭证未能通过服务器验证，请使用刚才的邮箱重新登录。' };
+        }
         this.session = data;
-        this.user = data.user || await this._fetchUser(data.access_token);
+        this.user = signupUser;
         this._recentSignup = null;
         this._clearPendingEmail(email);
         this._toggleResendVerification(false);
@@ -419,18 +534,19 @@ var DaoWenAuth = {
         return { success: false, msg: this._friendlyError(result.data, '无法登录：若刚注册请先完成邮箱验证；若以前注册过，请使用原密码或点“忘记密码”重置。') };
       }
 
-      this.session = result.data;
-      if (!this.session.expires_at && this.session.expires_in) {
-        this.session.expires_at = Math.floor(Date.now() / 1000) + Number(this.session.expires_in);
+      var loginSession = result.data;
+      if (!loginSession.expires_at && loginSession.expires_in) {
+        loginSession.expires_at = Math.floor(Date.now() / 1000) + Number(loginSession.expires_in);
       }
-      this.user = result.data.user || await this._fetchUser(result.data.access_token);
+      var loginUser = result.data.user || await this._fetchUser(result.data.access_token);
+      if (!loginUser) {
+        return { success: false, msg: '登录凭证验证失败，请重新登录' };
+      }
+      this.session = loginSession;
+      this.user = loginUser;
       this._recentSignup = null;
       this._clearPendingEmail(email);
       this._toggleResendVerification(false);
-      if (!this.user) {
-        this._clearSession(false);
-        return { success: false, msg: '登录凭证验证失败，请重新登录' };
-      }
       this._saveSession();
       this._restoreLoginActions();
       this._updateUI();
@@ -675,7 +791,15 @@ var DaoWenAuth = {
     var access = params.get('access_token');
     var refresh = params.get('refresh_token');
     var type = params.get('type');
-    if (!access) return false;
+    if (!access) {
+      var callbackError = params.get('error_description') || params.get('error');
+      if (!callbackError) return false;
+      try { history.replaceState(null, document.title, window.location.pathname + window.location.search); } catch (e) {}
+      this._recoveryMode = false;
+      this.openLogin();
+      this._setStatus('验证链接无效或已过期，请重新发送验证邮件或密码重置邮件。', 'error');
+      return true;
+    }
 
     this.session = {
       access_token: access,
@@ -725,7 +849,8 @@ var DaoWenAuth = {
         return;
       }
       self._loadStoredSession();
-      self._ensureSession(true).then(function(ok) {
+      // 只验证，不再次写回 localStorage，防止两个标签页互相触发无限 storage 事件。
+      self._ensureSession(true, false).then(function(ok) {
         self._updateUI();
         self._emitAuthChanged();
         if (ok && typeof Paywall !== 'undefined' && Paywall.syncBalance) Paywall.syncBalance(true).catch(function() {});
@@ -836,7 +961,7 @@ var DaoWenAuth = {
     var raw = String((data && (data.msg || data.message || data.error_description || data.error)) || '').toLowerCase();
     if (code === 'email_not_confirmed' || raw.indexOf('email not confirmed') !== -1) return '邮箱尚未验证，请先查看验证邮件';
     if (code === 'invalid_credentials' || raw.indexOf('invalid login credentials') !== -1) return '无法登录：若刚注册请先完成邮箱验证；若该邮箱以前注册过，请使用原密码或点“忘记密码”重置。';
-    if (raw.indexOf('user already registered') !== -1) return '该邮箱已注册，请直接登录';
+    if (code === 'user_already_exists' || code === 'user_already_registered' || code === '23505' || raw.indexOf('user already registered') !== -1 || raw.indexOf('users_email_partial_key') !== -1) return '该邮箱已有账号，请直接登录；若忘记密码请使用密码重置';
     if (raw.indexOf('password') !== -1 && raw.indexOf('least') !== -1) return '密码长度不符合要求';
     if (raw.indexOf('rate') !== -1 || raw.indexOf('too many') !== -1) return '操作过于频繁，请稍后再试';
     if (raw.indexOf('email') !== -1 && raw.indexOf('invalid') !== -1) return '邮箱格式无效';
