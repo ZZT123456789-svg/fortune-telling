@@ -12,11 +12,13 @@ var DaoWenAuth = {
   LEGACY_STORAGE_KEY: 'daowen_session',
   PENDING_EMAIL_KEY: 'daowen_pending_email_verification_v1',
   REFRESH_LOCK_KEY: 'daowen_auth_refresh_lock_v1',
+  TRUSTED_DEVICE_KEY: 'daowen_trusted_recovery_v1',
   REQUEST_TIMEOUT: 12000,
   user: null,
   session: null,
   _busy: false,
   _recoveryMode: false,
+  _trustedRecoveryMode: false,
   _refreshTimer: null,
   _initialized: false,
   _fetchGuardInstalled: false,
@@ -56,6 +58,7 @@ var DaoWenAuth = {
       self._updateUI();
       self._startRefreshTimer();
       self._emitAuthChanged();
+      if (self.user) self._registerTrustedDevice(false).catch(function() {});
       return !!self.user;
     })();
     return this._initPromise;
@@ -466,6 +469,7 @@ var DaoWenAuth = {
         this._saveSession();
         this._updateUI();
         this._emitAuthChanged();
+        this._registerTrustedDevice(false).catch(function() {});
         return { success: true, msg: '注册并登录成功' };
       }
       return { success: false, msg: '注册返回异常，请稍后重试' };
@@ -551,6 +555,7 @@ var DaoWenAuth = {
       this._restoreLoginActions();
       this._updateUI();
       this._emitAuthChanged();
+      this._registerTrustedDevice(false).catch(function() {});
       this._startRefreshTimer();
       return { success: true, msg: '登录成功' };
     } catch (e) {
@@ -647,6 +652,84 @@ var DaoWenAuth = {
     }
   },
 
+  _getTrustedCredential: function(email) {
+    email = String(email || '').trim().toLowerCase();
+    try {
+      var item = JSON.parse(localStorage.getItem(this.TRUSTED_DEVICE_KEY) || 'null');
+      if (!item || item.email !== email || !item.token || !/^\d{6}$/.test(String(item.code || ''))) return null;
+      if (!item.created_at || Date.now() - Number(item.created_at) > 180 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(this.TRUSTED_DEVICE_KEY);
+        return null;
+      }
+      return item;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  _saveTrustedCredential: function(credential) {
+    if (!credential || !credential.email || !credential.token || !credential.code) return false;
+    try {
+      localStorage.setItem(this.TRUSTED_DEVICE_KEY, JSON.stringify({
+        email: String(credential.email).toLowerCase(),
+        token: String(credential.token),
+        code: String(credential.code),
+        created_at: Date.now()
+      }));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  _clearTrustedCredential: function(email) {
+    var current = this._getTrustedCredential(String(email || '').toLowerCase());
+    if (!email || current) {
+      try { localStorage.removeItem(this.TRUSTED_DEVICE_KEY); } catch (e) {}
+    }
+  },
+
+  _registerTrustedDevice: async function(force) {
+    if (!this.user || !this.user.email || !this.session || !this.session.access_token) return false;
+    if (!force && this._getTrustedCredential(this.user.email)) return true;
+    if (this._trustedRegistrationPromise) return this._trustedRegistrationPromise;
+
+    var self = this;
+    this._trustedRegistrationPromise = (async function() {
+      try {
+        var label = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent.slice(0, 80) : '浏览器设备';
+        var resp = await fetch('/api/register-trusted-device', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + self.session.access_token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ label: label })
+        });
+        var data = await resp.json().catch(function() { return {}; });
+        return !!(resp.ok && data.success && self._saveTrustedCredential(data.credential));
+      } catch (e) {
+        console.warn('[DaoWenAuth] 可信设备登记失败:', e && e.message ? e.message : e);
+        return false;
+      }
+    })();
+
+    try {
+      return await this._trustedRegistrationPromise;
+    } finally {
+      this._trustedRegistrationPromise = null;
+    }
+  },
+
+  beginPasswordChange: function() {
+    if (!this.user || !this.session) return this.openLogin();
+    this.closeAccount();
+    this._trustedRecoveryMode = false;
+    this._recoveryMode = true;
+    this.openLogin();
+    this._setStatus('当前账号已验证，可以直接设置新密码。', 'success');
+  },
+
   resetPassword: async function() {
     var emailEl = document.getElementById('loginEmail');
     var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
@@ -655,25 +738,22 @@ var DaoWenAuth = {
       return;
     }
 
-    this._setBusy(true);
-    this._setStatus('正在发送重置邮件…', 'info');
-    try {
-      var redirectTo = this._baseRedirectUrl();
-      var result = await this._request('/auth/v1/recover?redirect_to=' + encodeURIComponent(redirectTo), {
-        method: 'POST',
-        body: JSON.stringify({ email: email })
-      });
-      if (!result.ok) {
-        this._setStatus(this._friendlyError(result.data, '发送失败，请稍后重试'), 'error');
-      } else {
-        // 不暴露账号是否存在，避免用户枚举。
-        this._setStatus('如果该邮箱已注册，你会收到密码重置邮件。', 'success');
-      }
-    } catch (e) {
-      this._setStatus('网络错误，请稍后重试', 'error');
-    } finally {
-      this._setBusy(false);
+    var credential = this._getTrustedCredential(email);
+    if (!credential) {
+      this._setStatus('当前浏览器没有该账号的可信凭证。请在曾经登录过的设备上重置，或联系人工客服核验。', 'error');
+      return;
     }
+
+    this._trustedRecoveryMode = true;
+    this._recoveryMode = true;
+    this._showRecoveryMode(true);
+    var recoveryEmail = document.getElementById('loginRecoveryEmail');
+    var recoveryCode = document.getElementById('loginRecoveryCode');
+    if (recoveryEmail) recoveryEmail.value = email;
+    if (recoveryCode) recoveryCode.value = credential.code;
+    this._setStatus('可信设备验证已自动填入，请设置新密码。', 'success');
+    var target = document.getElementById('loginNewPassword');
+    if (target) target.focus();
   },
 
   updatePassword: async function() {
@@ -688,6 +768,59 @@ var DaoWenAuth = {
     if (password !== confirm) {
       this._setStatus('两次输入的密码不一致', 'error');
       return;
+    }
+
+    if (this._trustedRecoveryMode) {
+      var recoveryEmail = (document.getElementById('loginRecoveryEmail') || {}).value || '';
+      var recoveryCode = (document.getElementById('loginRecoveryCode') || {}).value || '';
+      var credential = this._getTrustedCredential(recoveryEmail);
+      if (!credential || credential.code !== recoveryCode) {
+        this._setStatus('可信设备凭证已失效，请重新打开忘记密码。', 'error');
+        return;
+      }
+
+      this._setBusy(true);
+      try {
+        var resetResp = await fetch('/api/trusted-password-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: recoveryEmail,
+            token: credential.token,
+            code: recoveryCode,
+            password: password
+          })
+        });
+        var resetData = await resetResp.json().catch(function() { return {}; });
+        if (!resetResp.ok || !resetData.success) {
+          this._setStatus(resetData.error || '密码重置失败', 'error');
+          return;
+        }
+
+        this._clearTrustedCredential(recoveryEmail);
+        this._clearSession(false);
+        var loginResult = await this.signIn(recoveryEmail, password);
+        if (!loginResult.success) {
+          this._trustedRecoveryMode = false;
+          this._recoveryMode = false;
+          this._showRecoveryMode(false);
+          this._setStatus('密码已更新，请使用新密码重新登录。', 'success');
+          return;
+        }
+        await this._registerTrustedDevice(true);
+        this._trustedRecoveryMode = false;
+        this._recoveryMode = false;
+        this._showRecoveryMode(false);
+        this._setStatus('密码已更新并重新登录，本设备继续受信任。', 'success');
+        this._updateUI();
+        this._emitAuthChanged();
+        return;
+      } catch (e) {
+        this._setStatus('网络错误，请稍后重试', 'error');
+        return;
+      } finally {
+        this._setBusy(false);
+      }
     }
 
     var token = await this.getAccessToken();
@@ -894,6 +1027,7 @@ var DaoWenAuth = {
         '</div>' +
         '<button type="button" class="btn-secondary auth-refresh-balance">刷新云端余额</button>' +
         '<div class="auth-account-actions">' +
+          '<button type="button" class="btn-secondary auth-change-password" style="grid-column:1/-1">修改密码</button>' +
           '<button type="button" class="btn-secondary auth-signout-local">退出当前设备</button>' +
           '<button type="button" class="auth-danger-btn auth-signout-global">退出所有设备</button>' +
         '</div>' +
@@ -906,6 +1040,7 @@ var DaoWenAuth = {
     overlay.querySelector('.auth-refresh-balance').onclick = function() {
       if (window.Paywall && Paywall.syncBalance) Paywall.syncBalance(true).catch(function() {});
     };
+    overlay.querySelector('.auth-change-password').onclick = function() { self.beginPasswordChange(); };
     overlay.querySelector('.auth-signout-local').onclick = function() { self.signOut('local'); };
     overlay.querySelector('.auth-signout-global').onclick = function() {
       if (confirm('确定退出所有设备上的道问账号吗？')) self.signOut('global');
@@ -1017,6 +1152,7 @@ var DaoWenAuth = {
   _showRecoveryMode: function(flag) {
     var normal = document.getElementById('loginNormalActions');
     var recovery = document.getElementById('loginRecoveryActions');
+    var proof = document.getElementById('loginTrustedProof');
     var email = document.getElementById('loginEmail');
     var password = document.getElementById('loginPassword');
     var forgot = document.getElementById('loginForgotWrap');
@@ -1024,11 +1160,14 @@ var DaoWenAuth = {
     var desc = document.querySelector('#loginOverlay .modal-desc');
     if (normal) normal.style.display = flag ? 'none' : '';
     if (recovery) recovery.style.display = flag ? 'block' : 'none';
+    if (proof) proof.style.display = flag && this._trustedRecoveryMode ? 'block' : 'none';
     if (email) email.style.display = flag ? 'none' : '';
     if (password) password.style.display = flag ? 'none' : '';
     if (forgot) forgot.style.display = flag ? 'none' : '';
     if (title) title.textContent = flag ? '设置新密码' : '账号登录';
-    if (desc) desc.textContent = flag ? '为当前账号设置一个新的安全密码' : '安全登录 · 会话自动校验 · 支持邮箱找回密码';
+    if (desc) desc.textContent = flag
+      ? (this._trustedRecoveryMode ? '可信设备已自动验证，无需接收验证码' : '当前登录账号可直接修改密码')
+      : '信任模式 · 登录状态自动保存 · 本设备可找回密码';
   },
 
   _enhanceLoginUI: function() {
@@ -1087,7 +1226,7 @@ var DaoWenAuth = {
     var title = modal.querySelector('.modal-title');
     if (title) title.textContent = '道问账号';
     var desc = modal.querySelector('.modal-desc');
-    if (desc) desc.textContent = '安全登录 · 会话自动校验 · 支持邮箱找回密码';
+    if (desc) desc.textContent = '信任模式 · 登录状态自动保存 · 本设备可找回密码';
 
     var row = modal.querySelector('.btn-row');
     if (row) {
@@ -1100,7 +1239,7 @@ var DaoWenAuth = {
     var oldForgot = modal.querySelector('a[href*="resetPassword"]');
     if (oldForgot && oldForgot.parentElement) {
       oldForgot.parentElement.id = 'loginForgotWrap';
-      oldForgot.textContent = '忘记密码？发送重置邮件';
+      oldForgot.textContent = '忘记密码？使用本设备自动验证';
       oldForgot.onclick = function(e) { e.preventDefault(); DaoWenAuth.resetPassword(); };
       oldForgot.removeAttribute('href');
       oldForgot.style.cursor = 'pointer';
@@ -1127,6 +1266,10 @@ var DaoWenAuth = {
     recovery.id = 'loginRecoveryActions';
     recovery.style.display = 'none';
     recovery.innerHTML =
+      '<div id="loginTrustedProof" style="display:none">' +
+        '<input type="email" id="loginRecoveryEmail" class="form-input full" placeholder="账号邮箱" readonly>' +
+        '<input type="text" id="loginRecoveryCode" class="form-input full" placeholder="设备验证码" inputmode="numeric" readonly>' +
+      '</div>' +
       '<input type="password" id="loginNewPassword" class="form-input full" placeholder="新密码（至少8位）" autocomplete="new-password">' +
       '<input type="password" id="loginConfirmPassword" class="form-input full" placeholder="再次输入新密码" autocomplete="new-password">' +
       '<button type="button" class="btn-primary" id="loginUpdatePasswordBtn">保存新密码</button>';
@@ -1136,7 +1279,7 @@ var DaoWenAuth = {
 
     var note = document.createElement('p');
     note.className = 'auth-security-note';
-    note.textContent = '账号登录已启用安全会话校验。解读次数保存在云端账号余额中，兑换、购买和扣费均以服务端校验结果为准。';
+    note.textContent = '首次登录后，本浏览器会保存加密恢复凭证。忘记密码时自动验证；清除浏览器数据后该凭证也会消失。';
     modal.appendChild(note);
 
     [email, password].forEach(function(el) {

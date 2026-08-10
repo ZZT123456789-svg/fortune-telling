@@ -253,3 +253,44 @@ test('失效的邮箱链接会清理地址并给出可见提示流程', async ()
   assert.equal(consumed, true);
   assert.equal(harness.getReplacedUrl(), '/');
 });
+test('可信设备凭证会保存并在忘记密码时自动填入', async () => {
+  const harness = createHarness(async () => jsonResponse(404, {}));
+  const elements = {
+    loginEmail: { value: 'TRUSTED@EXAMPLE.COM', style: {} },
+    loginRecoveryEmail: { value: '', style: {} },
+    loginRecoveryCode: { value: '', style: {} },
+    loginNewPassword: { style: {}, focus() {} },
+    loginStatus: { textContent: '', className: '', style: {} },
+    loginNormalActions: { style: {} },
+    loginRecoveryActions: { style: {} },
+    loginTrustedProof: { style: {} },
+    loginPassword: { style: {} },
+    loginForgotWrap: { style: {} }
+  };
+  harness.context.document.getElementById = (id) => elements[id] || null;
+  harness.auth._saveTrustedCredential({
+    email: 'trusted@example.com',
+    token: 'device-secret-token',
+    code: '123456'
+  });
+
+  await harness.auth.resetPassword();
+
+  assert.equal(harness.auth._trustedRecoveryMode, true);
+  assert.equal(elements.loginRecoveryEmail.value, 'trusted@example.com');
+  assert.equal(elements.loginRecoveryCode.value, '123456');
+  assert.match(elements.loginStatus.textContent, /自动填入/);
+});
+
+test('过期可信设备凭证会自动清除', () => {
+  const harness = createHarness(async () => jsonResponse(404, {}));
+  harness.storage.set(harness.auth.TRUSTED_DEVICE_KEY, JSON.stringify({
+    email: 'expired@example.com',
+    token: 'expired-token',
+    code: '654321',
+    created_at: Date.now() - 181 * 24 * 60 * 60 * 1000
+  }));
+
+  assert.equal(harness.auth._getTrustedCredential('expired@example.com'), null);
+  assert.equal(harness.storage.has(harness.auth.TRUSTED_DEVICE_KEY), false);
+});

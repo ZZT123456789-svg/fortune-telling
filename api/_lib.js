@@ -74,6 +74,32 @@ async function serviceRpc(name, payload) {
   return data;
 }
 
+async function serviceRequest(path, options) {
+  requireServerConfig();
+  const request = Object.assign({}, options || {});
+  request.headers = Object.assign({
+    apikey: SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
+    Accept: 'application/json'
+  }, request.headers || {});
+  if (request.body && !request.headers['Content-Type']) request.headers['Content-Type'] = 'application/json';
+  const resp = await fetch(SUPABASE_URL + path, request);
+  const text = await resp.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
+  if (!resp.ok) {
+    const err = new Error('Supabase service request failed');
+    err.status = resp.status;
+    err.details = data;
+    throw err;
+  }
+  return data;
+}
+
+function sha256Hex(value) {
+  return crypto.createHash('sha256').update(String(value || ''), 'utf8').digest('hex');
+}
+
 function randomRequestId(prefix) {
   if (crypto.randomUUID) return (prefix || 'req') + ':' + crypto.randomUUID();
   return (prefix || 'req') + ':' + crypto.randomBytes(18).toString('hex');
@@ -119,6 +145,8 @@ module.exports = {
   readJson,
   verifyUser,
   serviceRpc,
+  serviceRequest,
+  sha256Hex,
   randomRequestId,
   moneyToCents,
   safeEqualHex,
