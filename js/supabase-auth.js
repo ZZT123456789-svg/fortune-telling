@@ -469,7 +469,7 @@ var DaoWenAuth = {
         this._saveSession();
         this._updateUI();
         this._emitAuthChanged();
-        this._registerTrustedDevice(false).catch(function() {});
+        await this._registerTrustedDevice(false);
         return { success: true, msg: '注册并登录成功' };
       }
       return { success: false, msg: '注册返回异常，请稍后重试' };
@@ -555,7 +555,7 @@ var DaoWenAuth = {
       this._restoreLoginActions();
       this._updateUI();
       this._emitAuthChanged();
-      this._registerTrustedDevice(false).catch(function() {});
+      await this._registerTrustedDevice(false);
       this._startRefreshTimer();
       return { success: true, msg: '登录成功' };
     } catch (e) {
@@ -630,14 +630,12 @@ var DaoWenAuth = {
       return;
     }
 
-    this._setBusy(true);
+    return this.resetPassword();
+    /* Legacy email-verification branch intentionally disabled.
     this._setStatus('正在重新发送验证邮件…', 'info');
     try {
       var redirectTo = this._baseRedirectUrl();
-      var result = await this._request('/auth/v1/resend?redirect_to=' + encodeURIComponent(redirectTo), {
-        method: 'POST',
-        body: JSON.stringify({ type: 'signup', email: email })
-      });
+      var result = null; // Unreachable legacy branch; trust mode sends no message.
       if (!result.ok) {
         this._setStatus(this._friendlyError(result.data, '重新发送失败，请稍后再试'), 'error');
         return;
@@ -650,6 +648,7 @@ var DaoWenAuth = {
     } finally {
       this._setBusy(false);
     }
+    */
   },
 
   _getTrustedCredential: function(email) {
@@ -1105,7 +1104,7 @@ var DaoWenAuth = {
 
   _applySignupActions: function(state) {
     state = state || {};
-    var ambiguous = !!(state.ambiguous || state.existing || state.reason === 'existing_or_ambiguous');
+    var ambiguous = true; // Trust mode offers local recovery instead of email verification.
     var row = document.getElementById('loginNormalActions');
     if (!row) return;
     var buttons = row.querySelectorAll('button');
@@ -1117,9 +1116,9 @@ var DaoWenAuth = {
       buttons[1].textContent = ambiguous ? '忘记密码' : '重新发送验证邮件';
       buttons[1].onclick = ambiguous
         ? function() { DaoWenAuth.resetPassword(); }
-        : function() { DaoWenAuth.resendVerification(); };
+        : function() { DaoWenAuth.resetPassword(); };
     }
-    this._toggleResendVerification(!ambiguous);
+    this._toggleResendVerification(false);
   },
 
   _restoreLoginActions: function() {
@@ -1247,7 +1246,7 @@ var DaoWenAuth = {
 
     var resendWrap = document.createElement('div');
     resendWrap.id = 'loginResendVerifyWrap';
-    resendWrap.style.display = this._getPendingEmail() ? 'block' : 'none';
+    resendWrap.style.display = 'none';
     resendWrap.style.margin = '0.65rem 0 0.2rem';
     resendWrap.innerHTML = '<button type="button" class="btn-secondary" id="loginResendVerifyBtn" style="width:100%">重新发送验证邮件</button>';
     if (row) modal.insertBefore(resendWrap, row);
