@@ -1,12 +1,12 @@
-const { noStore, readJson, verifyUser, serviceRpc } = require('./_lib');
+const { noStore, readJson, serviceRpc } = require('./_lib');
+const { requireUser } = require('./_auth');
 
 module.exports = async function handler(req, res) {
   noStore(res);
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    const user = await verifyUser(req);
-    if (!user) return res.status(401).json({ success: false, error: '请先登录后兑换' });
+    const user = await requireUser(req, res);
     const body = await readJson(req);
     const code = String(body.code || '').trim().toUpperCase();
     if (code.length < 8 || code.length > 80) {

@@ -3347,6 +3347,8 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
 }
 
 /* 登录弹窗：独立视觉层级 */
+#loginOverlay,
+#accountOverlay { z-index: 11000 !important; }
 #loginOverlay .tool-modal.auth-modal,
 .auth-account-modal {
   width: min(92vw, 440px) !important;

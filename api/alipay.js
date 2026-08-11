@@ -1,5 +1,6 @@
 const crypto = require('crypto');
-const { noStore, readJson, verifyUser, serviceRpc, zpaySign } = require('./_lib');
+const { noStore, readJson, serviceRpc, zpaySign } = require('./_lib');
+const { requireUser } = require('./_auth');
 
 const PRICE_MAP = {
   '3':  { money: '4.90',  cents: 490,  name: '道问-3次解读',  count: 3 },
@@ -17,8 +18,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    const user = await verifyUser(req);
-    if (!user) return res.status(401).json({ success: false, error: '购买前请先登录账号' });
+    const user = await requireUser(req, res);
 
     const body = await readJson(req);
     const tier = String(body.tier || '');

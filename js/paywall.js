@@ -3,7 +3,7 @@
  *
  * 安全原则：
  * 1. 浏览器不保存权威余额，不包含兑换码数据库。
- * 2. 兑换、购买、扣费均由登录用户 + Vercel API + Supabase 原子事务完成。
+ * 2. 兑换、购买、扣费均由游客/账号身份 + Vercel API + 数据库原子事务完成。
  * 3. localStorage 只保存“待确认订单号”，从不作为到账或余额依据。
  */
 var Paywall = {
@@ -14,15 +14,8 @@ var Paywall = {
   _suppressNextDeduct: false,
   PENDING_ORDER_KEY: 'daowen_pending_order_v2',
 
-  _isLoggedIn: function() {
-    return !!(window.DaoWenAuth && DaoWenAuth.user && DaoWenAuth.user.id);
-  },
-
-  _requireLogin: function(message) {
-    if (this._isLoggedIn()) return true;
-    alert(message || '此功能需要先登录账号。');
-    if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
-    return false;
+  _hasIdentity: function() {
+    return !!(window.DaoWenIdentity && DaoWenIdentity.user && DaoWenIdentity.user.id);
   },
 
   _json: async function(resp) {
@@ -63,20 +56,17 @@ var Paywall = {
 
   hasBalance: function(amount) {
     amount = Math.max(1, Number(amount || 1));
-    return this._isLoggedIn() && this._balanceLoaded && this._balance >= amount;
+    return this._balanceLoaded && this._balance >= amount;
   },
 
   syncBalance: function(force) {
     var self = this;
-    if (!this._isLoggedIn()) {
-      this._balance = 0;
-      this._balanceLoaded = true;
-      this._renderBalance();
-      return Promise.resolve(0);
-    }
     if (this._syncPromise && !force) return this._syncPromise;
 
-    this._syncPromise = fetch('/api/balance', { method: 'GET', cache: 'no-store' })
+    var identityReady = window.DaoWenIdentity && DaoWenIdentity.ready ? DaoWenIdentity.ready() : Promise.resolve();
+    this._syncPromise = identityReady.then(function() {
+      return fetch('/api/balance', { method: 'GET', cache: 'no-store' });
+    })
       .then(function(resp) { return self._json(resp); })
       .then(function(data) {
         self._setBalance(data.balance);
@@ -112,11 +102,12 @@ var Paywall = {
     var requestId = 'web:' + Date.now() + ':' + Math.random().toString(36).slice(2, 12);
     var self = this;
     this._consumeQueue = this._consumeQueue.then(function() {
-      return fetch('/api/consume-credit', {
+      var identityReady = window.DaoWenIdentity && DaoWenIdentity.ready ? DaoWenIdentity.ready() : Promise.resolve();
+      return identityReady.then(function() { return fetch('/api/consume-credit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amount, reason: reason || 'premium-content', requestId: requestId })
-      }).then(function(resp) { return self._json(resp); })
+      }); }).then(function(resp) { return self._json(resp); })
         .then(function(data) {
           self._setBalance(data.balance);
           return data;
@@ -137,14 +128,12 @@ var Paywall = {
   },
 
   redeemCode: async function(code) {
-    if (!this._requireLogin('兑换码必须绑定账号，请先登录。')) {
-      return { success: false, msg: '请先登录账号' };
-    }
     code = String(code || '').trim().toUpperCase();
     if (!code) return { success: false, msg: '请输入兑换码' };
     if (code.length > 80) return { success: false, msg: '兑换码格式不正确' };
 
     try {
+      if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
       var resp = await fetch('/api/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -175,8 +164,8 @@ var Paywall = {
     var bar = document.createElement('div');
     bar.id = 'pw_bar';
     bar.className = 'paywall-bar';
-    var loginText = this._isLoggedIn() ? '' : ' · <a href="javascript:DaoWenAuth.openLogin()" style="color:var(--gold);">先登录</a>';
-    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>' + loginText;
+    var saveText = (window.DaoWenIdentity && DaoWenIdentity.user && !DaoWenIdentity.user.isGuest) ? '' : ' · <a href="javascript:DaoWenIdentity.openSave(\'save\')" style="color:var(--gold);">保存数据</a>';
+    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>' + saveText;
     el.insertBefore(bar, el.firstChild);
     return true;
   },
@@ -193,7 +182,7 @@ var Paywall = {
     block.setAttribute('style', 'position:absolute;inset:0;background:rgba(17,17,15,.96);z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
     block.innerHTML = '<div><div style="font-size:3rem;">🔒</div>' +
       '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>' +
-      '<p style="color:#aaa;font-size:.85rem;">登录并拥有解读次数后解锁</p>' +
+      '<p style="color:#aaa;font-size:.85rem;">拥有解读次数后即可解锁，无需先登录</p>' +
       '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:.6rem 2rem;margin-top:.5rem;">🎫 购买解读次数</button>' +
       '<p style="color:#999;font-size:.76rem;margin-top:.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p></div>';
     el.appendChild(block);
@@ -240,7 +229,6 @@ var Paywall = {
   },
 
   openShop: function() {
-    if (!this._requireLogin('购买次数会绑定到账号，请先登录。')) return;
     var o = document.getElementById('paywallShopOverlay');
     if (o) {
       this._closeAllOthers(o);
@@ -258,7 +246,6 @@ var Paywall = {
   },
 
   openRedeem: function() {
-    if (!this._requireLogin('兑换码必须绑定到账号，请先登录。')) return;
     var o = document.getElementById('paywallRedeemOverlay');
     if (o) { this._closeAllOthers(o); o.style.zIndex = '9999'; o.classList.add('active'); }
     var input = document.getElementById('redeemCodeInput');
@@ -335,7 +322,6 @@ var Paywall = {
   },
 
   _checkPayment: async function(silent) {
-    if (!this._requireLogin('查询订单需要先登录。')) return false;
     var order = localStorage.getItem(this.PENDING_ORDER_KEY);
     if (!order) {
       if (!silent) alert('未找到待确认订单，请重新选择套餐。');
@@ -345,6 +331,7 @@ var Paywall = {
     var stEl = document.getElementById('alipayStatus');
     if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在由服务端核对支付状态...</p>';
     try {
+      if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
       var resp = await fetch('/api/check-order?order=' + encodeURIComponent(order), { method: 'GET', cache: 'no-store' });
       var data = await this._json(resp);
       if (data.paid) {
@@ -367,14 +354,13 @@ var Paywall = {
 
   _resumePendingPayment: function() {
     var order = localStorage.getItem(this.PENDING_ORDER_KEY);
-    if (!order || !this._isLoggedIn()) return;
+    if (!order) return;
     setTimeout(function() { Paywall._checkPayment(true).catch(function() {}); }, 900);
   }
 };
 
-/** 套餐点击入口：订单绑定当前登录用户，支付成功直接入账，不再返回兑换码。 */
+/** 套餐点击入口：订单绑定当前游客/账号身份，支付成功直接入账，不再返回兑换码。 */
 async function showBuyContact(tier) {
-  if (!Paywall._requireLogin('购买次数会绑定到账号，请先登录。')) return;
   var overlay = document.getElementById('paywallShopOverlay');
   var shopContent = overlay && overlay.querySelector('.tool-modal');
   if (!shopContent) return;
@@ -387,6 +373,7 @@ async function showBuyContact(tier) {
   shopContent.appendChild(loading);
 
   try {
+    if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
     var resp = await fetch('/api/alipay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -403,7 +390,7 @@ async function showBuyContact(tier) {
     panel.innerHTML =
       '<p style="color:var(--gold);font-weight:bold;font-size:1.05rem;">订单已创建</p>' +
       '<p style="font-size:.9rem;color:var(--text-secondary);">' + Number(data.count || 0) + ' 次解读 · ¥' + Paywall._escape(data.amount) + '</p>' +
-      '<p style="font-size:.8rem;color:var(--text-muted);">支付会绑定当前登录账号；到账以服务端验签结果为准。</p>' +
+      '<p style="font-size:.8rem;color:var(--text-muted);">支付会绑定当前游客或保存账号；到账以服务端验签结果为准。</p>' +
       '<button id="zpaySubmitBtn" class="btn-primary" style="width:auto;padding:.65rem 2rem;">📱 前往支付宝支付</button>' +
       '<div id="alipayStatus" style="margin-top:.8rem;"></div>' +
       '<button class="btn-secondary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.45rem 1.2rem;margin-top:.5rem;">🔄 已支付，检查到账</button>' +
@@ -421,12 +408,7 @@ async function showBuyContact(tier) {
   }
 }
 
-window.addEventListener('daowen:auth-changed', function(e) {
-  var loggedIn = !!(e.detail && e.detail.user && e.detail.user.id);
-  if (!loggedIn) {
-    Paywall._setBalance(0);
-    return;
-  }
+window.addEventListener('daowen:identity-changed', function() {
   Paywall.syncBalance(true).then(function() { Paywall._resumePendingPayment(); }).catch(function() {});
 });
 
@@ -434,7 +416,5 @@ document.addEventListener('DOMContentLoaded', function() {
   var input = document.getElementById('redeemCodeInput');
   if (input) input.placeholder = '输入兑换码';
   Paywall._renderBalance();
-  if (Paywall._isLoggedIn()) {
-    Paywall.syncBalance(true).then(function() { Paywall._resumePendingPayment(); }).catch(function() {});
-  }
+  Paywall.syncBalance(true).then(function() { Paywall._resumePendingPayment(); }).catch(function() {});
 });

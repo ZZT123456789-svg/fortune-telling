@@ -1,5 +1,6 @@
-/** AI八字深度解读：登录 + 服务端原子扣 1 次 + 失败自动退款 */
-const { noStore, readJson, verifyUser, serviceRpc, randomRequestId } = require('./_lib');
+/** AI八字深度解读：游客/账号身份 + 服务端原子扣 1 次 + 失败自动退款 */
+const { noStore, readJson, serviceRpc, randomRequestId } = require('./_lib');
+const { requireUser } = require('./_auth');
 const { callDeepSeek } = require('./_deepseek');
 
 const COST = 1;
@@ -28,8 +29,7 @@ module.exports = async function handler(req, res) {
   let debitId = '';
   let user = null;
   try {
-    user = await verifyUser(req);
-    if (!user) return res.status(401).json({ success: false, code: 'AUTH_REQUIRED', error: '请先登录账号' });
+    user = await requireUser(req, res);
 
     const body = await readJson(req);
     const chart = body.chart;

@@ -1,12 +1,12 @@
-const { noStore, verifyUser, serviceRpc } = require('./_lib');
+const { noStore, serviceRpc } = require('./_lib');
+const { requireUser } = require('./_auth');
 
 module.exports = async function handler(req, res) {
   noStore(res);
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    const user = await verifyUser(req);
-    if (!user) return res.status(401).json({ success: false, error: '请先登录' });
+    const user = await requireUser(req, res);
     const balance = await serviceRpc('api_get_balance', { p_user_id: user.id });
     return res.status(200).json({ success: true, balance: Number(balance || 0) });
   } catch (e) {

@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test tests/auth.test.js",
-    "check": "node --check js/supabase-auth.js && node --check js/paywall.js"
+    "test": "node --test tests/identity.test.js tests/flows.test.js",
+    "check": "node --check js/user-system.js && node --check js/user-data.js && node --check js/paywall.js && node --check js/ai-chat.js && node --check api/_auth.js && node --check api/_lib.js && node --check api/account.js && node --check api/session.js && node --check api/user-data.js"
   },
   "repository": {
     "type": "git",

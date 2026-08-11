@@ -1,13 +1,63 @@
--- 道问：兑换码 / 积分 / 支付安全化
--- 在 Supabase SQL Editor 中执行一次。
+-- 道问：自有身份 / 数据保存 / 兑换码 / 积分 / 支付
+-- 在 Postgres 管理控制台执行一次；浏览器不参与账号认证。
 -- 设计原则：浏览器不直接写余额、不读取兑换码、不写支付订单；所有敏感写操作仅 service_role 可调用。
 
 create extension if not exists pgcrypto;
 
+-- 0) 站内用户、会话、密码找回和保存数据。账号密码只保存 scrypt 哈希。
+create table if not exists public.app_users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique,
+  password_hash text,
+  is_guest boolean not null default true,
+  password_reset_required boolean not null default false,
+  merged_into uuid references public.app_users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((is_guest and email is null and password_hash is null) or (not is_guest and email is not null)),
+  check (email is null or email = lower(email))
+);
+
+create table if not exists public.app_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  token_hash text unique not null check (length(token_hash) = 64),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists app_sessions_user_idx on public.app_sessions(user_id);
+create index if not exists app_sessions_expires_idx on public.app_sessions(expires_at);
+
+create table if not exists public.app_password_resets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  token_hash text unique not null check (length(token_hash) = 64),
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists app_password_resets_user_idx on public.app_password_resets(user_id, created_at desc);
+
+create table if not exists public.app_login_attempts (
+  id bigserial primary key,
+  email_hash text not null check (length(email_hash) = 64),
+  ip_hash text not null check (length(ip_hash) = 64),
+  success boolean not null default false,
+  attempted_at timestamptz not null default now()
+);
+create index if not exists app_login_attempts_email_time_idx on public.app_login_attempts(email_hash, attempted_at desc);
+create index if not exists app_login_attempts_ip_time_idx on public.app_login_attempts(ip_hash, attempted_at desc);
+
+create table if not exists public.user_data (
+  user_id uuid primary key references public.app_users(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 -- 1) 用户余额：兼容现有 user_balances 表
 create table if not exists public.user_balances (
   id bigserial primary key,
-  user_id uuid unique not null references auth.users(id) on delete cascade,
+  user_id uuid unique not null references public.app_users(id) on delete cascade,
   balance integer not null default 0,
   updated_at timestamptz not null default now()
 );
@@ -45,7 +95,7 @@ create table if not exists public.redeem_codes (
 create table if not exists public.redeem_redemptions (
   id bigserial primary key,
   code_hash text not null references public.redeem_codes(code_hash) on delete restrict,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.app_users(id) on delete cascade,
   credits integer not null check (credits > 0),
   redeemed_at timestamptz not null default now(),
   unique (code_hash, user_id)
@@ -53,7 +103,7 @@ create table if not exists public.redeem_redemptions (
 
 create table if not exists public.redeem_attempts (
   id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.app_users(id) on delete cascade,
   attempted_at timestamptz not null default now(),
   success boolean not null default false
 );
@@ -63,7 +113,7 @@ create index if not exists redeem_attempts_user_time_idx
 -- 3) 余额流水：便于审计、幂等与退款
 create table if not exists public.credit_ledger (
   id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.app_users(id) on delete cascade,
   delta integer not null check (delta <> 0),
   balance_after integer not null check (balance_after >= 0),
   reason text not null,
@@ -78,10 +128,10 @@ create unique index if not exists credit_ledger_user_request_uidx
 create index if not exists credit_ledger_user_created_idx
   on public.credit_ledger(user_id, created_at desc);
 
--- 4) 支付订单：订单必须绑定登录用户
+-- 4) 支付订单：订单始终绑定游客或保存账号身份
 create table if not exists public.payment_orders (
   order_no text primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.app_users(id) on delete cascade,
   tier text not null,
   amount_cents integer not null check (amount_cents > 0),
   credits integer not null check (credits > 0),
@@ -104,6 +154,11 @@ alter table public.redeem_redemptions enable row level security;
 alter table public.redeem_attempts enable row level security;
 alter table public.credit_ledger enable row level security;
 alter table public.payment_orders enable row level security;
+alter table public.app_users enable row level security;
+alter table public.app_sessions enable row level security;
+alter table public.app_password_resets enable row level security;
+alter table public.app_login_attempts enable row level security;
+alter table public.user_data enable row level security;
 
 revoke all on table public.user_balances from anon, authenticated;
 revoke all on table public.redeem_codes from anon, authenticated;
@@ -111,6 +166,11 @@ revoke all on table public.redeem_redemptions from anon, authenticated;
 revoke all on table public.redeem_attempts from anon, authenticated;
 revoke all on table public.credit_ledger from anon, authenticated;
 revoke all on table public.payment_orders from anon, authenticated;
+revoke all on table public.app_users from anon, authenticated;
+revoke all on table public.app_sessions from anon, authenticated;
+revoke all on table public.app_password_resets from anon, authenticated;
+revoke all on table public.app_login_attempts from anon, authenticated;
+revoke all on table public.user_data from anon, authenticated;
 
 grant select, insert, update, delete on table public.user_balances to service_role;
 grant select, insert, update, delete on table public.redeem_codes to service_role;
@@ -118,6 +178,11 @@ grant select, insert, update, delete on table public.redeem_redemptions to servi
 grant select, insert, update, delete on table public.redeem_attempts to service_role;
 grant select, insert, update, delete on table public.credit_ledger to service_role;
 grant select, insert, update, delete on table public.payment_orders to service_role;
+grant select, insert, update, delete on table public.app_users to service_role;
+grant select, insert, update, delete on table public.app_sessions to service_role;
+grant select, insert, update, delete on table public.app_password_resets to service_role;
+grant select, insert, update, delete on table public.app_login_attempts to service_role;
+grant select, insert, update, delete on table public.user_data to service_role;
 
 do $$
 declare s text;
@@ -126,7 +191,8 @@ begin
     'user_balances_id_seq',
     'redeem_redemptions_id_seq',
     'redeem_attempts_id_seq',
-    'credit_ledger_id_seq'
+    'credit_ledger_id_seq',
+    'app_login_attempts_id_seq'
   ] loop
     if to_regclass('public.' || s) is not null then
       execute format('grant usage, select on sequence public.%I to service_role', s);
@@ -168,7 +234,7 @@ declare
   v_balance integer;
   v_recent integer;
 begin
-  if p_user_id is null then return jsonb_build_object('success', false, 'code', 'AUTH_REQUIRED'); end if;
+  if p_user_id is null then return jsonb_build_object('success', false, 'code', 'IDENTITY_REQUIRED'); end if;
   v_norm := upper(btrim(coalesce(p_code, '')));
   if length(v_norm) < 8 or length(v_norm) > 80 then
     return jsonb_build_object('success', false, 'code', 'INVALID_CODE', 'msg', '无效的兑换码');
@@ -251,7 +317,7 @@ declare
   v_balance integer;
   v_existing public.credit_ledger%rowtype;
 begin
-  if p_user_id is null then return jsonb_build_object('success', false, 'code', 'AUTH_REQUIRED'); end if;
+  if p_user_id is null then return jsonb_build_object('success', false, 'code', 'IDENTITY_REQUIRED'); end if;
   if p_amount is null or p_amount < 1 or p_amount > 20 then
     return jsonb_build_object('success', false, 'code', 'BAD_AMOUNT');
   end if;
@@ -479,7 +545,59 @@ as $$
   );
 $$;
 
--- 13) 敏感 RPC 只允许 service_role 执行
+-- 13) 登录已有账号时，把当前游客数据原子迁移到账号。
+create or replace function public.api_merge_guest_identity(p_guest_user_id uuid, p_account_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_guest_balance integer := 0;
+  v_account_balance integer := 0;
+begin
+  if p_guest_user_id is null or p_account_user_id is null or p_guest_user_id = p_account_user_id then
+    return jsonb_build_object('success', false, 'code', 'BAD_IDENTITY');
+  end if;
+
+  perform 1 from public.app_users where id in (p_guest_user_id, p_account_user_id) order by id for update;
+  if not exists (select 1 from public.app_users where id = p_guest_user_id and is_guest and merged_into is null)
+     or not exists (select 1 from public.app_users where id = p_account_user_id and not is_guest) then
+    return jsonb_build_object('success', false, 'code', 'INVALID_MERGE');
+  end if;
+
+  insert into public.user_balances(user_id, balance) values (p_account_user_id, 0) on conflict (user_id) do nothing;
+  select coalesce(balance, 0) into v_account_balance from public.user_balances where user_id = p_account_user_id for update;
+  select coalesce(balance, 0) into v_guest_balance from public.user_balances where user_id = p_guest_user_id for update;
+  v_account_balance := coalesce(v_account_balance, 0);
+  v_guest_balance := coalesce(v_guest_balance, 0);
+  update public.user_balances set balance = v_account_balance + v_guest_balance, updated_at = now() where user_id = p_account_user_id;
+  delete from public.user_balances where user_id = p_guest_user_id;
+
+  update public.payment_orders set user_id = p_account_user_id where user_id = p_guest_user_id;
+  delete from public.redeem_redemptions g
+    where g.user_id = p_guest_user_id
+      and exists (select 1 from public.redeem_redemptions a where a.user_id = p_account_user_id and a.code_hash = g.code_hash);
+  update public.redeem_redemptions set user_id = p_account_user_id where user_id = p_guest_user_id;
+  update public.redeem_attempts set user_id = p_account_user_id where user_id = p_guest_user_id;
+  update public.credit_ledger
+    set user_id = p_account_user_id,
+        request_id = case when request_id is null then null else 'guest:' || p_guest_user_id::text || ':' || request_id end
+    where user_id = p_guest_user_id;
+
+  insert into public.user_data(user_id, payload, updated_at)
+    select p_account_user_id, payload, now() from public.user_data where user_id = p_guest_user_id
+    on conflict (user_id) do update
+      set payload = public.user_data.payload || excluded.payload, updated_at = now();
+  delete from public.user_data where user_id = p_guest_user_id;
+  delete from public.app_sessions where user_id = p_guest_user_id;
+  update public.app_users set merged_into = p_account_user_id, updated_at = now() where id = p_guest_user_id;
+
+  return jsonb_build_object('success', true, 'balance', v_account_balance + v_guest_balance);
+end;
+$$;
+
+-- 14) 敏感 RPC 只允许 service_role 执行
 revoke all on function public.api_get_balance(uuid) from public, anon, authenticated;
 revoke all on function public.api_redeem_code(uuid, text) from public, anon, authenticated;
 revoke all on function public.api_consume_credits(uuid, integer, text, text) from public, anon, authenticated;
@@ -487,6 +605,7 @@ revoke all on function public.api_refund_credits(uuid, integer, text, text) from
 revoke all on function public.api_create_payment_order(text, uuid, text, integer, integer) from public, anon, authenticated;
 revoke all on function public.api_complete_payment(text, text, integer) from public, anon, authenticated;
 revoke all on function public.api_payment_status(uuid, text) from public, anon, authenticated;
+revoke all on function public.api_merge_guest_identity(uuid, uuid) from public, anon, authenticated;
 
 grant execute on function public.api_get_balance(uuid) to service_role;
 grant execute on function public.api_redeem_code(uuid, text) to service_role;
@@ -495,8 +614,9 @@ grant execute on function public.api_refund_credits(uuid, integer, text, text) t
 grant execute on function public.api_create_payment_order(text, uuid, text, integer, integer) to service_role;
 grant execute on function public.api_complete_payment(text, text, integer) to service_role;
 grant execute on function public.api_payment_status(uuid, text) to service_role;
+grant execute on function public.api_merge_guest_identity(uuid, uuid) to service_role;
 
--- 14) 管理员生成新兑换码：只在 SQL Editor 执行，明文只返回一次。
+-- 15) 管理员生成新兑换码：只在数据库管理控制台执行，明文只返回一次。
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated, service_role;
 
@@ -537,13 +657,13 @@ $$;
 
 revoke all on function private.issue_redeem_code(integer, integer, timestamptz, text) from public, anon, authenticated, service_role;
 
--- 使用示例（请在 SQL Editor 手动运行，不要把返回的明文码提交到 GitHub）：
+-- 使用示例（请在数据库管理控制台手动运行，不要把返回的明文码提交到 GitHub）：
 -- select private.issue_redeem_code(3, 1, null, '客服发放');
 -- select private.issue_redeem_code(10, 1, now() + interval '30 days', '活动码');
 -- select private.issue_redeem_code(20, 5, null, '最多5人可用的活动码');
 
--- 15) 客服 / 旧客户迁移：管理员手工调整余额并留下审计流水。
--- 仅在 Supabase SQL Editor 由管理员执行，不暴露给 service_role API。
+-- 16) 客服 / 旧客户迁移：管理员手工调整余额并留下审计流水。
+-- 仅在数据库管理控制台由管理员执行，不暴露给 service_role API。
 create or replace function private.admin_adjust_credits(
   p_user_id uuid,
   p_delta integer,
@@ -560,7 +680,7 @@ declare
 begin
   if p_user_id is null then raise exception 'missing user'; end if;
   if p_delta = 0 or abs(p_delta) > 100000 then raise exception 'bad delta'; end if;
-  if not exists (select 1 from auth.users where id = p_user_id) then raise exception 'user not found'; end if;
+  if not exists (select 1 from public.app_users where id = p_user_id) then raise exception 'user not found'; end if;
 
   insert into public.user_balances(user_id, balance)
     values (p_user_id, 0)

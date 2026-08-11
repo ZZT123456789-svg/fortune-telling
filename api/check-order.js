@@ -1,9 +1,9 @@
 const {
   noStore,
-  verifyUser,
   serviceRpc,
   moneyToCents
 } = require('./_lib');
+const { requireUser } = require('./_auth');
 
 async function queryZPay(orderNo) {
   const zpid = String(process.env.ZPAY_PID || '').trim();
@@ -23,8 +23,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
-    const user = await verifyUser(req);
-    if (!user) return res.status(401).json({ success: false, paid: false, error: '请先登录' });
+    const user = await requireUser(req, res);
 
     const orderNo = String((req.query && req.query.order) || '').trim();
     if (!/^\d{10,32}$/.test(orderNo)) {

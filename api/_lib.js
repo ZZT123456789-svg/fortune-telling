@@ -1,25 +1,14 @@
 const crypto = require('crypto');
 
-const FALLBACK_SUPABASE_URL = 'https://ebdnkgfilnvfkkdvqrzu.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViZG5rZ2ZpbG52ZmtrZHZxcnp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMTAxODEsImV4cCI6MjA5OTc4NjE4MX0.l3saO79tS6KOjI1w78QWWrkamO0OY8IGh38i1Yjy2Ro';
-const ENV_SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
-const ENV_SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
-const HAS_PUBLIC_SUPABASE_ENV = !!(ENV_SUPABASE_URL && ENV_SUPABASE_ANON_KEY);
-const SUPABASE_URL = (HAS_PUBLIC_SUPABASE_ENV ? ENV_SUPABASE_URL : FALLBACK_SUPABASE_URL).replace(/\/$/, '');
-const SUPABASE_ANON_KEY = HAS_PUBLIC_SUPABASE_ENV ? ENV_SUPABASE_ANON_KEY : FALLBACK_SUPABASE_ANON_KEY;
-const SUPABASE_CONFIG_SOURCE = HAS_PUBLIC_SUPABASE_ENV ? 'vercel-env' : 'repo-fallback';
-const SUPABASE_SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+// The data service is still used for Postgres tables/RPCs, but browser auth and
+// Supabase Auth are deliberately not part of this module anymore.
+const DATA_API_URL = String(process.env.DATA_API_URL || process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
+const DATA_SERVICE_KEY = String(process.env.DATA_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
 function noStore(res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-}
-
-function getBearer(req) {
-  const value = String((req.headers && req.headers.authorization) || '');
-  const m = value.match(/^Bearer\s+(.+)$/i);
-  return m ? m[1].trim() : '';
 }
 
 async function readJson(req) {
@@ -28,72 +17,40 @@ async function readJson(req) {
   try { return JSON.parse(req.body); } catch (_) { return {}; }
 }
 
-function requireServerConfig() {
-  if (!SUPABASE_ANON_KEY) throw new Error('SUPABASE_ANON_KEY missing');
-  if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY missing');
+function requireDataConfig() {
+  if (!DATA_API_URL) throw new Error('DATA_API_URL (or SUPABASE_URL) missing');
+  if (!DATA_SERVICE_KEY) throw new Error('DATA_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) missing');
 }
 
-async function verifyUser(req) {
-  requireServerConfig();
-  const token = getBearer(req);
-  if (!token) return null;
-
-  const resp = await fetch(SUPABASE_URL + '/auth/v1/user', {
-    method: 'GET',
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: 'Bearer ' + token
-    }
-  });
-  if (!resp.ok) return null;
-  const user = await resp.json().catch(() => null);
-  return user && user.id ? user : null;
-}
-
-async function serviceRpc(name, payload) {
-  requireServerConfig();
-  const resp = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + encodeURIComponent(name), {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify(payload || {})
-  });
-  const text = await resp.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
-  if (!resp.ok) {
-    const err = new Error('Supabase RPC failed: ' + name);
-    err.status = resp.status;
-    err.details = data;
-    throw err;
-  }
-  return data;
-}
-
-async function serviceRequest(path, options) {
-  requireServerConfig();
+async function dataRequest(path, options) {
+  requireDataConfig();
   const request = Object.assign({}, options || {});
   request.headers = Object.assign({
-    apikey: SUPABASE_SERVICE_ROLE_KEY,
-    Authorization: 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
+    apikey: DATA_SERVICE_KEY,
+    Authorization: 'Bearer ' + DATA_SERVICE_KEY,
     Accept: 'application/json'
   }, request.headers || {});
   if (request.body && !request.headers['Content-Type']) request.headers['Content-Type'] = 'application/json';
-  const resp = await fetch(SUPABASE_URL + path, request);
+
+  const resp = await fetch(DATA_API_URL + path, request);
   const text = await resp.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
   if (!resp.ok) {
-    const err = new Error('Supabase service request failed');
+    const err = new Error('Data service request failed');
     err.status = resp.status;
     err.details = data;
     throw err;
   }
   return data;
+}
+
+async function dataRpc(name, payload) {
+  return dataRequest('/rest/v1/rpc/' + encodeURIComponent(name), {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(payload || {})
+  });
 }
 
 function sha256Hex(value) {
@@ -137,15 +94,14 @@ function parseFormLike(input) {
 }
 
 module.exports = {
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  SUPABASE_CONFIG_SOURCE,
+  DATA_API_URL,
   noStore,
-  getBearer,
   readJson,
-  verifyUser,
-  serviceRpc,
-  serviceRequest,
+  dataRpc,
+  dataRequest,
+  // Compatibility names for business-only call sites. Neither performs auth.
+  serviceRpc: dataRpc,
+  serviceRequest: dataRequest,
   sha256Hex,
   randomRequestId,
   moneyToCents,

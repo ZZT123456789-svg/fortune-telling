@@ -42,7 +42,7 @@
   <header class="header">
     <div class="header-top-right">
       <button class="redeem-btn" onclick="Paywall.openRedeem()">🎫 兑换码</button>
-      <button id="loginBtn" onclick="DaoWenAuth.openLogin()" style="padding:0.6rem 1.2rem;background:#3cb371;color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;font-family:KaiTi,sans-serif;margin-right:0.5rem;">👤 登录</button>
+      <button id="loginBtn" onclick="DaoWenIdentity.openSave('save')" style="padding:0.6rem 1.2rem;background:#3cb371;color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;font-family:KaiTi,sans-serif;margin-right:0.5rem;">☁ 保存数据</button>
       <button class="contact-btn" id="contactBtn" onclick="toggleContact()">📧 联系我们</button>
       <div class="contact-popup" id="contactPopup">
         <button class="contact-close" onclick="toggleContact()">✕</button>
@@ -188,19 +188,43 @@
     </div>
   </div>
 
-  <!-- ====== 登录弹窗 ====== -->
+  <!-- ====== 数据保存 / 恢复弹窗 ====== -->
   <div class="tool-overlay" id="loginOverlay">
-    <div class="tool-modal">
-      <button class="modal-close" onclick="DaoWenAuth.closeLogin()">✕</button>
-      <h2 class="modal-title">👤 登录 / 注册</h2>
-      <p class="modal-desc">登录后积分云端同步，换设备不丢失</p>
-      <input type="email" id="loginEmail" class="form-input full" placeholder="邮箱地址">
-      <input type="password" id="loginPassword" class="form-input full" placeholder="密码（至少6位）">
-      <div class="btn-row">
-        <button class="btn-primary" onclick="DaoWenAuth.doLogin('signin')">🔑 登录</button>
-        <button class="btn-secondary" onclick="DaoWenAuth.doLogin('signup')">📝 注册</button>
+    <div class="tool-modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal-close" onclick="DaoWenIdentity.closeLogin()">✕</button>
+      <div class="auth-brand-mark" aria-hidden="true">道</div>
+      <h2 class="modal-title" id="loginTitle">保存我的数据</h2>
+      <p class="modal-desc" id="loginDesc">设置邮箱和密码，当前命盘、积分与订单会继续绑定在同一身份下</p>
+
+      <div id="accountCredentials">
+        <input type="email" id="loginEmail" class="form-input full" placeholder="邮箱地址" autocomplete="email">
+        <div class="auth-password-wrap">
+          <input type="password" id="loginPassword" class="form-input full" placeholder="密码（8–72位）" autocomplete="current-password" onkeydown="if(event.key==='Enter')DaoWenIdentity.doPrimary()">
+        </div>
       </div>
-      <p style="text-align:center;margin-top:0.5rem;font-size:0.8rem;"><a href="javascript:DaoWenAuth.resetPassword()" style="color:var(--text-muted);">忘记密码？</a></p>
+      <div class="btn-row" id="loginNormalActions">
+        <button class="btn-primary" id="accountPrimaryBtn" onclick="DaoWenIdentity.doPrimary()">保存账号</button>
+        <button class="btn-secondary" id="accountSecondaryBtn" onclick="DaoWenIdentity.doSecondary()">已有账号，恢复数据</button>
+      </div>
+      <p id="loginForgotWrap" style="display:none;text-align:center;margin-top:0.5rem;font-size:0.8rem;"><a href="javascript:DaoWenIdentity.resetPassword()" style="color:var(--text-muted);">忘记密码？发送重设链接</a></p>
+
+      <div id="loginResetRequestActions" style="display:none">
+        <input type="email" id="loginResetEmail" class="form-input full" placeholder="保存账号的邮箱" autocomplete="email">
+        <div class="btn-row">
+          <button type="button" class="btn-primary" onclick="DaoWenIdentity.requestReset()">发送重设链接</button>
+          <button type="button" class="btn-secondary" onclick="DaoWenIdentity.switchMode('login')">返回恢复数据</button>
+        </div>
+      </div>
+
+      <div id="loginResetCompleteActions" style="display:none">
+        <input type="email" id="loginResetTargetEmail" class="form-input full" readonly>
+        <input type="password" id="loginNewPassword" class="form-input full" placeholder="新密码（8–72位）" autocomplete="new-password">
+        <input type="password" id="loginConfirmPassword" class="form-input full" placeholder="再次输入新密码" autocomplete="new-password">
+        <button type="button" class="btn-primary" onclick="DaoWenIdentity.completeReset()">保存新密码并恢复数据</button>
+      </div>
+
+      <div id="loginStatus" class="auth-status info" style="display:none" aria-live="polite"></div>
+      <p class="auth-security-note">无需验证码。密码只以不可逆哈希保存；保存后可在其他设备恢复数据。</p>
     </div>
   </div>
 
@@ -222,7 +246,7 @@
           <div class="pw-benefit"><i>◈</i><div><strong>深度命理解读</strong><span>八字、紫微与占卜结果通用</span></div></div>
           <div class="pw-benefit"><i>▥</i><div><strong>结构化分析</strong><span>从格局、趋势到行动提醒</span></div></div>
           <div class="pw-benefit"><i>卷</i><div><strong>专属解读建议</strong><span>按本次排盘与问题生成内容</span></div></div>
-          <div class="pw-benefit"><i>印</i><div><strong>账号云端绑定</strong><span>购买与剩余次数跟随登录账号</span></div></div>
+          <div class="pw-benefit"><i>印</i><div><strong>身份自动绑定</strong><span>游客可直接购买，保存账号后跨设备恢复</span></div></div>
         </div>
 
         <div class="shop-grid pw-plan-grid">
@@ -316,8 +340,8 @@
         <span>🔒 隐私政策</span><span class="toggle-arrow">▸</span>
       </div>
       <div class="disclaimer-content">
-        <p><b>基础功能：</b>基础排盘、起卦、抽牌、收藏和历史记录默认在当前浏览器处理并保存，不要求注册账号。清除浏览器网站数据会同时删除本地记录。</p>
-        <p><b>全能解读：</b>只有你登录、会员有效并主动发起请求时，服务才会处理你填写的问题、本次工具输入、真太阳时和结构化结果。浏览器收藏和历史记录不作为解读内容提交。</p>
+        <p><b>基础功能：</b>首次访问会自动生成游客身份，不要求先登录。命理工具输入和必要记录会绑定到该身份；设置邮箱和密码后可跨设备恢复。</p>
+        <p><b>全能解读：</b>只有你主动发起请求时，服务才会处理你填写的问题、本次工具输入、真太阳时和结构化结果。密码不会发送给模型服务。</p>
         <p><b>服务端处理：</b>全能解读由服务端调用第三方模型服务生成，服务密钥仅保存在服务端环境变量。系统会保存必要的使用记录用于风控和后台查看，不记录密码、服务密钥等敏感信息。</p>
       </div>
     </div>
@@ -793,7 +817,8 @@
     </div>
   </div>
 
-  <script src="js/supabase-auth.js"></script>
+  <script src="js/user-system.js"></script>
+  <script src="js/user-data.js"></script>
   <script src="js/paywall.js"></script>
   <script src="js/ai-chat.js"></script>
   <script src="js/bazi-db.js"></script>

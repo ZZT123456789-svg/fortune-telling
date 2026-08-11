@@ -1,6 +1,6 @@
 /**
  * AI命理助手 — 安全版浮窗对话
- * 每次请求由 /api/ai-chat 在服务端验证登录并扣 2 次；前端不再自行判断或扣余额。
+ * 每次请求由 /api/ai-chat 按当前游客/账号身份在服务端扣 2 次。
  */
 var AIChat = {
   messages: [],
@@ -53,11 +53,8 @@ var AIChat = {
     var question = input.value.trim();
     if (!question) return;
 
-    if (!window.DaoWenAuth || !DaoWenAuth.user || !DaoWenAuth.user.id) {
-      this._addMsg('assistant', '🔐 AI 助手需要先登录账号。');
-      if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
-      return;
-    }
+    if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
+
     if (window.Paywall && Paywall._balanceLoaded && Paywall.getBalance() < 2) {
       this._addMsg('assistant', '🎫 当前解读次数不足。AI 助手每次需要 2 次额度。');
       Paywall.openShop();
@@ -82,9 +79,8 @@ var AIChat = {
       var loadEl = document.getElementById(loadId);
       if (loadEl) loadEl.remove();
 
-      if (resp.status === 401 || data.code === 'AUTH_REQUIRED') {
-        this._addMsg('assistant', '🔐 登录状态已失效，请重新登录后再试。');
-        if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+      if (resp.status === 401 || data.code === 'IDENTITY_REQUIRED') {
+        this._addMsg('assistant', '🔐 游客身份初始化失败，请刷新页面后重试。');
       } else if (resp.status === 402 || data.code === 'INSUFFICIENT') {
         this._addMsg('assistant', '🎫 解读次数不足。AI 助手每次需要 2 次额度。');
         if (window.Paywall) {
@@ -105,9 +101,8 @@ var AIChat = {
     } catch (e) {
       var pending = document.getElementById(loadId);
       if (pending) pending.remove();
-      if (e && e.code === 'AUTH_REQUIRED') {
-        this._addMsg('assistant', '🔐 请先登录账号。');
-        if (window.DaoWenAuth && DaoWenAuth.openLogin) DaoWenAuth.openLogin();
+      if (e && e.code === 'IDENTITY_REQUIRED') {
+        this._addMsg('assistant', '🔐 游客身份初始化失败，请刷新页面后重试。');
       } else {
         this._addMsg('assistant', '❌ 网络错误，请稍后重试。');
       }
