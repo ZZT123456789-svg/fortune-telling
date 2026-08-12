@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090a0a">
+  <title>道问书库｜古籍原文与白话对照</title>
+  <link rel="stylesheet" href="css/library.css">
+</head>
+<body>
+  <nav class="lib-nav" aria-label="书库导航">
+    <a class="lib-brand" href="/"><span>☯</span> 道问</a>
+    <a class="lib-back" href="/app">返回应用</a>
+  </nav>
+
+  <header class="lib-hero">
+    <p class="lib-kicker">道问 · 古籍校勘计划</p>
+    <h1>命理书库</h1>
+    <p>古籍原文在上，原创白话解释在下。读原典，知其义，不以摘句代替全书。</p>
+    <div class="lib-search-wrap">
+      <label class="sr-only" for="librarySearch">搜索书名、章节或正文</label>
+      <input id="librarySearch" type="search" placeholder="搜索书名、章节或正文……" autocomplete="off">
+      <button id="librarySearchClear" type="button">清除</button>
+    </div>
+    <div class="lib-filters" id="libraryFilters" aria-label="书籍分类"></div>
+  </header>
+
+  <main class="lib-main">
+    <section id="libraryShelf" class="lib-shelf" aria-label="古籍书架"></section>
+    <p id="libraryEmpty" class="lib-empty" hidden>没有找到相关内容，请换一个关键词。</p>
+  </main>
+
+  <aside id="reader" class="reader" aria-hidden="true">
+    <div class="reader-bar">
+      <button id="readerClose" class="reader-close" type="button" aria-label="关闭阅读器">← 书架</button>
+      <div class="reader-book-name" id="readerBookName"></div>
+      <button id="readerTocToggle" type="button" aria-expanded="false">目录</button>
+      <button id="readerSettingsToggle" type="button" aria-expanded="false">阅读设置</button>
+    </div>
+    <div class="reader-progress"><i id="readerProgress"></i></div>
+    <div class="reader-layout">
+      <nav id="readerToc" class="reader-toc" aria-label="章节目录"></nav>
+      <article id="readerArticle" class="reader-article" tabindex="-1">
+        <div class="reader-heading">
+          <p id="readerBookMeta"></p>
+          <h2 id="readerChapterTitle"></h2>
+        </div>
+        <section class="text-block original-block">
+          <div class="text-block-head"><h3>古籍原文</h3><button type="button" data-toggle-block="original">收起</button></div>
+          <div id="readerOriginal" class="classic-text"></div>
+        </section>
+        <section class="text-block translation-block">
+          <div class="text-block-head"><h3>白话解释</h3><button type="button" data-toggle-block="translation">收起</button></div>
+          <div id="readerTranslation" class="modern-text"></div>
+        </section>
+        <section class="reader-notes">
+          <h3>本章术语</h3>
+          <div id="readerTerms"></div>
+        </section>
+        <div class="reader-source" id="readerSource"></div>
+        <div class="reader-pager">
+          <button id="readerPrev" type="button">← 上一章</button>
+          <button id="readerNext" type="button">下一章 →</button>
+        </div>
+      </article>
+    </div>
+    <section id="readerSettings" class="reader-settings" aria-label="阅读设置">
+      <h3>阅读设置</h3>
+      <label>字号 <input id="fontSizeSetting" type="range" min="16" max="28" step="1"></label>
+      <label>行距 <input id="lineHeightSetting" type="range" min="16" max="24" step="1"></label>
+      <label class="setting-switch"><input id="paperModeSetting" type="checkbox"> 宣纸浅色模式</label>
+      <button id="readerSettingsClose" type="button">完成</button>
+    </section>
+  </aside>
+
+  <noscript>需要启用 JavaScript 才能使用章节检索和阅读进度功能。</noscript>
+  <script src="data/library-books.js"></script>
+  <script src="js/library.js"></script>
+</body>
+</html>

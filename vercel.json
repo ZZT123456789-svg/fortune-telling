@@ -16,7 +16,8 @@
     }
   },
   "rewrites": [
-    { "source": "/app", "destination": "/index" }
+    { "source": "/app", "destination": "/index" },
+    { "source": "/library", "destination": "/library.html" }
   ],
   "headers": [
     {
