@@ -9,7 +9,7 @@
  * 4) 保留 ZiweiModule.open/close/calculate 与 _renderSVG 兼容接口，避免影响其他模块。
  */
 var ZiweiModule = {
-  ENGINE_URL: 'https://cdn.jsdelivr.net/npm/iztro@2.5.8/dist/iztro.min.js',
+  ENGINE_URL: '/js/vendor/iztro-2.5.8.min.js',
   _enginePromise: null,
   _lastChart: null,
   _lastInput: null,
