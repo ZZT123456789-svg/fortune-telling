@@ -38,3 +38,14 @@ test('紫微时辰映射保留早子时与晚子时', () => {
   assert.equal(ZiweiModule._hourToTimeIndex(22), 11);
   assert.equal(ZiweiModule._hourToTimeIndex(23), 12);
 });
+
+test('三方四正按命宫连接两个三合宫和对宫', () => {
+  assert.deepEqual(
+    Array.from(ZiweiModule._getSanFangBranches('子')),
+    ['辰', '申', '午']
+  );
+  assert.deepEqual(
+    Array.from(ZiweiModule._getSanFangBranches('亥')),
+    ['卯', '未', '巳']
+  );
+});

@@ -237,6 +237,7 @@ var ZiweiModule = {
       html += this._renderPalace(palacesByGrid[slot], slot);
     }
 
+    html += this._renderSanFangLines(chart);
     html += '</div>';
     html += '<div class="zw-actions">' +
       '<button class="btn-secondary" type="button" onclick="ZiweiModule.close()">返回</button>' +
@@ -245,7 +246,67 @@ var ZiweiModule = {
     html += '</div>';
 
     ctn.innerHTML = html;
-    setTimeout(function() { ctn.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+    setTimeout(function() {
+      ZiweiModule._positionSanFangLines();
+      ctn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  },
+
+  _getSanFangBranches: function(originBranch) {
+    var branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    var originIndex = branches.indexOf(originBranch);
+    if (originIndex < 0) return [];
+    return [4, 8, 6].map(function(offset) {
+      return branches[(originIndex + offset) % 12];
+    });
+  },
+
+  _renderSanFangLines: function(chart) {
+    var origin = chart && chart.earthlyBranchOfSoulPalace;
+    var targets = this._getSanFangBranches(origin);
+    if (!origin || targets.length !== 3) return '';
+    return '<svg class="zw-sanfang-lines" aria-hidden="true" data-origin-branch="' + this._escape(origin) + '">' +
+      targets.map(function(branch) {
+        return '<line data-target-branch="' + ZiweiModule._escape(branch) + '" x1="0" y1="0" x2="0" y2="0"></line>';
+      }).join('') +
+      '<circle class="zw-sanfang-origin" cx="0" cy="0" r="4"></circle>' +
+      '</svg>';
+  },
+
+  _positionSanFangLines: function() {
+    var board = document.querySelector('#ziweiResult .zw-board');
+    var svg = board && board.querySelector('.zw-sanfang-lines');
+    if (!board || !svg || svg.offsetParent === null) return;
+    var boardRect = board.getBoundingClientRect();
+    if (!boardRect.width || !boardRect.height) return;
+    var originBranch = svg.getAttribute('data-origin-branch');
+    var origin = board.querySelector('.zw-palace[data-branch="' + originBranch + '"]');
+    if (!origin) return;
+
+    var centerOf = function(element) {
+      var rect = element.getBoundingClientRect();
+      return {
+        x: rect.left - boardRect.left + rect.width / 2,
+        y: rect.top - boardRect.top + rect.height / 2
+      };
+    };
+    var start = centerOf(origin);
+    svg.setAttribute('viewBox', '0 0 ' + boardRect.width + ' ' + boardRect.height);
+    svg.querySelectorAll('line[data-target-branch]').forEach(function(line) {
+      var branch = line.getAttribute('data-target-branch');
+      var target = board.querySelector('.zw-palace[data-branch="' + branch + '"]');
+      if (!target) return;
+      var end = centerOf(target);
+      line.setAttribute('x1', start.x);
+      line.setAttribute('y1', start.y);
+      line.setAttribute('x2', end.x);
+      line.setAttribute('y2', end.y);
+    });
+    var marker = svg.querySelector('.zw-sanfang-origin');
+    if (marker) {
+      marker.setAttribute('cx', start.x);
+      marker.setAttribute('cy', start.y);
+    }
   },
 
   _renderHeader: function(chart, input) {
@@ -282,7 +343,7 @@ var ZiweiModule = {
 
   _renderPalace: function(p, gridClass) {
     if (!p) return '<section class="zw-palace ' + gridClass + '"></section>';
-    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + '">';
+    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + '" data-branch="' + this._escape(p.earthlyBranch || '') + '">';
     html += '<div class="zw-palace-head"><span class="zw-palace-name">' + this._escape(p.name) + '</span>' +
       (p.isBodyPalace ? '<span class="zw-body-badge">身宫</span>' : '') +
       '<span class="zw-palace-gz">' + this._escape((p.heavenlyStem || '') + (p.earthlyBranch || '')) + '</span></div>';
@@ -307,7 +368,7 @@ var ZiweiModule = {
       html += '</div>';
     }
 
-    var adjectives = (p.adjectiveStars || []).filter(function(s) { return s && s.name; }).slice(0, 10);
+    var adjectives = (p.adjectiveStars || []).filter(function(s) { return s && s.name; });
     if (adjectives.length) {
       html += '<div class="zw-adjective">' + adjectives.map(function(s) { return ZiweiModule._escape(s.name); }).join(' · ') + '</div>';
     }
@@ -461,7 +522,7 @@ var ZiweiModule = {
       .zw-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.42rem}
       .zw-chip{display:inline-flex;align-items:center;gap:.36rem;padding:.34rem .55rem;border:1px solid rgba(125,100,59,.18);border-radius:999px;background:rgba(255,255,255,.58);font-size:.74rem}
       .zw-chip small{color:#907f67}.zw-chip b{font-weight:600;color:#3b342b}
-      .zw-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(160px,auto));gap:1px;background:rgba(105,83,48,.34);border:1px solid rgba(105,83,48,.34);border-radius:12px;overflow:hidden;box-shadow:0 14px 38px rgba(45,37,25,.09)}
+      .zw-board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(160px,auto));gap:1px;background:rgba(105,83,48,.34);border:1px solid rgba(105,83,48,.34);border-radius:12px;overflow:hidden;box-shadow:0 14px 38px rgba(45,37,25,.09)}
       .zw-palace{position:relative;min-width:0;padding:.58rem .62rem;background:rgba(253,250,240,.98);overflow:hidden}
       .zw-palace::after{content:'☰';position:absolute;right:.35rem;bottom:-.35rem;font-size:2.3rem;color:rgba(70,60,45,.035);pointer-events:none}
       .zw-palace.is-soul{background:linear-gradient(145deg,#fffaf0,#f6ead5)}
@@ -487,6 +548,9 @@ var ZiweiModule = {
       .zw-center-line{font-size:.76rem;line-height:1.65;color:#746956}
       .zw-center-line.zw-yearly{color:#9a412e;font-weight:600}
       .zw-center-note{max-width:80%;margin-top:.45rem;font-size:.65rem;line-height:1.5;color:#9a907f}
+      #ziweiResult .zw-sanfang-lines{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;z-index:2;pointer-events:none;overflow:visible;filter:none;background:transparent;border-radius:0;box-shadow:none}
+      .zw-sanfang-lines line{stroke:#bf2f27;stroke-width:1.35;stroke-linecap:round;opacity:.56;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 1px rgba(255,255,255,.55))}
+      .zw-sanfang-origin{fill:#bf2f27;stroke:rgba(255,250,238,.9);stroke-width:1.4;opacity:.8;vector-effect:non-scaling-stroke}
       .g1{grid-column:1;grid-row:1}.g2{grid-column:2;grid-row:1}.g3{grid-column:3;grid-row:1}.g4{grid-column:4;grid-row:1}
       .g5{grid-column:1;grid-row:2}.g8{grid-column:4;grid-row:2}.g9{grid-column:1;grid-row:3}.g12{grid-column:4;grid-row:3}
       .g13{grid-column:1;grid-row:4}.g14{grid-column:2;grid-row:4}.g15{grid-column:3;grid-row:4}.g16{grid-column:4;grid-row:4}
@@ -494,6 +558,7 @@ var ZiweiModule = {
       @media(max-width:760px){
         #ziweiOverlay .ziwei-modal{width:98vw;padding-left:.65rem;padding-right:.65rem}
         .zw-board{display:flex;flex-direction:column;background:transparent;border:0;gap:.55rem;box-shadow:none;border-radius:0}
+        #ziweiResult .zw-sanfang-lines{display:none}
         .zw-center{order:-1;min-height:210px;border:1px solid rgba(105,83,48,.24);border-radius:12px}
         .zw-palace{min-height:0;border:1px solid rgba(105,83,48,.18);border-radius:10px;padding:.7rem}
         .zw-summary{padding:.8rem}.zw-summary-title{font-size:1.2rem}.zw-chip{font-size:.69rem}

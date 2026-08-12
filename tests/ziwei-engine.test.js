@@ -58,6 +58,22 @@ test('网站展示层不会遗漏十四主星和四化标记', () => {
   for (const mutagen of ['禄','权','科','忌']) assert.match(html, new RegExp('zw-mutagen[^>]*>' + mutagen + '<'));
 });
 
+test('网站展示层完整显示全部杂曜并输出三方四正连线', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const chart = iztro.astro.bySolar('2023-03-06', 4, '女', true, 'zh-CN');
+  const module = context.ZiweiModule;
+  const adjectiveNames = chart.palaces.flatMap(p => p.adjectiveStars.filter(s => s && s.name).map(s => s.name));
+  const html = chart.palaces.map(p => module._renderPalace(p, 'test')).join('');
+  for (const name of adjectiveNames) assert.match(html, new RegExp('(?:^|[> ·])' + name + '(?:[< ·]|$)'));
+
+  const lines = module._renderSanFangLines(chart);
+  assert.equal((lines.match(/<line /g) || []).length, 3);
+  assert.match(lines, /data-origin-branch="亥"/);
+  for (const branch of ['卯', '未', '巳']) assert.match(lines, new RegExp('data-target-branch="' + branch + '"'));
+});
+
 test('紫微引擎固定文件与许可证随网站部署', () => {
   const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
   assert.match(ziweiSource, /ENGINE_URL:\s*'\/js\/vendor\/iztro-2\.5\.8\.min\.js'/);
