@@ -52,17 +52,45 @@ module.exports = async function handler(req, res) {
   }
 
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
-  const pool = new Pool({
-    host: `db.${projectRef}.supabase.co`,
-    port: 5432,
-    database: 'postgres',
-    user: 'postgres',
-    password: serviceKey,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 10000,
-    max: 1
-  });
+
+  // Try multiple Supabase pooler regions + direct connection
+  const configs = [
+    { host: 'aws-0-us-east-1.pooler.supabase.com', port: 6543, user: `postgres.${projectRef}` },
+    { host: 'aws-0-ap-southeast-1.pooler.supabase.com', port: 6543, user: `postgres.${projectRef}` },
+    { host: 'aws-0-us-west-2.pooler.supabase.com', port: 6543, user: `postgres.${projectRef}` },
+    { host: 'aws-0-eu-central-1.pooler.supabase.com', port: 6543, user: `postgres.${projectRef}` },
+    { host: `db.${projectRef}.supabase.co`, port: 5432, user: 'postgres' }
+  ];
+
+  let pool = null;
+  let lastErr = null;
+
+  for (const cfg of configs) {
+    try {
+      pool = new Pool({
+        host: cfg.host,
+        port: cfg.port,
+        database: 'postgres',
+        user: cfg.user,
+        password: serviceKey,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 8000,
+        idleTimeoutMillis: 8000,
+        max: 1
+      });
+      const client = await pool.connect();
+      client.release();
+      break; // connected successfully
+    } catch (e) {
+      lastErr = e;
+      if (pool) { try { await pool.end(); } catch (_) {} }
+      pool = null;
+    }
+  }
+
+  if (!pool) {
+    return res.status(500).json({ success: false, error: 'Cannot connect to Supabase', detail: lastErr ? lastErr.message : '' });
+  }
 
   const results = [];
   try {
