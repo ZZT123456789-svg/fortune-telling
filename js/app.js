@@ -632,6 +632,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.DaoWenUI = {
     PAYMENT_STATE_KEY,
     saveCurrentToolState,
+    goHome(event) {
+      if (event) event.preventDefault();
+      window.location.assign('/');
+    },
     enter() {
       const hero = document.getElementById('daoHero');
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
