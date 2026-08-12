@@ -3848,6 +3848,20 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .modal-close { position: sticky !important; float: right; top: 0 !important; z-index: 20; color: #e8ca88 !important; background: rgba(7,8,8,.9) !important; border-color: rgba(215,174,89,.46) !important; }
 #paywallShopOverlay { display: none !important; }
 
+/* 八字测算后的付费提示是独立结果块，不再覆盖整份超长报告。 */
+.bazi-paywall-prompt {
+  min-height: min(420px, 56dvh);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  color: #fff;
+  text-align: center;
+  background: radial-gradient(circle at 50% 28%, rgba(201,154,66,.1), transparent 34%), #050606;
+  border: 1px solid rgba(216,174,87,.28);
+  border-radius: 14px;
+}
+.bazi-paywall-prompt p { margin: .55rem 0; }
+
 @media (max-width: 760px) {
   .dao-nav { top: 6px; left: 6px; right: 6px; width: auto; min-height: 53px; gap: 8px; padding: 4px 6px 4px 9px; transform: none; border-radius: 19px; }
   .dao-brand { gap: 5px; font-size: .98rem; }
@@ -3877,6 +3891,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   .tool-modal table { min-width: 620px; }
   .tool-modal .table-wrap,.tool-modal .chart-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .modal-close { top: env(safe-area-inset-top) !important; }
+  .bazi-paywall-prompt { min-height: min(390px, 52dvh); border-radius: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .dao-hero.dao-entering { animation: none; } .dao-scroll-cue span { animation: none; } }
 

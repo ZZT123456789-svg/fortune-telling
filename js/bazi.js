@@ -44,6 +44,23 @@ var BaziModule = {
     document.getElementById('baziResult').style.display = 'none';
   },
 
+  // Results live inside the modal's own scroll container. Keep the page fixed
+  // and bring the newly rendered result to the top of that container.
+  _focusResult: function(ctn) {
+    if (!ctn) return;
+    setTimeout(function() {
+      var modal = ctn.closest('.tool-modal');
+      if (!modal) {
+        ctn.scrollIntoView({behavior: 'smooth', block: 'start'});
+        return;
+      }
+      var modalRect = modal.getBoundingClientRect();
+      var resultRect = ctn.getBoundingClientRect();
+      var targetTop = modal.scrollTop + resultRect.top - modalRect.top - 12;
+      modal.scrollTo({top: Math.max(0, targetTop), behavior: 'smooth'});
+    }, 60);
+  },
+
   switchMode: function(mode) {
     this.currentMode = mode;
     this._updateModeUI();
@@ -496,26 +513,26 @@ var BaziModule = {
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>' +
       '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">🤖 问AI</button>';
 
-    // 滚动到结果
-    setTimeout(function(){ ctn.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
-
     // 排盘免费 + AI深度解读付费
     // 全内容渲染 + 付费墙覆盖
     var fullHtml = freeHtml + paidHtml;
     if (Paywall.hasBalance()) {
       Paywall.deduct();
       ctn.innerHTML = fullHtml;
+      self._focusResult(ctn);
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     } else {
-      ctn.innerHTML = fullHtml +
-        '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:#000;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;">'+
+      // 独立显示付费提示，避免提示被垂直居中在整份超长报告中间。
+      ctn.innerHTML =
+        '<div class="bazi-paywall-prompt">'+
           '<div><div style="font-size:3rem;">🔒</div>'+
           '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
           '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
           '<button class="btn-primary" onclick="Paywall.openShop()" style="margin-top:0.5rem;padding:0.6rem 2rem;">🎫 购买解读次数</button>'+
           '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>'+
           '</div></div>';
-      ctn.style.position = 'relative';
+      ctn.style.position = '';
+      self._focusResult(ctn);
     }
     } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
@@ -588,6 +605,7 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析基于传统命理规则，仅供娱乐参考。感情最重要的是两个人的用心经营。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+    this._focusResult(ctn);
   },
 
   /** 调用AI生成深度解读 */
