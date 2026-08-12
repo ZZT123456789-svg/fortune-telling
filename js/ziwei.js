@@ -57,13 +57,13 @@ var ZiweiModule = {
 
       var timeIndex = this._hourToTimeIndex(h);
       var dateText = y + '-' + m + '-' + d;
-      var chart;
-
-      if (calType === 'lunar') {
-        chart = engine.astro.byLunar(dateText, timeIndex, gender, isLeap, true, 'zh-CN');
-      } else {
-        chart = engine.astro.bySolar(dateText, timeIndex, gender, true, 'zh-CN');
-      }
+      var chart = this._createChart(engine, {
+        dateText: dateText,
+        timeIndex: timeIndex,
+        gender: gender,
+        calType: calType,
+        isLeapMonth: isLeap
+      });
 
       if (!chart || !Array.isArray(chart.palaces) || chart.palaces.length !== 12) {
         throw new Error('排盘结果不完整，请检查出生日期');
@@ -142,6 +142,41 @@ var ZiweiModule = {
     // iztro: 0=早子时，1=丑时 … 11=亥时，12=晚子时。
     if (hour === 23) return 12;
     return Math.floor((hour + 1) / 2);
+  },
+
+  /**
+   * iztro 2.5.8 官方参数适配层。
+   * bySolar(date, timeIndex, gender, fixLeap, language)
+   * byLunar(date, timeIndex, gender, isLeapMonth, fixLeap, language)
+   */
+  _createChart: function(engine, options) {
+    if (!engine || !engine.astro) throw new Error('紫微排盘引擎未正确加载');
+    var dateText = options.dateText;
+    var timeIndex = options.timeIndex;
+    var gender = options.gender;
+    var fixLeap = true;
+    var language = 'zh-CN';
+
+    if (options.calType === 'lunar') {
+      if (typeof engine.astro.byLunar !== 'function') throw new Error('紫微农历排盘接口不可用');
+      return engine.astro.byLunar(
+        dateText,
+        timeIndex,
+        gender,
+        !!options.isLeapMonth,
+        fixLeap,
+        language
+      );
+    }
+
+    if (typeof engine.astro.bySolar !== 'function') throw new Error('紫微阳历排盘接口不可用');
+    return engine.astro.bySolar(
+      dateText,
+      timeIndex,
+      gender,
+      fixLeap,
+      language
+    );
   },
 
   _validateInput: function(y, m, d, h, minute, calType) {

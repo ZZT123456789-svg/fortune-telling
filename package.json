@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js",
-    "check": "node --check js/visitor-identity.js && node --check js/user-data.js && node --check js/paywall.js && node --check js/ai-chat.js && node --check api/_auth.js && node --check api/_lib.js && node --check api/session.js && node --check api/user-data.js"
+    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js tests/ziwei.test.js",
+    "check": "node --check js/visitor-identity.js && node --check js/user-data.js && node --check js/paywall.js && node --check js/ai-chat.js && node --check js/ziwei.js && node --check api/_auth.js && node --check api/_lib.js && node --check api/session.js && node --check api/user-data.js"
   },
   "repository": {
     "type": "git",
