@@ -3777,6 +3777,8 @@ body {
 .dao-balance { min-height: 44px; display: flex; align-items: center; gap: 7px; padding: 0 14px; color: var(--dw-gold-light); background: rgba(6,7,7,.55); border: 1px solid rgba(220,183,106,.2); border-radius: 24px; cursor: default; }
 .dao-balance span { color: #aaa293; font-size: .72rem; }
 .dao-balance b { font-size: 1rem; }
+.dao-redeem { min-height: 44px; padding: 0 14px; color: var(--dw-gold-light); background: rgba(8,9,9,.68); border: 1px solid rgba(220,183,106,.34); border-radius: 24px; font: 700 .76rem/1 var(--font-body); letter-spacing: .04em; cursor: pointer; }
+.dao-redeem:hover { color: #fff1ca; border-color: rgba(239,203,130,.68); background: rgba(207,161,72,.1); transform: translateY(-1px); }
 .dao-recharge { min-height: 44px; padding: 0 17px; color: #20170c; background: linear-gradient(120deg,#b77d2b,#efd18a 52%,#b67b29); border: 1px solid #dfb866; border-radius: 24px; font: 800 .78rem/1 var(--font-body); letter-spacing: .08em; cursor: pointer; box-shadow: 0 7px 18px rgba(139,91,25,.16); }
 .dao-recharge:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
@@ -3870,6 +3872,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   .dao-account-actions { gap: 4px; }
   .dao-balance { min-height: 38px; padding: 0 8px; gap: 4px; }
   .dao-balance span { display: none; }
+  .dao-redeem { min-height: 38px; padding: 0 8px; font-size: .68rem; }
   .dao-recharge { min-height: 38px; padding: 0 9px; font-size: .7rem; }
   .dao-hero { min-height: 620px; background-position: 50% center; }
   .dao-hero-content { margin-top: 40px; width: 94vw; }
