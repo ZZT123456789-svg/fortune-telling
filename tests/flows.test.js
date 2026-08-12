@@ -101,6 +101,7 @@ test('首页游客 → AI 扣积分 → 创建支付 → 回调入账 → 查询
     const payment = await invoke(payHandler, { method: 'POST', body: { tier: '3' } });
     assert.equal(payment.statusCode, 200);
     assert.equal(state.lastOrderUser, identity.id);
+    assert.equal(payment.body.payParams.return_url, 'https://daowen.test/payment.html?returned=1');
     const orderNo = payment.body.outTradeNo;
 
     const notified = await invoke(notifyHandler, {

@@ -228,14 +228,12 @@ var Paywall = {
   },
 
   openShop: function() {
-    var o = document.getElementById('paywallShopOverlay');
-    if (o) {
-      this._closeAllOthers(o);
-      o.style.zIndex = '9999';
-      o.classList.add('active');
-      this._resetShopView();
+    // 购买统一使用独立支付页，避免在排盘弹窗内再次嵌套支付弹窗。
+    // 跳转前保存当前工具表单、弹窗滚动位置和页面位置，取消或完成后恢复。
+    if (window.DaoWenUI && typeof DaoWenUI.saveCurrentToolState === 'function') {
+      DaoWenUI.saveCurrentToolState();
     }
-    this.syncBalance().catch(function() {});
+    window.location.href = 'payment.html';
   },
 
   closeShop: function() {

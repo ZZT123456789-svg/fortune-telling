@@ -567,3 +567,104 @@ document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
   initDaoUI();
 });
+
+// ============ 黑金首页、弹窗滚动锁与支付返回状态 ============
+(function installDaoWenInteractiveShell() {
+  const PAYMENT_STATE_KEY = 'daowen_payment_return_state_v1';
+
+  function activeToolOverlay() {
+    return Array.from(document.querySelectorAll('.tool-overlay.active'))
+      .find(el => !/^paywall/.test(el.id || '')) || null;
+  }
+
+  function saveCurrentToolState() {
+    const overlay = activeToolOverlay();
+    const state = {
+      overlayId: overlay ? overlay.id : '',
+      pageScrollY: window.scrollY || 0,
+      modalScrollTop: overlay && overlay.querySelector('.tool-modal') ? overlay.querySelector('.tool-modal').scrollTop : 0,
+      fields: []
+    };
+    if (overlay) {
+      overlay.querySelectorAll('input,select,textarea').forEach((field, index) => {
+        if (field.type === 'file' || field.type === 'password') return;
+        state.fields.push({
+          key: field.id || field.name || String(index),
+          index,
+          type: field.type,
+          value: field.value,
+          checked: !!field.checked
+        });
+      });
+    }
+    try { sessionStorage.setItem(PAYMENT_STATE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function restoreToolState() {
+    if (!/[?&]restore=1(?:&|$)/.test(location.search)) return;
+    let state = null;
+    try { state = JSON.parse(sessionStorage.getItem(PAYMENT_STATE_KEY) || 'null'); } catch (e) {}
+    if (!state) return;
+    const overlay = state.overlayId ? document.getElementById(state.overlayId) : null;
+    if (overlay) {
+      const fields = overlay.querySelectorAll('input,select,textarea');
+      (state.fields || []).forEach(saved => {
+        let field = saved.key && !/^\d+$/.test(saved.key) ? document.getElementById(saved.key) || overlay.querySelector('[name="' + CSS.escape(saved.key) + '"]') : fields[saved.index];
+        if (!field) return;
+        if (/^(checkbox|radio)$/.test(saved.type || '')) field.checked = saved.checked;
+        else field.value = saved.value == null ? '' : saved.value;
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      overlay.classList.add('active');
+      const modal = overlay.querySelector('.tool-modal');
+      if (modal) requestAnimationFrame(() => { modal.scrollTop = Number(state.modalScrollTop || 0); });
+    } else {
+      window.scrollTo(0, Number(state.pageScrollY || 0));
+    }
+    try { sessionStorage.removeItem(PAYMENT_STATE_KEY); } catch (e) {}
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+
+  function syncBodyModalLock() {
+    document.body.classList.toggle('dw-modal-open', !!activeToolOverlay() || !!document.querySelector('.tool-overlay.active'));
+  }
+
+  window.DaoWenUI = {
+    PAYMENT_STATE_KEY,
+    saveCurrentToolState,
+    enter() {
+      const hero = document.getElementById('daoHero');
+      const home = document.getElementById('appHome');
+      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (hero && !reduced) hero.classList.add('dao-entering');
+      if (home && !reduced) home.classList.add('dao-arriving');
+      setTimeout(() => {
+        if (home) home.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+        if (hero) setTimeout(() => hero.classList.remove('dao-entering'), 850);
+        if (home) setTimeout(() => home.classList.remove('dao-arriving'), 1500);
+      }, reduced ? 0 : 430);
+    },
+    openAI() {
+      if (window.AIChat && typeof AIChat._show === 'function') AIChat._show();
+    },
+    toggleMore(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('daoMoreMenu');
+      if (!menu) return;
+      const open = menu.classList.toggle('open');
+      const trigger = document.querySelector('.dao-more-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', String(open));
+    }
+  };
+
+  document.addEventListener('click', event => {
+    const menu = document.getElementById('daoMoreMenu');
+    if (menu && !event.target.closest('.dao-more-wrap')) menu.classList.remove('open');
+  });
+  const observer = new MutationObserver(syncBodyModalLock);
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tool-overlay').forEach(el => observer.observe(el, { attributes: true, attributeFilter: ['class'] }));
+    syncBodyModalLock();
+    setTimeout(restoreToolState, 180);
+  });
+})();

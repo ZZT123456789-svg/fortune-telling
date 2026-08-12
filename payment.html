@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>道问 · 积分充值</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dw-payment-body">
+  <main class="dw-payment-page">
+    <header class="dw-payment-nav">
+      <button type="button" class="dw-payment-back" onclick="PaymentPage.returnToTool()">← 返回原功能</button>
+      <a class="dao-brand" href="index.html"><span class="dao-brand-mark">☯</span><span>道问</span></a>
+      <div class="dw-payment-balance">当前余量 <b id="paymentBalance">—</b> 次</div>
+    </header>
+
+    <section class="dw-payment-shell" aria-labelledby="paymentTitle">
+      <div class="dw-payment-eyebrow">✦ 安全支付 · 自动绑定当前游客身份</div>
+      <h1 id="paymentTitle">购买解读积分</h1>
+      <p>选择套餐后创建订单。支付完成或取消均可返回原功能，已填写的数据与滚动位置会自动恢复。</p>
+
+      <div class="dw-plan-grid" id="paymentPlans">
+        <button type="button" class="dw-plan-card" onclick="PaymentPage.createOrder(3)">
+          <span>轻量体验</span><strong>3 次解读</strong><b><small>¥</small>4.9</b><em>约 ¥1.63 / 次</em><i>立即购买</i>
+        </button>
+        <button type="button" class="dw-plan-card featured" onclick="PaymentPage.createOrder(10)">
+          <mark>超值推荐</mark><span>常用推荐</span><strong>10 次解读</strong><b><small>¥</small>9.9</b><em>约 ¥0.99 / 次</em><i>立即购买</i>
+        </button>
+        <button type="button" class="dw-plan-card" onclick="PaymentPage.createOrder(20)">
+          <span>高频使用</span><strong>20 次解读</strong><b><small>¥</small>19.9</b><em>约 ¥1.00 / 次</em><i>立即购买</i>
+        </button>
+      </div>
+
+      <section class="dw-order-panel" id="paymentOrderPanel" hidden aria-live="polite"></section>
+      <section class="dw-payment-status" id="paymentStatus" aria-live="polite"></section>
+
+      <div class="dw-payment-assurance">
+        <span>游客身份自动绑定</span><span>服务端验签到账</span><span>支付宝安全支付</span><span>返回后恢复填写内容</span>
+      </div>
+      <button type="button" class="dw-cancel-payment" onclick="PaymentPage.returnToTool()">取消并返回原功能</button>
+    </section>
+  </main>
+  <script src="js/visitor-identity.js"></script>
+  <script src="js/payment-page.js"></script>
+</body>
+</html>

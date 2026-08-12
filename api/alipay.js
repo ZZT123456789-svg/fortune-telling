@@ -47,7 +47,8 @@ module.exports = async function handler(req, res) {
       type: 'alipay',
       out_trade_no: orderNo,
       notify_url: appUrl + '/api/alipay-notify',
-      return_url: appUrl + '/',
+      // 支付完成后先回独立支付页核验到账，再由用户返回原功能并恢复表单状态。
+      return_url: appUrl + '/payment.html?returned=1',
       name: plan.name,
       money: plan.money,
       sign_type: 'MD5'

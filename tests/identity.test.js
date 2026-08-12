@@ -64,3 +64,18 @@ test('数据库业务表直接绑定匿名 UUID，不依赖用户表', () => {
   assert.match(sql, /create table if not exists public\.payment_orders[\s\S]*user_id uuid not null/i);
   assert.match(sql, /create table if not exists public\.user_balances[\s\S]*user_id uuid unique not null/i);
 });
+
+test('黑金首页使用真实控件，购买入口统一进入独立支付页', () => {
+  const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const payment = fs.readFileSync(path.join(ROOT, 'payment.html'), 'utf8');
+  const paywall = fs.readFileSync(path.join(ROOT, 'js', 'paywall.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
+  assert.match(home, /class="dao-nav"/);
+  assert.match(home, /class="dao-enter-btn"/);
+  assert.match(home, /onclick="DailyModule\.openModule\(\)"/);
+  assert.match(css, /assets\/daowen-hero-bg\.png/);
+  assert.match(payment, /id="paymentPlans"/);
+  assert.match(payment, /取消并返回原功能/);
+  assert.match(paywall, /window\.location\.href = 'payment\.html'/);
+  assert.equal(fs.existsSync(path.join(ROOT, 'assets', 'daowen-hero-bg.png')), true);
+});

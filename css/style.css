@@ -3718,3 +3718,197 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
   .pw-assurance small { font-size:.56rem; }
 }
 @media (max-width:400px) { .pw-benefits{grid-template-columns:1fr;} .pw-plan-list{grid-template-columns:1fr;} .pw-assurance{grid-template-columns:1fr;} }
+
+/* ==========================================================================
+   道问黑金沉浸式界面（2026 重构）
+   所有界面均为真实 HTML/CSS；背景图只承载山水、雾气与漩涡场景。
+   ========================================================================== */
+:root {
+  --dw-bg: #070808;
+  --dw-panel: rgba(12, 13, 13, .94);
+  --dw-panel-soft: rgba(18, 19, 18, .82);
+  --dw-line: rgba(214, 174, 91, .34);
+  --dw-line-bright: rgba(246, 211, 138, .72);
+  --dw-gold: #d9b76f;
+  --dw-gold-light: #f3dba2;
+  --dw-ivory: #f3efe5;
+  --dw-muted: #aaa397;
+}
+html { scroll-behavior: smooth; background: var(--dw-bg); }
+body {
+  color: var(--dw-ivory) !important;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(174,136,64,.08), transparent 30%),
+    linear-gradient(180deg,#090a0a 0%,#070808 100%) !important;
+}
+#starCanvas { display: none !important; }
+#splashOverlay { display: none !important; }
+
+/* 顶部真实导航 */
+.dao-nav {
+  position: fixed; z-index: 9000; top: 10px; left: 50%;
+  width: min(1450px, calc(100% - 28px)); min-height: 62px;
+  display: flex; align-items: center; gap: 24px; padding: 6px 12px 6px 16px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(237,221,186,.17); border-radius: 32px;
+  color: #eee9df; background: rgba(13,15,15,.72);
+  box-shadow: 0 15px 42px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter: blur(17px) saturate(.8); -webkit-backdrop-filter: blur(17px) saturate(.8);
+}
+.dao-brand { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; color: #f1eee6 !important; text-decoration: none; font: 700 1.45rem/1 var(--font-display); letter-spacing: .08em; }
+.dao-brand-mark { width: 42px; height: 42px; display: grid; place-items: center; color: #111; background: radial-gradient(circle at 35% 28%,#fff,#d8d5c9 50%,#8a877f); border: 1px solid #b9a36f; border-radius: 50%; box-shadow: 0 0 18px rgba(224,192,118,.14); }
+.dao-nav-scroll { min-width: 0; flex: 1 1 auto; display: flex; justify-content: center; align-items: center; gap: 4px; }
+.dao-nav-scroll > a,.dao-nav-scroll > button,.dao-more-trigger {
+  flex: 0 0 auto; min-height: 42px; padding: 0 17px; display: inline-flex; align-items: center;
+  border: 0; border-radius: 24px; color: #d9d4ca !important; background: transparent;
+  font: 600 .94rem/1 var(--font-body); text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.dao-nav-scroll > a:hover,.dao-nav-scroll > button:hover,.dao-nav-scroll > a.active,.dao-more-trigger:hover { color: #fff4d6 !important; background: rgba(255,245,220,.045); }
+.dao-nav-scroll > a.active { box-shadow: inset 0 0 0 1px rgba(218,183,111,.18); }
+.dao-more-wrap { position: relative; flex: 0 0 auto; }
+.dao-more-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 190px; display: none; grid-template-columns: 1fr 1fr; gap: 4px; padding: 9px;
+  border: 1px solid var(--dw-line); border-radius: 14px; background: rgba(9,10,10,.97); box-shadow: 0 18px 50px rgba(0,0,0,.55); backdrop-filter: blur(18px);
+}
+.dao-more-menu.open { display: grid; }
+.dao-more-menu button { min-height: 39px; border: 0; border-radius: 8px; color: #d9d0bd; background: transparent; cursor: pointer; }
+.dao-more-menu button:hover { color: #17130d; background: linear-gradient(135deg,#f2daa5,#b98737); }
+.dao-balance { flex: 0 0 auto; min-height: 44px; display: flex; align-items: center; gap: 7px; padding: 0 15px; color: var(--dw-gold-light); background: rgba(6,7,7,.55); border: 1px solid var(--dw-line); border-radius: 24px; cursor: pointer; }
+.dao-balance span { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--dw-line); border-radius: 50%; font-size: .67rem; }
+.dao-balance b { font-size: 1rem; }
+.dao-balance em { color: #bcb4a2; font-size: .72rem; font-style: normal; }
+
+/* 首屏 */
+.dao-hero { position: relative; z-index: 2; height: 100svh; min-height: 690px; overflow: hidden; display: grid; place-items: center; isolation: isolate; background: #070808 url('../assets/daowen-hero-bg.png') center center / cover no-repeat; }
+.dao-hero::before { content:""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(circle at 50% 35%,transparent 0 17%,rgba(3,4,4,.08) 45%,rgba(3,4,4,.54) 100%); }
+.dao-hero::after { content:""; position: absolute; inset: auto 0 0; height: 30%; z-index: -1; background: linear-gradient(transparent,#080909); }
+.dao-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg,rgba(3,4,4,.28),transparent 29% 70%,rgba(3,4,4,.35)), radial-gradient(ellipse at 50% 61%,rgba(0,0,0,.26),transparent 55%); pointer-events: none; }
+.dao-hero-content { width: min(900px,92vw); margin-top: 80px; text-align: center; filter: drop-shadow(0 5px 15px rgba(0,0,0,.82)); }
+.dao-eyebrow { display: inline-flex; align-items: center; gap: .7rem; padding: .48rem 1.1rem; color: #d1c8b7; background: rgba(17,19,19,.72); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; font-size: .88rem; letter-spacing: .08em; backdrop-filter: blur(10px); }
+.dao-eyebrow span { color: var(--dw-gold); }
+.dao-hero h1 { margin: 18px 0 0; color: #f5f2e9; font: 700 clamp(5.7rem,12vw,10rem)/.96 var(--font-display); letter-spacing: .13em; text-indent: .13em; text-shadow: 0 0 12px rgba(255,247,219,.34),0 6px 30px rgba(0,0,0,.8); }
+.dao-roman { margin: 8px 0 0; color: #c8a867; font: 500 .88rem/1 serif; letter-spacing: .85em; text-indent: .85em; }
+.dao-moon { display: block; margin: 21px auto 13px; color: #d6b66e; font-size: 1.4rem; }
+.dao-hero-lead { margin: 0; color: #f3eee2; font: 500 clamp(1.18rem,2vw,1.65rem)/1.8 var(--font-display); letter-spacing: .14em; }
+.dao-hero-sub { margin: 10px 0 0; color: #c7c0b3; font-size: .98rem; letter-spacing: .1em; }
+.dao-hero-actions { margin-top: 31px; display: flex; justify-content: center; gap: 18px; }
+.dao-hero-actions button { min-width: 210px; height: 66px; display: inline-flex; align-items: center; justify-content: center; gap: 14px; border-radius: 35px; font: 700 1.08rem/1 var(--font-body); letter-spacing: .07em; cursor: pointer; transition: transform .25s ease,box-shadow .25s ease; }
+.dao-enter-btn { position: relative; color: #17140e; background: linear-gradient(135deg,rgba(255,255,255,.96),#eee5d3 55%,#cdb889); border: 1px solid #fff2cd; box-shadow: 0 9px 27px rgba(0,0,0,.35), inset 0 0 20px rgba(137,104,45,.15); }
+.dao-enter-btn b { position: absolute; right: 11px; bottom: 9px; font-size: 1.2rem; }
+.dao-fortune-btn { color: #efe9dc; background: rgba(10,11,11,.68); border: 1px solid rgba(219,180,99,.5); box-shadow: inset 0 0 22px rgba(207,165,80,.05); backdrop-filter: blur(10px); }
+.dao-fortune-btn span { color: var(--dw-gold); font-size: 1.25rem; }
+.dao-hero-actions button:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(0,0,0,.42),0 0 22px rgba(215,174,91,.13); }
+.dao-scroll-cue { position: absolute; left: 50%; bottom: 23px; width: 29px; height: 46px; transform: translateX(-50%); border: 1px solid rgba(235,218,177,.25); border-radius: 18px; }
+.dao-scroll-cue span { display:block; width:3px; height:8px; margin:8px auto; border-radius:3px; background:#d8b66c; animation:dwScroll 1.7s ease infinite; }
+@keyframes dwScroll { 0%{opacity:0;transform:translateY(0)} 35%{opacity:1} 100%{opacity:0;transform:translateY(17px)} }
+.dao-hero.dao-entering { animation: dwHeroDive .85s cubic-bezier(.55,.05,.28,1) both; transform-origin: 50% 67%; }
+@keyframes dwHeroDive { to { transform: translateY(-18vh) scale(1.13); opacity: .18; filter: blur(5px); } }
+
+/* 功能主页 */
+.dao-app-home { position: relative; z-index: 3; min-height: 100vh; padding: 90px 0 35px; overflow: hidden; background: radial-gradient(ellipse at 50% 0,rgba(188,146,65,.08),transparent 36%),linear-gradient(180deg,#080909,#0d0e0d 50%,#080909); }
+.dao-app-home::before { content:""; position:absolute; inset:0; z-index:-1; opacity:.1; background: url('../assets/daowen-hero-bg.png') center top / 1600px auto no-repeat; filter: blur(2px); }
+.dao-app-home::after { content:""; position:absolute; z-index:8; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at 50% 12%,rgba(220,217,204,.23),transparent 48%),linear-gradient(90deg,transparent,rgba(205,205,194,.08),transparent); transform:translateY(22%); }
+.dao-app-home.dao-arriving::after { animation:dwMistReveal 1.35s ease-out both; }
+@keyframes dwMistReveal { 0%{opacity:.92;transform:translateY(22%);filter:blur(20px)} 58%{opacity:.48} 100%{opacity:0;transform:translateY(-15%);filter:blur(30px)} }
+.dao-app-home > .header { display: none !important; }
+.section-header { color: var(--dw-ivory) !important; }
+.section-h2 { color: var(--dw-gold-light) !important; text-shadow: 0 3px 16px rgba(0,0,0,.8); }
+.section-lead { color: var(--dw-muted) !important; }
+.tools-grid { position: relative; z-index: 1; }
+.tool-card { color: #eee8db !important; background: radial-gradient(circle at 20% 0,rgba(204,163,81,.08),transparent 36%),linear-gradient(145deg,rgba(27,29,28,.92),rgba(11,12,12,.96)) !important; border: 1px solid rgba(221,180,94,.27) !important; box-shadow: 0 18px 45px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.025) !important; }
+.tool-card::before { border-color: rgba(235,196,119,.10) !important; }
+.tool-card:hover { border-color: rgba(242,205,130,.63) !important; box-shadow: 0 24px 55px rgba(0,0,0,.38),0 0 22px rgba(203,158,69,.08) !important; }
+.tc-icon { filter: grayscale(.55) sepia(.35); }
+.tc-name { color: var(--dw-gold-light) !important; }
+.tc-desc { color: #aaa499 !important; }
+.tc-tag { color: #d9b66c !important; background: rgba(204,160,75,.075) !important; border-color: rgba(210,167,82,.22) !important; }
+.disclaimer-section { color: #b2aa9a; }
+.disclaimer-box { color: #b2aa9a !important; background: rgba(15,16,15,.9) !important; border-color: rgba(210,170,89,.22) !important; }
+
+/* 全站弹窗：电脑内部滚动、底层锁定；表单/按钮不受装饰层阻挡 */
+body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
+.tool-overlay { z-index: 9500 !important; padding: 22px !important; overflow: hidden !important; background: rgba(3,4,4,.78) !important; backdrop-filter: blur(13px) saturate(.65) !important; -webkit-backdrop-filter: blur(13px) saturate(.65) !important; }
+.tool-overlay.active { display: flex !important; align-items: center !important; justify-content: center !important; }
+.tool-modal { position: relative; width: min(960px,calc(100vw - 44px)) !important; max-width: 960px !important; max-height: calc(100dvh - 44px) !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; color: #ece6d9 !important; background: radial-gradient(ellipse at 50% -10%,rgba(205,161,75,.12),transparent 36%),linear-gradient(180deg,rgba(20,21,20,.98),rgba(8,9,9,.99)) !important; border: 1px solid rgba(221,180,92,.42) !important; border-radius: 20px !important; box-shadow: 0 35px 100px rgba(0,0,0,.7),inset 0 1px rgba(255,235,190,.04) !important; scrollbar-color: rgba(213,170,85,.45) transparent; }
+.tool-modal::before { content:"" !important; position:absolute !important; top:0 !important; left:8% !important; right:8% !important; width:auto !important; height:1px !important; background:linear-gradient(90deg,transparent,#b17c2d,#f1d38e,#b17c2d,transparent) !important; box-shadow:0 0 16px rgba(244,204,124,.45) !important; pointer-events:none !important; }
+.tool-modal::after { pointer-events: none !important; opacity: .08 !important; }
+.modal-title { color: var(--dw-gold-light) !important; }
+.modal-desc,.result-sub,.form-label { color: #aaa395 !important; }
+.form-input,.form-select,.form-textarea,input,select,textarea { color: #eee8dc !important; background-color: rgba(3,4,4,.62) !important; border-color: rgba(209,169,88,.27) !important; }
+.form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,select:focus,textarea:focus { border-color: rgba(241,204,127,.74) !important; box-shadow: 0 0 0 3px rgba(214,169,78,.09) !important; outline: none; }
+.btn-primary { color: #17130c !important; background: linear-gradient(120deg,#b9802d,#f0d493 50%,#b77c29) !important; border-color: #e1bc70 !important; }
+.btn-secondary { color: #e7d5ac !important; background: rgba(13,14,13,.72) !important; border-color: rgba(214,172,87,.34) !important; }
+.modal-close { position: sticky !important; float: right; top: 0 !important; z-index: 20; color: #e8ca88 !important; background: rgba(7,8,8,.9) !important; border-color: rgba(215,174,89,.46) !important; }
+#paywallShopOverlay { display: none !important; }
+
+@media (max-width: 760px) {
+  .dao-nav { top: 6px; left: 6px; right: 6px; width: auto; min-height: 53px; gap: 8px; padding: 4px 6px 4px 9px; transform: none; border-radius: 19px; }
+  .dao-brand { gap: 5px; font-size: .98rem; }
+  .dao-brand-mark { width: 34px; height: 34px; }
+  .dao-nav-scroll { justify-content: flex-start; gap: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .dao-nav-scroll::-webkit-scrollbar { display: none; }
+  .dao-nav-scroll > a,.dao-nav-scroll > button,.dao-more-trigger { min-height: 37px; padding: 0 11px; font-size: .78rem; }
+  .dao-more-menu { position: fixed; top: 63px; right: 8px; }
+  .dao-balance { min-height: 38px; padding: 0 8px; gap: 4px; }
+  .dao-balance span,.dao-balance em { display: none; }
+  .dao-hero { min-height: 620px; background-position: 50% center; }
+  .dao-hero-content { margin-top: 40px; width: 94vw; }
+  .dao-eyebrow { font-size: .7rem; }
+  .dao-hero h1 { font-size: clamp(4.7rem,23vw,7rem); }
+  .dao-roman { letter-spacing: .62em; text-indent: .62em; font-size: .72rem; }
+  .dao-hero-lead { font-size: 1.05rem; }
+  .dao-hero-sub { width: 92%; margin: 8px auto 0; font-size: .76rem; line-height: 1.7; }
+  .dao-hero-actions { gap: 9px; width: 94%; margin: 25px auto 0; }
+  .dao-hero-actions button { flex: 1 1 0; min-width: 0; height: 54px; gap: 7px; font-size: .87rem; }
+  .dao-enter-btn b { right: 7px; bottom: 7px; font-size: .9rem; }
+  .dao-app-home { padding-top: 69px; }
+  .tool-overlay { padding: 0 !important; align-items: stretch !important; }
+  .tool-overlay.active { align-items: stretch !important; }
+  .tool-modal { width: 100vw !important; max-width: none !important; height: 100dvh !important; max-height: 100dvh !important; margin: 0 !important; padding: calc(1.15rem + env(safe-area-inset-top)) .85rem calc(1rem + env(safe-area-inset-bottom)) !important; border-width: 1px 0 0 !important; border-radius: 0 !important; }
+  .tool-modal table { min-width: 620px; }
+  .tool-modal .table-wrap,.tool-modal .chart-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .modal-close { top: env(safe-area-inset-top) !important; }
+}
+@media (prefers-reduced-motion: reduce) { .dao-hero.dao-entering { animation: none; } .dao-scroll-cue span { animation: none; } }
+
+/* 独立支付页 */
+.dw-payment-body { min-height: 100dvh; overflow-x: hidden; background: #070808 url('../assets/daowen-hero-bg.png') center / cover fixed no-repeat !important; }
+.dw-payment-body::before { content:""; position:fixed; inset:0; background:rgba(3,4,4,.76); backdrop-filter:blur(5px); pointer-events:none; }
+.dw-payment-page { position:relative; z-index:1; min-height:100dvh; padding:16px clamp(12px,3vw,40px) 38px; }
+.dw-payment-nav { width:min(1180px,100%); min-height:62px; margin:0 auto 24px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:8px 13px; border:1px solid rgba(229,193,120,.24); border-radius:31px; background:rgba(11,12,12,.82); backdrop-filter:blur(16px); }
+.dw-payment-back,.dw-cancel-payment { color:#d9c08a; background:transparent; border:1px solid rgba(213,172,88,.32); border-radius:22px; cursor:pointer; }
+.dw-payment-back { min-height:42px; padding:0 16px; }
+.dw-payment-balance { padding:0 12px; color:#a9a293; font-size:.78rem; white-space:nowrap; }
+.dw-payment-balance b { margin-left:5px; color:#f1d58f; font-size:1.05rem; }
+.dw-payment-shell { width:min(1100px,100%); margin:auto; padding:clamp(22px,4vw,50px); color:#eee7d9; text-align:center; background:radial-gradient(ellipse at 50% 0,rgba(202,158,72,.14),transparent 34%),rgba(8,9,9,.94); border:1px solid rgba(222,180,91,.43); border-radius:24px; box-shadow:0 35px 100px rgba(0,0,0,.6); }
+.dw-payment-eyebrow { color:#d7b66d; font-size:.82rem; letter-spacing:.13em; }
+.dw-payment-shell h1 { margin:.45rem 0; color:#f3d999; font:800 clamp(2rem,5vw,3.4rem)/1.2 var(--font-display); letter-spacing:.1em; }
+.dw-payment-shell > p { max-width:700px; margin:0 auto 1.5rem; color:#a8a092; line-height:1.75; }
+.dw-plan-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; max-width:940px; margin:0 auto 25px; }
+.dw-plan-grid.is-busy { opacity:.52; pointer-events:none; }
+.dw-plan-card { position:relative; min-height:330px; padding:27px 22px 20px; display:flex; flex-direction:column; align-items:flex-start; color:#d8c69d; text-align:left; background:linear-gradient(155deg,rgba(29,30,28,.98),rgba(10,11,11,.99)); border:1px solid rgba(216,174,87,.31); border-radius:16px; cursor:pointer; transition:.25s ease; }
+.dw-plan-card:hover { transform:translateY(-5px); border-color:rgba(242,206,132,.66); box-shadow:0 20px 45px rgba(0,0,0,.35); }
+.dw-plan-card.featured { border-color:rgba(241,204,126,.72); box-shadow:0 0 30px rgba(198,150,55,.08); }
+.dw-plan-card mark { position:absolute; top:0; right:0; padding:6px 12px; color:#261b0d; background:linear-gradient(120deg,#b67d2c,#efd28d); border-radius:0 15px 0 10px; font-size:.68rem; }
+.dw-plan-card > span { color:#ad9360; font-size:.76rem; letter-spacing:.12em; }
+.dw-plan-card > strong { margin:16px 0 5px; color:#f0ddae; font:700 1.3rem/1.3 var(--font-display); }
+.dw-plan-card > b { color:#f5e3b9; font:800 3.8rem/1.2 var(--font-display); }
+.dw-plan-card > b small { font-size:.36em; }
+.dw-plan-card > em { color:#8e8779; font-size:.75rem; font-style:normal; }
+.dw-plan-card > i { width:100%; min-height:44px; margin-top:auto; display:grid; place-items:center; color:#21180c; background:linear-gradient(90deg,#b47a2a,#eed08a,#b47a2a); border-radius:8px; font-style:normal; font-weight:800; }
+.dw-order-panel,.dw-payment-status { max-width:700px; margin:16px auto; padding:18px; color:#cfbea0; background:rgba(18,19,17,.92); border:1px solid rgba(212,169,79,.28); border-radius:14px; }
+.dw-order-panel[hidden] { display:none; }
+.dw-order-panel h2 { color:#edcf8d; }
+.dw-order-note { color:#918979; font-size:.75rem; }
+.dw-order-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:9px; }
+.dw-order-actions button,.dw-payment-status button { width:auto !important; min-height:44px; padding:.6rem 1.2rem; }
+.dw-payment-status:empty { display:none; }
+.dw-payment-status .success { color:#8fd0a4; }
+.dw-payment-status .error { color:#e0978c; }
+.dw-payment-assurance { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:940px; margin:20px auto; color:#9e9584; font-size:.72rem; }
+.dw-payment-assurance span { padding:13px 8px; border:1px solid rgba(209,168,82,.17); border-radius:9px; background:rgba(255,235,190,.018); }
+.dw-payment-assurance span::before { content:"✓"; margin-right:6px; color:#d5ae60; }
+.dw-cancel-payment { min-height:43px; padding:0 20px; }
+@media(max-width:700px){
+  .dw-payment-page{padding:7px 0 0}.dw-payment-nav{min-height:54px;margin:0 7px 8px;width:auto;border-radius:18px}.dw-payment-nav .dao-brand span:last-child{display:none}.dw-payment-back{padding:0 10px;font-size:.74rem}.dw-payment-balance{padding:0 5px;font-size:.68rem}.dw-payment-shell{min-height:calc(100dvh - 69px);padding:25px 12px calc(22px + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:0}.dw-plan-grid{grid-template-columns:1fr;gap:10px}.dw-plan-card{min-height:210px;padding:19px 18px}.dw-plan-card>b{font-size:3rem}.dw-payment-assurance{grid-template-columns:1fr 1fr}.dw-order-actions{flex-direction:column}.dw-order-actions button{width:100%!important}
+}

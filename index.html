@@ -38,6 +38,55 @@
   <!-- ====== Canvas 背景 ====== -->
   <canvas id="starCanvas"></canvas>
 
+  <!-- ====== 全站真实导航与沉浸式首页 ====== -->
+  <nav class="dao-nav" aria-label="主导航">
+    <a class="dao-brand" href="#daoHero" aria-label="返回道问首页">
+      <span class="dao-brand-mark">☯</span><span>道问</span>
+    </a>
+    <div class="dao-nav-scroll">
+      <a class="active" href="#daoHero">首页</a>
+      <button type="button" onclick="BaziModule.open()">八字</button>
+      <button type="button" onclick="ZiweiModule.open()">紫微</button>
+      <button type="button" onclick="LiuyaoModule.open()">六爻</button>
+      <button type="button" onclick="window.DaoWenUI.openAI()">AI 解读</button>
+      <button type="button" onclick="AlmanacModule.open()">黄历</button>
+      <div class="dao-more-wrap">
+        <button type="button" class="dao-more-trigger" onclick="window.DaoWenUI.toggleMore(event)" aria-expanded="false">更多⌄</button>
+        <div class="dao-more-menu" id="daoMoreMenu">
+          <button onclick="MeihuaModule.open()">梅花易数</button>
+          <button onclick="TarotModule.shuffle()">塔罗占卜</button>
+          <button onclick="CeziModule.open()">测字</button>
+          <button onclick="NameModule.open()">姓名</button>
+          <button onclick="DreamModule.open()">梦境</button>
+          <button onclick="XiaoLiuRenModule.open()">小六壬</button>
+          <button onclick="ZhugeModule.open()">诸葛神数</button>
+        </div>
+      </div>
+    </div>
+    <button class="dao-balance" type="button" onclick="Paywall.openShop()" aria-label="查看积分并充值">
+      <span>余</span><b data-daowen-balance>—</b><em>充值</em>
+    </button>
+  </nav>
+
+  <section class="dao-hero" id="daoHero" aria-labelledby="daoHeroTitle">
+    <div class="dao-hero-shade"></div>
+    <div class="dao-hero-content">
+      <div class="dao-eyebrow"><span>✦</span> 东方命理，洞见天机</div>
+      <h1 id="daoHeroTitle">道 问</h1>
+      <p class="dao-roman">DAO WEN</p>
+      <span class="dao-moon">◔</span>
+      <p class="dao-hero-lead">天地之间，万事皆有迹可循。</p>
+      <p class="dao-hero-sub">八字、紫微、六爻、梅花、塔罗与 AI 推演，一念入局。</p>
+      <div class="dao-hero-actions">
+        <button class="dao-enter-btn" type="button" onclick="window.DaoWenUI.enter()"><span>开始入局</span><i>→</i><b>☯</b></button>
+        <button class="dao-fortune-btn" type="button" onclick="DailyModule.openModule()"><span>⌘</span> 每日签运</button>
+      </div>
+    </div>
+    <div class="dao-scroll-cue" aria-hidden="true"><span></span></div>
+  </section>
+
+  <main class="dao-app-home" id="appHome">
+
   <!-- ====== Header ====== -->
   <header class="header">
     <div class="header-top-right">
@@ -187,7 +236,9 @@
     </div>
   </div>
 
-  <!-- ====== 付费墙弹窗 ====== -->
+  </main>
+
+  <!-- ====== 付费墙弹窗（购买入口已迁移至独立支付页，仅保留旧结构兼容） ====== -->
   <div class="tool-overlay" id="paywallShopOverlay">
     <div class="tool-modal pw-premium-modal">
       <button class="modal-close" onclick="Paywall.closeShop()" aria-label="关闭">✕</button>
