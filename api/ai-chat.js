@@ -1,4 +1,4 @@
-/** AI命理助手：游客/账号身份 + 服务端原子扣 2 次 + 失败自动退款 */
+/** AI命理助手：匿名浏览器身份 + 服务端原子扣 2 次 + 失败自动退款 */
 const { noStore, readJson, serviceRpc, randomRequestId } = require('./_lib');
 const { requireUser } = require('./_auth');
 const { callDeepSeek } = require('./_deepseek');

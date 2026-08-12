@@ -3,7 +3,7 @@
  *
  * 安全原则：
  * 1. 浏览器不保存权威余额，不包含兑换码数据库。
- * 2. 兑换、购买、扣费均由游客/账号身份 + Vercel API + 数据库原子事务完成。
+ * 2. 兑换、购买、扣费均由匿名浏览器身份 + Vercel API + 数据库原子事务完成。
  * 3. localStorage 只保存“待确认订单号”，从不作为到账或余额依据。
  */
 var Paywall = {
@@ -164,8 +164,7 @@ var Paywall = {
     var bar = document.createElement('div');
     bar.id = 'pw_bar';
     bar.className = 'paywall-bar';
-    var saveText = (window.DaoWenIdentity && DaoWenIdentity.user && !DaoWenIdentity.user.isGuest) ? '' : ' · <a href="javascript:DaoWenIdentity.openSave(\'save\')" style="color:var(--gold);">保存数据</a>';
-    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>' + saveText;
+    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>';
     el.insertBefore(bar, el.firstChild);
     return true;
   },
@@ -182,7 +181,7 @@ var Paywall = {
     block.setAttribute('style', 'position:absolute;inset:0;background:rgba(17,17,15,.96);z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
     block.innerHTML = '<div><div style="font-size:3rem;">🔒</div>' +
       '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>' +
-      '<p style="color:#aaa;font-size:.85rem;">拥有解读次数后即可解锁，无需先登录</p>' +
+      '<p style="color:#aaa;font-size:.85rem;">拥有解读次数后即可解锁</p>' +
       '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:.6rem 2rem;margin-top:.5rem;">🎫 购买解读次数</button>' +
       '<p style="color:#999;font-size:.76rem;margin-top:.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p></div>';
     el.appendChild(block);
@@ -359,7 +358,7 @@ var Paywall = {
   }
 };
 
-/** 套餐点击入口：订单绑定当前游客/账号身份，支付成功直接入账，不再返回兑换码。 */
+/** 套餐点击入口：订单绑定当前匿名浏览器身份，支付成功直接入账，不再返回兑换码。 */
 async function showBuyContact(tier) {
   var overlay = document.getElementById('paywallShopOverlay');
   var shopContent = overlay && overlay.querySelector('.tool-modal');
@@ -390,7 +389,7 @@ async function showBuyContact(tier) {
     panel.innerHTML =
       '<p style="color:var(--gold);font-weight:bold;font-size:1.05rem;">订单已创建</p>' +
       '<p style="font-size:.9rem;color:var(--text-secondary);">' + Number(data.count || 0) + ' 次解读 · ¥' + Paywall._escape(data.amount) + '</p>' +
-      '<p style="font-size:.8rem;color:var(--text-muted);">支付会绑定当前游客或保存账号；到账以服务端验签结果为准。</p>' +
+      '<p style="font-size:.8rem;color:var(--text-muted);">支付会绑定当前浏览器；清除网站数据后可能无法恢复，到账以服务端验签结果为准。</p>' +
       '<button id="zpaySubmitBtn" class="btn-primary" style="width:auto;padding:.65rem 2rem;">📱 前往支付宝支付</button>' +
       '<div id="alipayStatus" style="margin-top:.8rem;"></div>' +
       '<button class="btn-secondary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.45rem 1.2rem;margin-top:.5rem;">🔄 已支付，检查到账</button>' +

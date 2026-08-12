@@ -5,7 +5,7 @@
  * 保留原文件对外 API：StarBackground、AppController、typewriter、
  * typewriterHTML、showEl、hideEl、randomInt、randomPick、shuffle、
  * todayStr、createRipple、initAddressCascade、toggleContact、copyContact。
- * 不改支付、登录、命理排盘或 AI 业务逻辑。
+ * 不改支付、命理排盘或 AI 业务逻辑。
  */
 
 // ============ 水墨八卦动态背景 ============
@@ -559,8 +559,6 @@ function initDaoUI() {
   enhanceDaoSplash();
   makeToolCardsAccessible();
   addRevealMotion();
-  const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) loginBtn.classList.add('dao-header-action');
   document.documentElement.classList.add('dao-ink-theme-ready');
 }
 

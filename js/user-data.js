@@ -1,4 +1,4 @@
-/** 自动保存命理工具输入和少量本地记录；不保存密码、兑换码或支付字段。 */
+/** 自动保存命理工具输入和少量本地记录；不保存兑换码或支付字段。 */
 var DaoWenUserData = {
   _dirty: false,
   _timer: null,
@@ -13,7 +13,7 @@ var DaoWenUserData = {
     if (['password', 'hidden', 'submit', 'button', 'file'].indexOf(type) !== -1) return false;
     if (/(password|email|redeem|code|token|order|payment|pay|contact|aiChat)/i.test(el.id)) return false;
     var overlay = el.closest ? el.closest('.tool-overlay') : null;
-    if (overlay && /^(loginOverlay|accountOverlay|paywallShopOverlay|paywallRedeemOverlay)$/.test(overlay.id || '')) return false;
+    if (overlay && /^(paywallShopOverlay|paywallRedeemOverlay)$/.test(overlay.id || '')) return false;
     return true;
   },
 
