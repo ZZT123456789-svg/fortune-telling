@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/ZZT123456789-svg/fortune-telling/issues"
   },
-  "homepage": "https://github.com/ZZT123456789-svg/fortune-telling#readme"
+  "homepage": "https://github.com/ZZT123456789-svg/fortune-telling#readme",
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
 }
