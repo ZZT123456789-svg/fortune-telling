@@ -83,7 +83,8 @@ test('黑金首页使用真实控件，购买入口统一进入独立支付页',
   assert.match(paywall, /window\.location\.href = 'payment\.html'/);
   assert.match(app, /window\.location\.href = '\/app'/);
   assert.match(paymentPage, /window\.location\.href = '\/app\?restore=1'/);
-  assert.match(vercel, /"source": "\/app", "destination": "\/index\.html"/);
+  assert.match(vercel, /"source": "\/app", "destination": "\/index"/);
+  assert.doesNotMatch(vercel, /"source": "\/app", "destination": "\/index\.html"/);
   assert.match(home, /class="dao-account-actions"/);
   assert.match(home, /class="dao-balance" aria-label="当前积分余额"/);
   assert.match(home, /class="dao-recharge"/);
