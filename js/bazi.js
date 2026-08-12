@@ -495,8 +495,6 @@ var BaziModule = {
         '<div style=\"width:60px;height:4px;background:var(--border-subtle);margin:1rem auto;border-radius:2px;overflow:hidden;\">' +
           '<div style=\"width:100%;height:100%;background:var(--gold);animation:loadingBar 1.5s ease-in-out infinite;\"></div></div>' +
         '</div></div>';
-      // 异步请求AI
-      self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis);
     } else {
       // 规则解读(降级)
       paidHtml = self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
@@ -517,7 +515,6 @@ var BaziModule = {
     // 全内容渲染 + 付费墙覆盖
     var fullHtml = freeHtml + paidHtml;
     if (Paywall.hasBalance()) {
-      Paywall.deduct();
       ctn.innerHTML = fullHtml;
       self._focusResult(ctn);
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
@@ -629,6 +626,7 @@ var BaziModule = {
     })
     .then(function(resp){return resp.json();})
     .then(function(data){
+      if (window.Paywall && data.balance != null) Paywall._setBalance(Number(data.balance));
       var container = document.getElementById('aiReadingContainer');
       if (!container) return;
       if (data.success) {
@@ -638,15 +636,17 @@ var BaziModule = {
           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
           .replace(/\n\n/g, '</p><p style="line-height:1.9;">')
           .replace(/\n- /g, '<br/>• ');
-        container.innerHTML = '<div class="analysis-card" style="border-left:3px solid #7c3aed;"><h4>🤖 AI深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由Claude AI基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
+        container.innerHTML = '<div class="analysis-card" style="border-left:3px solid #7c3aed;"><h4>🤖 AI深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由AI基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
       } else {
         // AI失败，降级到规则解读
         container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj);
+        if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
       }
     })
     .catch(function(){
       var container = document.getElementById('aiReadingContainer');
       if (container) container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj);
+      if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
     });
   },
 

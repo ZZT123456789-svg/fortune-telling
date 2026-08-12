@@ -29,3 +29,10 @@ test('欢迎首页不再显示底部滚动提示图标', () => {
   assert.doesNotMatch(home, /dao-scroll-cue/);
   assert.doesNotMatch(css, /dao-scroll-cue|@keyframes\s+dwScroll/);
 });
+
+test('八字 AI 解读只发送一次服务端扣费请求', () => {
+  const bazi = fs.readFileSync(path.join(ROOT, 'js', 'bazi.js'), 'utf8');
+  assert.equal((bazi.match(/_callAIReading\(/g) || []).length, 1);
+  assert.doesNotMatch(bazi, /Paywall\.deduct\(\)/);
+  assert.match(bazi, /data\.balance != null[\s\S]*Paywall\._setBalance/);
+});

@@ -146,3 +146,50 @@ test('命理输入快照通过 user-data API 绑定当前游客 ID', async () =>
   const get = await invoke(handler, { method: 'GET' });
   assert.deepEqual(get.body.data, payload);
 });
+
+test('八字 AI 解读仅扣一次，生成失败时自动退还', async () => {
+  const identity = { id: 'guest-ai-reading-1', is_guest: true };
+  const state = { balance: 3, consumeCount: 0, refundCount: 0 };
+  const libStub = {
+    noStore() {},
+    async readJson(req) { return req.body || {}; },
+    randomRequestId() { return 'ai-reading:request-1'; },
+    async serviceRpc(name, payload) {
+      assert.equal(payload.p_user_id, identity.id);
+      if (name === 'api_consume_credits') {
+        state.consumeCount += 1;
+        state.balance -= payload.p_amount;
+        return { success: true, balance: state.balance };
+      }
+      if (name === 'api_refund_credits') {
+        state.refundCount += 1;
+        state.balance += payload.p_amount;
+        return { success: true, balance: state.balance };
+      }
+      throw new Error('unexpected RPC ' + name);
+    }
+  };
+  const chart = { year: '甲子', month: '乙丑', day: '丙寅', hour: '丁卯', dm: '丙', de: '火' };
+
+  const successHandler = loadHandler('api/ai-reading.js', {
+    './_lib': libStub,
+    './_auth': { requireUser: async () => identity },
+    './_deepseek': { callDeepSeek: async () => '八字 AI 测试解读' }
+  });
+  const success = await invoke(successHandler, { method: 'POST', body: { chart } });
+  assert.equal(success.statusCode, 200);
+  assert.equal(success.body.content, '八字 AI 测试解读');
+  assert.equal(state.consumeCount, 1);
+  assert.equal(state.balance, 2);
+
+  const failingHandler = loadHandler('api/ai-reading.js', {
+    './_lib': libStub,
+    './_auth': { requireUser: async () => identity },
+    './_deepseek': { callDeepSeek: async () => { throw new Error('provider unavailable'); } }
+  });
+  const failed = await invoke(failingHandler, { method: 'POST', body: { chart } });
+  assert.equal(failed.statusCode, 503);
+  assert.equal(state.consumeCount, 2);
+  assert.equal(state.refundCount, 1);
+  assert.equal(state.balance, 2);
+});
