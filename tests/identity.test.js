@@ -79,6 +79,7 @@ test('黑金首页使用真实控件，购买入口统一进入独立支付页',
   assert.match(css, /assets\/daowen-hero-bg\.png/);
   assert.match(payment, /id="paymentPlans"/);
   assert.match(payment, /取消并返回原功能/);
+  assert.doesNotMatch(payment, /游客身份自动绑定|服务端验签到账|支付宝安全支付|返回后恢复填写内容/);
   assert.match(paywall, /window\.location\.href = 'payment\.html'/);
   assert.match(app, /window\.location\.href = '\/app'/);
   assert.match(paymentPage, /window\.location\.href = '\/app\?restore=1'/);
