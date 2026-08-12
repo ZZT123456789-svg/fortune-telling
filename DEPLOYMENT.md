@@ -13,6 +13,8 @@
 
 全新数据库只需执行 `sql/secure-credits.sql`。
 
+必须在 Supabase Dashboard 的 SQL Editor 中执行这些脚本。不要通过公开网站接口执行迁移，也不要把 `service_role` 密钥当作 PostgreSQL 数据库密码。
+
 ## 服务端环境变量
 
 必须配置：
@@ -24,6 +26,15 @@
 - AI 使用的现有服务端密钥
 
 不再需要 `SUPABASE_ANON_KEY`、`RESEND_API_KEY` 或 `MAIL_FROM`。
+
+推荐在 Vercel 的 Production、Preview、Development 三个环境中都配置上述变量；线上至少必须配置 Production。修改后需要重新部署，旧部署不会自动获得新变量。
+
+## 上线自检
+
+1. 访问 `/api/balance`，应返回 `200` 和数字余额，不应返回 `500`。
+2. 创建支付订单时应返回订单号和支付参数；不进行真实付款也能验证订单创建。
+3. 支付通知只允许服务端验签后入账，同一订单重复通知不会重复增加积分。
+4. 支付完成或取消后返回 `/payment?returned=1`，再由页面恢复原功能和输入快照。
 
 ## 数据规则
 

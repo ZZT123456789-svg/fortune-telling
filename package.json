@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js tests/ziwei.test.js tests/ziwei-engine.test.js tests/library.test.js",
+    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js tests/ziwei.test.js tests/ziwei-engine.test.js tests/library.test.js tests/deployment.test.js",
     "check": "node --check js/visitor-identity.js && node --check js/user-data.js && node --check js/paywall.js && node --check js/ai-chat.js && node --check js/ziwei.js && node --check js/library.js && node --check data/library-books.js && node --check api/_auth.js && node --check api/_lib.js && node --check api/session.js && node --check api/user-data.js"
   },
   "repository": {
@@ -18,7 +18,5 @@
     "url": "https://github.com/ZZT123456789-svg/fortune-telling/issues"
   },
   "homepage": "https://github.com/ZZT123456789-svg/fortune-telling#readme",
-  "dependencies": {
-    "pg": "^8.23.0"
-  }
+  "dependencies": {}
 }
