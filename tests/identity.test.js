@@ -50,12 +50,25 @@ test('篡改匿名 Cookie 后自动换新身份', async () => {
   }
 });
 
-test('页面和运行时不存在登录、注册、邮箱密码或找回接口', () => {
-  const files = ['index.html', 'js/visitor-identity.js', 'js/paywall.js', 'api/_auth.js', 'api/session.js'];
-  const forbidden = /loginOverlay|loginBtn|\/api\/account|password|resetPassword|\bsignIn\b|\bsignUp\b|邮箱地址|注册账号/i;
-  for (const file of files) assert.doesNotMatch(fs.readFileSync(path.join(ROOT, file), 'utf8'), forbidden, file);
-  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'account.js')), false);
-  assert.equal(fs.existsSync(path.join(ROOT, 'js', 'user-system.js')), false);
+test('登录系统存在：邮箱+密码登录（无邮件确认）+ 信任留存码', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.match(html, /id="loginBtn"/);
+  assert.match(html, /id="loginOverlay"/);
+  assert.equal(fs.existsSync(path.join(ROOT, 'js', 'auth-ui.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-login.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-signup.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-logout.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-recover.js')), true);
+
+  // 无邮件确认：注册走 Supabase admin users + email_confirm:true，不发邮件
+  const signup = fs.readFileSync(path.join(ROOT, 'api', 'auth-signup.js'), 'utf8');
+  assert.match(signup, /email_confirm:\s*true/);
+
+  // 身份模块不落明文密码、不存明文留存码；留存码由 HMAC 派生
+  const auth = fs.readFileSync(path.join(ROOT, 'api', '_auth.js'), 'utf8');
+  assert.doesNotMatch(auth, /password_hash|bcrypt/i);
+  assert.match(auth, /recover:/);
+  assert.match(auth, /daowen_account/);
 });
 
 test('数据库业务表直接绑定匿名 UUID，不依赖用户表', () => {
