@@ -100,7 +100,7 @@ var PaymentPage = (function () {
     if (status) status.innerHTML = '';
   }
 
-  function returnToTool() { window.location.href = 'index.html?restore=1'; }
+  function returnToTool() { window.location.href = '/app?restore=1'; }
 
   document.addEventListener('DOMContentLoaded', function () {
     syncBalance();

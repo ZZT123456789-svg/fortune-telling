@@ -3773,10 +3773,12 @@ body {
 .dao-more-menu.open { display: grid; }
 .dao-more-menu button { min-height: 39px; border: 0; border-radius: 8px; color: #d9d0bd; background: transparent; cursor: pointer; }
 .dao-more-menu button:hover { color: #17130d; background: linear-gradient(135deg,#f2daa5,#b98737); }
-.dao-balance { flex: 0 0 auto; min-height: 44px; display: flex; align-items: center; gap: 7px; padding: 0 15px; color: var(--dw-gold-light); background: rgba(6,7,7,.55); border: 1px solid var(--dw-line); border-radius: 24px; cursor: pointer; }
-.dao-balance span { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--dw-line); border-radius: 50%; font-size: .67rem; }
+.dao-account-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; }
+.dao-balance { min-height: 44px; display: flex; align-items: center; gap: 7px; padding: 0 14px; color: var(--dw-gold-light); background: rgba(6,7,7,.55); border: 1px solid rgba(220,183,106,.2); border-radius: 24px; cursor: default; }
+.dao-balance span { color: #aaa293; font-size: .72rem; }
 .dao-balance b { font-size: 1rem; }
-.dao-balance em { color: #bcb4a2; font-size: .72rem; font-style: normal; }
+.dao-recharge { min-height: 44px; padding: 0 17px; color: #20170c; background: linear-gradient(120deg,#b77d2b,#efd18a 52%,#b67b29); border: 1px solid #dfb866; border-radius: 24px; font: 800 .78rem/1 var(--font-body); letter-spacing: .08em; cursor: pointer; box-shadow: 0 7px 18px rgba(139,91,25,.16); }
+.dao-recharge:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
 /* 首屏 */
 .dao-hero { position: relative; z-index: 2; height: 100svh; min-height: 690px; overflow: hidden; display: grid; place-items: center; isolation: isolate; background: #070808 url('../assets/daowen-hero-bg.png') center center / cover no-repeat; }
@@ -3806,6 +3808,11 @@ body {
 
 /* 功能主页 */
 .dao-app-home { position: relative; z-index: 3; min-height: 100vh; padding: 90px 0 35px; overflow: hidden; background: radial-gradient(ellipse at 50% 0,rgba(188,146,65,.08),transparent 36%),linear-gradient(180deg,#080909,#0d0e0d 50%,#080909); }
+body:not(.dw-app-page) .dao-app-home { display: none; }
+.dw-app-page .dao-hero { display: none; }
+.dw-app-page { padding-top: 0 !important; }
+.dw-app-page .dao-app-home { display: block; min-height: 100dvh; padding-top: 92px; }
+.dw-landing-page .ai-chat-fab,.dw-landing-page .ai-chat-window { display: none !important; }
 .dao-app-home::before { content:""; position:absolute; inset:0; z-index:-1; opacity:.1; background: url('../assets/daowen-hero-bg.png') center top / 1600px auto no-repeat; filter: blur(2px); }
 .dao-app-home::after { content:""; position:absolute; z-index:8; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at 50% 12%,rgba(220,217,204,.23),transparent 48%),linear-gradient(90deg,transparent,rgba(205,205,194,.08),transparent); transform:translateY(22%); }
 .dao-app-home.dao-arriving::after { animation:dwMistReveal 1.35s ease-out both; }
@@ -3849,8 +3856,10 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   .dao-nav-scroll::-webkit-scrollbar { display: none; }
   .dao-nav-scroll > a,.dao-nav-scroll > button,.dao-more-trigger { min-height: 37px; padding: 0 11px; font-size: .78rem; }
   .dao-more-menu { position: fixed; top: 63px; right: 8px; }
+  .dao-account-actions { gap: 4px; }
   .dao-balance { min-height: 38px; padding: 0 8px; gap: 4px; }
-  .dao-balance span,.dao-balance em { display: none; }
+  .dao-balance span { display: none; }
+  .dao-recharge { min-height: 38px; padding: 0 9px; font-size: .7rem; }
   .dao-hero { min-height: 620px; background-position: 50% center; }
   .dao-hero-content { margin-top: 40px; width: 94vw; }
   .dao-eyebrow { font-size: .7rem; }

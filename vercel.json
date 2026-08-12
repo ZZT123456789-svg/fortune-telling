@@ -15,6 +15,9 @@
       "main": true
     }
   },
+  "rewrites": [
+    { "source": "/app", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

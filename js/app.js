@@ -634,15 +634,11 @@ document.addEventListener('DOMContentLoaded', () => {
     saveCurrentToolState,
     enter() {
       const hero = document.getElementById('daoHero');
-      const home = document.getElementById('appHome');
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (hero && !reduced) hero.classList.add('dao-entering');
-      if (home && !reduced) home.classList.add('dao-arriving');
       setTimeout(() => {
-        if (home) home.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-        if (hero) setTimeout(() => hero.classList.remove('dao-entering'), 850);
-        if (home) setTimeout(() => home.classList.remove('dao-arriving'), 1500);
-      }, reduced ? 0 : 430);
+        window.location.href = '/app';
+      }, reduced ? 0 : 520);
     },
     openAI() {
       if (window.AIChat && typeof AIChat._show === 'function') AIChat._show();

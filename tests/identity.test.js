@@ -69,6 +69,9 @@ test('黑金首页使用真实控件，购买入口统一进入独立支付页',
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const payment = fs.readFileSync(path.join(ROOT, 'payment.html'), 'utf8');
   const paywall = fs.readFileSync(path.join(ROOT, 'js', 'paywall.js'), 'utf8');
+  const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+  const paymentPage = fs.readFileSync(path.join(ROOT, 'js', 'payment-page.js'), 'utf8');
+  const vercel = fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
   assert.match(home, /class="dao-nav"/);
   assert.match(home, /class="dao-enter-btn"/);
@@ -77,5 +80,11 @@ test('黑金首页使用真实控件，购买入口统一进入独立支付页',
   assert.match(payment, /id="paymentPlans"/);
   assert.match(payment, /取消并返回原功能/);
   assert.match(paywall, /window\.location\.href = 'payment\.html'/);
+  assert.match(app, /window\.location\.href = '\/app'/);
+  assert.match(paymentPage, /window\.location\.href = '\/app\?restore=1'/);
+  assert.match(vercel, /"source": "\/app", "destination": "\/index\.html"/);
+  assert.match(home, /class="dao-account-actions"/);
+  assert.match(home, /class="dao-balance" aria-label="当前积分余额"/);
+  assert.match(home, /class="dao-recharge"/);
   assert.equal(fs.existsSync(path.join(ROOT, 'assets', 'daowen-hero-bg.png')), true);
 });

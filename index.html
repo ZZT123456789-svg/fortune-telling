@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <script>
+    document.body.classList.add(/^\/app\/?$/.test(location.pathname) ? 'dw-app-page' : 'dw-landing-page');
+  </script>
   <!-- ====== 开场动画 ====== -->
   <script>
     function dismissSplash() {
@@ -63,9 +66,10 @@
         </div>
       </div>
     </div>
-    <button class="dao-balance" type="button" onclick="Paywall.openShop()" aria-label="查看积分并充值">
-      <span>余</span><b data-daowen-balance>—</b><em>充值</em>
-    </button>
+    <div class="dao-account-actions">
+      <div class="dao-balance" aria-label="当前积分余额"><span>余额</span><b data-daowen-balance>—</b></div>
+      <button class="dao-recharge" type="button" onclick="Paywall.openShop()">充值</button>
+    </div>
   </nav>
 
   <section class="dao-hero" id="daoHero" aria-labelledby="daoHeroTitle">
