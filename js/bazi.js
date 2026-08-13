@@ -37,6 +37,7 @@ var BaziModule = {
     this.currentMode = 'single';
     this._updateModeUI();
     this._initAddressCascades();
+    this._syncCalendarUI();
   },
 
   close: function() {
@@ -139,6 +140,30 @@ var BaziModule = {
     return coord ? coord.lng : 116;
   },
 
+  _isValidSolarDate: function(year, month, day) {
+    return typeof DaoCalendar !== 'undefined' && DaoCalendar.validSolarDate(year, month, day);
+  },
+
+  _syncCalendarUI: function() {
+    var type = document.getElementById('baziCalType1');
+    var wrap = document.getElementById('baziLeapWrap1');
+    var leap = document.getElementById('baziLeapMonth1');
+    var month = document.getElementById('baziMonth1');
+    var lunar = !!(type && type.value === 'lunar');
+    if (wrap) wrap.hidden = !lunar;
+    if (!lunar && leap) leap.checked = false;
+    if (month && month.options) {
+      var selected = month.value;
+      var lunarNames = ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'];
+      month.options[0].textContent = lunar ? '请选择农历月份' : '请选择月份';
+      for (var i = 1; i <= 12; i++) {
+        if (month.options[i]) month.options[i].textContent = lunar ? lunarNames[i - 1] : i + '月';
+      }
+      month.value = selected;
+    }
+    this._updateTrueSolar('1');
+  },
+
   /** 真太阳时计算 */
   _calcTrueSolar: function(year, month, day, hour, minute, prefix) {
     var longitude = this._getLongitude(prefix);
@@ -172,6 +197,20 @@ var BaziModule = {
     var minute = parseInt(document.getElementById('baziMinute' + prefix).value) || 0;
     if (isNaN(hour)) return;
     if (!year || !month || !day) { year = 1990; month = 1; day = 1; }
+    if (prefix === '1') {
+      var type = document.getElementById('baziCalType1');
+      if (type && type.value === 'lunar') {
+        try {
+          var leap = !!(document.getElementById('baziLeapMonth1') && document.getElementById('baziLeapMonth1').checked);
+          var converted = this._lunarToSolar(year, month, day, leap);
+          year = converted.year; month = converted.month; day = converted.day;
+        } catch (error) {
+          display.style.display = 'none';
+          return;
+        }
+      }
+    }
+    if (!this._isValidSolarDate(year, month, day)) { display.style.display = 'none'; return; }
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
     display.style.display = 'block';
     document.getElementById('trueSolarTime' + prefix).textContent =
@@ -348,11 +387,14 @@ var BaziModule = {
       var minute = parseInt(document.getElementById('baziMinute1').value) || 0;
       if (!year || !month || !day || isNaN(hour)) { alert('请填写完整的出生日期和时间'); return; }
 
-      // 农历→阳历转换（近似）
+      // 农历先严格转换成公历；八字年、月柱仍按节气判定。
       var calType = document.getElementById('baziCalType1').value;
       if (calType === 'lunar') {
-        var solar = this._lunarToSolar(year, month, day);
+        var isLeap = !!(document.getElementById('baziLeapMonth1') && document.getElementById('baziLeapMonth1').checked);
+        var solar = this._lunarToSolar(year, month, day, isLeap);
         year = solar.year; month = solar.month; day = solar.day;
+      } else if (!this._isValidSolarDate(year, month, day)) {
+        throw new Error('公历日期不存在，请检查年月日');
       }
 
       var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
@@ -379,6 +421,7 @@ var BaziModule = {
     var hour = parseInt(document.getElementById('baziHour' + suffix).value);
     var minute = parseInt(document.getElementById('baziMinute' + suffix).value) || 0;
     if (!year || !month || !day || isNaN(hour)) return null;
+    if (!this._isValidSolarDate(year, month, day)) throw new Error('合盘中的公历日期不存在，请检查年月日');
     return this._analyzeSingle(name, gender, year, month, day, hour, minute, suffix);
   },
 
@@ -769,12 +812,10 @@ var BaziModule = {
     return h;
   },
 
-  /** 农历→阳历近似转换（简化，农历比阳历晚约20-50天） */
-  _lunarToSolar: function(ly, lm, ld) {
-    // 简易：农历日期 + 约30天 = 阳历日期
-    var d = new Date(ly, lm - 1, ld + 28);
-    // 如果超过当月天数则进位
-    return {year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate()};
+  /** 农历→公历：统一走固定版本历法引擎，并严格核验闰月。 */
+  _lunarToSolar: function(ly, lm, ld, isLeap) {
+    if (typeof DaoCalendar === 'undefined' || !DaoCalendar.lunarToSolar) throw new Error('历法引擎未加载');
+    return DaoCalendar.lunarToSolar(ly, lm, ld, !!isLeap);
   },
 
   // ==== 身强弱判断 ====
@@ -1351,9 +1392,15 @@ var BaziModule = {
 
 // 地址变化时更新真太阳时
 document.addEventListener('change', function(e) {
+  if (e.target && (e.target.id === 'baziCalType1' || e.target.id === 'baziLeapMonth1')) {
+    BaziModule._syncCalendarUI();
+    return;
+  }
   if (e.target && e.target.id && e.target.id.indexOf('bazi') === 0 &&
       (e.target.id.indexOf('Province') > -1 || e.target.id.indexOf('City') > -1 ||
-       e.target.id.indexOf('Hour') > -1 || e.target.id.indexOf('Minute') > -1)) {
+       e.target.id.indexOf('Year') > -1 || e.target.id.indexOf('Month') > -1 ||
+       e.target.id.indexOf('Day') > -1 || e.target.id.indexOf('Hour') > -1 ||
+       e.target.id.indexOf('Minute') > -1)) {
     var prefix = e.target.id.replace('bazi','').replace(/[^0-9AB]/g,'');
     if (BaziModule._updateTrueSolar) BaziModule._updateTrueSolar(prefix);
   }

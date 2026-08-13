@@ -65,6 +65,10 @@ var ZiweiModule = {
         isLeapMonth: isLeap
       });
 
+      this._assertCalendarMatch(chart, {
+        year:y, month:m, day:d, calType:calType, isLeapMonth:isLeap
+      });
+
       if (!chart || !Array.isArray(chart.palaces) || chart.palaces.length !== 12) {
         throw new Error('排盘结果不完整，请检查出生日期');
       }
@@ -250,6 +254,23 @@ var ZiweiModule = {
       ZiweiModule._positionSanFangLines();
       ctn.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
+  },
+
+  _assertCalendarMatch: function(chart, input) {
+    if (!chart) throw new Error('历法转换没有返回结果');
+    if (input.calType === 'lunar') {
+      var raw = chart.rawDates && chart.rawDates.lunarDate;
+      if (!raw || raw.lunarYear !== input.year || raw.lunarMonth !== input.month || raw.lunarDay !== input.day) {
+        throw new Error('农历日期不存在，请检查年月日');
+      }
+      if (!!raw.isLeap !== !!input.isLeapMonth) {
+        throw new Error(input.isLeapMonth ? '该年份没有这个闰月' : '农历闰月设置不一致');
+      }
+      return true;
+    }
+    var expected = input.year + '-' + input.month + '-' + input.day;
+    if (String(chart.solarDate || '') !== expected) throw new Error('公历日期转换结果不一致');
+    return true;
   },
 
   _getSanFangBranches: function(originBranch) {

@@ -35,6 +35,21 @@ var AlmanacModule = {
     document.getElementById('almanacResult').style.display = 'none';
   },
 
+  _calendarForSolar: function(year, month, day) {
+    if (typeof DaoCalendar === 'undefined' || !DaoCalendar.solarDetails) throw new Error('历法引擎未加载');
+    var details = DaoCalendar.solarDetails(year, month, day, 6);
+    function named(pillar) {
+      return {gan:AlmanacModule.tianGan[pillar.gan],zhi:AlmanacModule.diZhi[pillar.zhi],ganIdx:pillar.gan,zhiIdx:pillar.zhi};
+    }
+    return { details:details, year:named(details.yearPillar), month:named(details.monthPillar), day:named(details.dayPillar) };
+  },
+
+  _lunarDateText: function(lunar) {
+    var months = ['','正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'];
+    var days = ['','初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+    return (lunar.isLeap ? '闰' : '') + months[lunar.month] + days[lunar.day];
+  },
+
   /** Get day's gan-zhi (simplified calculation) */
   _getDayGanZhi: function(year, month, day) {
     // Use a known reference: 2024-01-01 = 甲子日 (ganIdx=0, zhiIdx=0)
@@ -93,6 +108,7 @@ var AlmanacModule = {
     var m = parseInt(document.getElementById('almanacMonth').value);
     var d = parseInt(document.getElementById('almanacDay').value);
     if (!y || !m || !d) { alert('请输入完整日期'); return; }
+    if (typeof DaoCalendar === 'undefined' || !DaoCalendar.validSolarDate(y,m,d)) { alert('公历日期不存在，请检查年月日'); return; }
     this._render(y, m, d);
   },
 
@@ -105,14 +121,16 @@ var AlmanacModule = {
   },
 
   _render: function(year, month, day) {
-    var yearGZ = this._getYearGanZhi(year);
-    var monthGZ = this._getMonthGanZhi(year, month);
-    var dayGZ = this._getDayGanZhi(year, month, day);
+    var calendar = this._calendarForSolar(year, month, day);
+    var yearGZ = calendar.year;
+    var monthGZ = calendar.month;
+    var dayGZ = calendar.day;
+    var lunar = calendar.details.lunar;
     var yiJi = this._getYiJi(dayGZ);
 
     var shengxiao = this.shengXiao[yearGZ.zhiIdx];
     var dayXingXiu = this.xingXiu[dayGZ.zhiIdx % 28];
-    var jianChuDay = this.jianChu[(month - 1) % 12];
+    var jianChuDay = this.jianChu[((dayGZ.zhiIdx - monthGZ.zhiIdx) % 12 + 12) % 12];
 
     var pengZuDay = this.pengZu[dayGZ.gan] || '';
     var pengZuZhi = this.pengZu[dayGZ.zhi] || '';
@@ -127,7 +145,8 @@ var AlmanacModule = {
       '<div class="result-header">📆 ' + year + '年' + month + '月' + day + '日 黄历</div>' +
       '<div class="almanac-grid">' +
         '<div class="almanac-item"><span class="alabel">农历年份</span><br/><span class="avalue">' + yearGZ.gan + yearGZ.zhi + '年（' + shengxiao + '年）</span></div>' +
-        '<div class="almanac-item"><span class="alabel">农历月份</span><br/><span class="avalue">' + monthGZ.gan + monthGZ.zhi + '月</span></div>' +
+        '<div class="almanac-item"><span class="alabel">农历日期</span><br/><span class="avalue">' + this._lunarDateText(lunar) + '</span></div>' +
+        '<div class="almanac-item"><span class="alabel">节气月柱</span><br/><span class="avalue">' + monthGZ.gan + monthGZ.zhi + '月</span></div>' +
         '<div class="almanac-item"><span class="alabel">日干支</span><br/><span class="avalue">' + dayGZ.gan + dayGZ.zhi + '日</span></div>' +
         '<div class="almanac-item"><span class="alabel">星宿</span><br/><span class="avalue">' + dayXingXiu + '宿</span></div>' +
         '<div class="almanac-item"><span class="alabel">建除</span><br/><span class="avalue">' + jianChuDay + '日</span></div>' +
@@ -136,7 +155,7 @@ var AlmanacModule = {
       '<div class="almanac-yi"><span class="alabel">✅ 宜：</span>' + yiJi.yi.join('、') + '</div>' +
       '<div class="almanac-ji"><span class="alabel">❌ 忌：</span>' + yiJi.ji.join('、') + '</div>' +
       '<div style="font-size:0.8rem;color:var(--text-muted);padding:0.3rem;">📜 彭祖百忌：' + pengZuDay + ' ' + pengZuZhi + '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">⚠ 黄历数据为简化推算，仅供参考</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">⚠ 农历日期与干支由统一历法引擎计算；宜忌内容仅供传统文化参考</p>' +
       '<button class="btn-secondary" onclick="AlmanacModule.close()">🔙 返回</button>';
     Paywall.blockAll('almanacResult');
   }

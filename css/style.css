@@ -3833,6 +3833,9 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .modal-title { color: var(--dw-gold-light) !important; }
 .modal-desc,.result-sub,.form-label { color: #aaa395 !important; }
 .form-input,.form-select,.form-textarea,input,select,textarea { color: #eee8dc !important; background-color: rgba(3,4,4,.62) !important; border-color: rgba(209,169,88,.27) !important; }
+.calendar-leap-toggle { margin-top:.55rem; display:flex; align-items:center; gap:.4rem; color:#d6bd82; font-size:.78rem; cursor:pointer; }
+.calendar-leap-toggle[hidden] { display:none !important; }
+.calendar-leap-toggle input { width:auto !important; margin:0; }
 .form-input:focus,.form-select:focus,.form-textarea:focus,input:focus,select:focus,textarea:focus { border-color: rgba(241,204,127,.74) !important; box-shadow: 0 0 0 3px rgba(214,169,78,.09) !important; outline: none; }
 .btn-primary { color: #17130c !important; background: linear-gradient(120deg,#b9802d,#f0d493 50%,#b77c29) !important; border-color: #e1bc70 !important; }
 .btn-secondary { color: #e7d5ac !important; background: rgba(13,14,13,.72) !important; border-color: rgba(214,172,87,.34) !important; }

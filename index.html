@@ -443,11 +443,11 @@
         <div class="form-row">
           <div class="form-group"><label>姓名</label><input type="text" id="baziName1" placeholder="输入姓名"></div>
           <div class="form-group"><label>性别</label><select id="baziGender1"><option value="男">男</option><option value="女">女</option></select></div>
-          <div class="form-group"><label>日历类型</label><select id="baziCalType1"><option value="solar">阳历（公历）</option><option value="lunar">农历（阴历）</option></select></div>
+          <div class="form-group"><label>日历类型</label><select id="baziCalType1"><option value="solar">阳历（公历）</option><option value="lunar">农历（阴历）</option></select><label id="baziLeapWrap1" class="calendar-leap-toggle" hidden><input type="checkbox" id="baziLeapMonth1"> 这是闰月</label></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>出生年份</label><input type="number" id="baziYear1" placeholder="1990" min="1900" max="2100"></div>
-          <div class="form-group"><label>出生月份</label><input type="number" id="baziMonth1" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>出生月份</label><select id="baziMonth1"><option value="">请选择月份</option><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
           <div class="form-group"><label>出生日期</label><input type="number" id="baziDay1" placeholder="1-31" min="1" max="31"></div>
         </div>
         <div class="form-row">
@@ -898,6 +898,7 @@
   <script src="js/user-data.js"></script>
   <script src="js/paywall.js"></script>
   <script src="js/ai-chat.js"></script>
+  <script src="js/vendor/iztro-2.5.8.min.js"></script>
   <script src="js/bazi-db.js"></script>
   <script src="js/bazi-classics.js"></script>
   <script src="js/lunar.js"></script>
