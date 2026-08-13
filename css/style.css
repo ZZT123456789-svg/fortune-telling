@@ -2234,18 +2234,10 @@ body::before {
   mix-blend-mode: multiply;
 }
 
-body::after {
-  content: "☯";
-  position: fixed;
-  left: -8vw;
-  bottom: -15vw;
-  z-index: 0;
-  pointer-events: none;
-  font-family: serif;
-  font-size: min(46vw, 560px);
-  color: rgba(27,29,25,.034);
-  transform: rotate(-12deg);
-}
+/* Do not place a decorative glyph on the page body. Some mobile emoji fonts
+   render the yin-yang character as a full-colour image and ignore its colour,
+   which turned this subtle desktop watermark into a huge purple icon. */
+body::after { content: none; display: none; }
 
 ::selection {
   color: #fffaf1;
