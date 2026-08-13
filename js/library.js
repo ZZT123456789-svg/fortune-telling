@@ -42,7 +42,7 @@
 
   function searchableText(book) {
     return [book.title, book.category, book.author, book.description].concat(book.chapters.flatMap(function (chapter) {
-      return [chapter.title].concat(chapter.original, chapter.translation, chapter.terms.flat());
+      return [chapter.title].concat(chapter.original, chapter.terms ? chapter.terms.flat() : []);
     })).join(' ').toLowerCase();
   }
 
@@ -62,7 +62,7 @@
         '<div class="book-cover"><span>' + escapeHtml(book.category) + '</span><b>' + escapeHtml(book.title) + '</b><i>道问校勘</i></div>' +
         '<div class="book-info"><p class="book-era">' + escapeHtml(book.dynasty) + '</p><h2>' + escapeHtml(book.title) + '</h2>' +
         '<p class="book-author">' + escapeHtml(book.author) + '</p><p class="book-desc">' + escapeHtml(book.description) + '</p>' +
-        '<p class="book-status">首批校勘版 · ' + book.chapters.length + ' 章' + lastRead + '</p>' +
+        '<p class="book-status">原文全文版 · ' + book.chapters.length + ' 章' + lastRead + '</p>' +
         '<button type="button" data-open-book="' + escapeHtml(book.id) + '">开始阅读</button></div></article>';
     }).join('');
     document.getElementById('libraryEmpty').hidden = list.length > 0;
@@ -91,11 +91,12 @@
     document.getElementById('readerBookMeta').textContent = book.dynasty + ' · ' + book.author;
     document.getElementById('readerChapterTitle').textContent = chapter.title;
     document.getElementById('readerOriginal').innerHTML = paragraphHtml(chapter.original);
-    document.getElementById('readerTranslation').innerHTML = paragraphHtml(chapter.translation);
-    document.getElementById('readerTerms').innerHTML = chapter.terms.map(function (term) {
+    var terms = Array.isArray(chapter.terms) ? chapter.terms : [];
+    document.querySelector('.reader-notes').hidden = terms.length === 0;
+    document.getElementById('readerTerms').innerHTML = terms.map(function (term) {
       return '<details><summary>' + escapeHtml(term[0]) + '</summary><p>' + escapeHtml(term[1]) + '</p></details>';
     }).join('');
-    document.getElementById('readerSource').innerHTML = '原文校勘参考：<a href="' + escapeHtml(book.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(book.sourceName) + '</a><br>白话解释为道问原创整理，仅作传统文化阅读参考。';
+    document.getElementById('readerSource').innerHTML = '原文来源：<a href="' + escapeHtml(book.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(book.sourceName) + '</a>。古籍版本之间可能存在异文。';
     document.getElementById('readerToc').innerHTML = '<h3>目录</h3>' + book.chapters.map(function (item, index) {
       return '<button type="button" data-chapter="' + index + '" class="' + (index === state.chapter ? 'active' : '') + '"><small>' + String(index + 1).padStart(2, '0') + '</small>' + escapeHtml(item.title) + '</button>';
     }).join('');
