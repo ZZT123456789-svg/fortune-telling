@@ -22,3 +22,10 @@ test('环境变量模板包含匿名身份、数据服务和支付必需配置',
     assert.match(env, new RegExp('^' + name + '=', 'm'), name + ' missing');
   }
 });
+
+test('Vercel 使用零配置部署静态页面与 API，不生成空输出目录', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  assert.equal(Object.hasOwn(config, 'buildCommand'), false);
+  assert.equal(Object.hasOwn(config, 'outputDirectory'), false);
+  assert.equal(config.rewrites.some((route) => route.source === '/app'), true);
+});
