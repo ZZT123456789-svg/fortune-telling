@@ -1,0 +1,20 @@
+.dw-contact-menu { position: relative; flex: 0 0 auto; }
+.dw-contact-menu .dw-contact-trigger { min-height:44px; padding:0 14px; white-space:nowrap; color:#e8d4a5; background:rgba(8,9,9,.68); border:1px solid rgba(220,183,106,.34); border-radius:24px; font:700 .76rem/1 "Noto Serif SC","Microsoft YaHei",sans-serif; letter-spacing:.04em; cursor:pointer; }
+.dw-contact-menu .dw-contact-trigger:hover { color:#fff1ca; border-color:rgba(239,203,130,.68); background:rgba(207,161,72,.1); }
+.dw-contact-panel { position:absolute; top:calc(100% + 10px); right:0; z-index:12000; width:min(300px,calc(100vw - 18px)); padding:18px 15px 12px; color:#eee8dc; background:rgba(8,10,10,.98); border:1px solid rgba(225,187,108,.42); border-radius:15px; box-shadow:0 20px 55px rgba(0,0,0,.62); backdrop-filter:blur(18px); }
+.dw-contact-panel[hidden] { display:none; }
+.dw-contact-close { position:absolute; top:7px; right:8px; width:32px; height:32px; padding:0; border:0; border-radius:50%; color:#ead39f; background:transparent; font-size:1rem; cursor:pointer; }
+.dw-contact-close:hover { color:#fff; background:rgba(255,255,255,.06); }
+.dw-contact-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; min-height:55px; padding:10px 4px; border-bottom:1px solid rgba(224,184,103,.14); }
+.dw-contact-row:last-child { border-bottom:0; }
+.dw-contact-label { display:block; font-size:.72rem; color:#979083; }
+.dw-contact-value { display:block; margin-top:4px; font-size:.9rem; word-break:break-all; }
+.dw-contact-row.wechat .dw-contact-value { color:#36d267; }
+.dw-contact-row.qq .dw-contact-value { color:#36a9ff; }
+.dw-contact-copy { min-width:64px; min-height:34px; padding:0 10px; border-radius:10px; background:transparent; cursor:pointer; font-size:.76rem; }
+.dw-contact-row.wechat .dw-contact-copy { color:#49dc76; border:1px solid rgba(54,210,103,.52); }
+.dw-contact-row.qq .dw-contact-copy { color:#55b6ff; border:1px solid rgba(54,169,255,.52); }
+.dw-contact-row.wechat .dw-contact-copy:hover { color:#061208; background:#36d267; }
+.dw-contact-row.qq .dw-contact-copy:hover { color:#06101a; background:#36a9ff; }
+@media(max-width:760px) { .dw-contact-menu .dw-contact-trigger { min-height:38px; padding:0 7px; font-size:.66rem; letter-spacing:0; } .dw-contact-panel { position:fixed; top:64px; right:7px; width:min(290px,calc(100vw - 14px)); } }
+@media(max-width:430px) { .dw-contact-menu .dw-contact-trigger { padding:0 5px; font-size:.61rem; } }

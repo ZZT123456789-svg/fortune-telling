@@ -3857,18 +3857,18 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .bazi-paywall-prompt p { margin: .55rem 0; }
 
 @media (max-width: 760px) {
-  .dao-nav { top: 6px; left: 6px; right: 6px; width: auto; min-height: 53px; gap: 8px; padding: 4px 6px 4px 9px; transform: none; border-radius: 19px; }
+  .dao-nav { top: 6px; left: 6px; right: 6px; width: auto; min-height: 53px; gap: 4px; padding: 4px 5px; transform: none; border-radius: 19px; }
   .dao-brand { gap: 5px; font-size: .98rem; }
   .dao-brand-mark { width: 34px; height: 34px; }
   .dao-nav-scroll { justify-content: flex-start; gap: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .dao-nav-scroll::-webkit-scrollbar { display: none; }
   .dao-nav-scroll > a,.dao-nav-scroll > button,.dao-more-trigger { min-height: 37px; padding: 0 11px; font-size: .78rem; }
   .dao-more-menu { position: fixed; top: 63px; right: 8px; }
-  .dao-account-actions { gap: 4px; }
+  .dao-account-actions { gap: 2px; flex-wrap: nowrap; }
   .dao-balance { min-height: 38px; padding: 0 8px; gap: 4px; }
   .dao-balance span { display: none; }
-  .dao-redeem { min-height: 38px; padding: 0 8px; font-size: .68rem; }
-  .dao-recharge { min-height: 38px; padding: 0 9px; font-size: .7rem; }
+  .dao-redeem { min-height: 38px; padding: 0 6px; font-size: .64rem; }
+  .dao-recharge { min-height: 38px; padding: 0 7px; font-size: .66rem; }
   .dao-hero { min-height: 620px; background-position: 50% center; }
   .dao-hero-content { margin-top: 40px; width: 94vw; }
   .dao-eyebrow { font-size: .7rem; }

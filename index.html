@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>道问-命理推理</title>
   <link rel="stylesheet" href="css/style.css?v=20260813-1">
+  <link rel="stylesheet" href="css/contact-menu.css?v=20260821-1">
 </head>
 <body>
   <script>
@@ -72,6 +73,7 @@
       <div class="dao-balance" aria-label="当前积分余额"><span>余额</span><b data-daowen-balance>—</b></div>
       <button class="dao-redeem" type="button" onclick="Paywall.openRedeem()" aria-label="兑换码">兑换码</button>
       <button class="dao-recharge" type="button" onclick="Paywall.openShop()">充值</button>
+      <div data-contact-menu></div>
     </div>
   </nav>
 
@@ -95,21 +97,7 @@
 
   <!-- ====== Header ====== -->
   <header class="header">
-    <div class="header-top-right">
-      <button class="redeem-btn" onclick="Paywall.openRedeem()">🎫 兑换码</button>
-      <button class="contact-btn" id="contactBtn" onclick="toggleContact()">📧 联系我们</button>
-      <div class="contact-popup" id="contactPopup">
-        <button class="contact-close" onclick="toggleContact()">✕</button>
-        <div class="contact-item">
-          <span>💬 微信：ZZT-2004-12</span>
-          <button class="copy-btn" onclick="copyContact('ZZT-2004-12',this)">📋 复制</button>
-        </div>
-        <div class="contact-item">
-          <span>🐧 QQ：3237659951</span>
-          <button class="copy-btn" onclick="copyContact('3237659951',this)">📋 复制</button>
-        </div>
-      </div>
-    </div>
+    <div class="header-top-right"><button class="redeem-btn" onclick="Paywall.openRedeem()">🎫 兑换码</button></div>
     <h1 class="site-title">道问</h1>
     <p class="site-subtitle">天地之间，万事皆有迹可循</p>
   </header>
@@ -922,5 +910,6 @@
   <script src="js/dream.js"></script>
   <script src="js/name-analysis.js"></script>
   <script src="js/personality.js"></script>
+  <script src="js/contact-menu.js?v=20260821-1"></script>
 </body>
 </html>
