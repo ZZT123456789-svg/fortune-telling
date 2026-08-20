@@ -25,7 +25,26 @@ test('环境变量模板包含匿名身份、数据服务和支付必需配置',
 
 test('Vercel 使用零配置部署静态页面与 API，不生成空输出目录', () => {
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
-  assert.equal(Object.hasOwn(config, 'buildCommand'), false);
-  assert.equal(Object.hasOwn(config, 'outputDirectory'), false);
+  const builders = new Map(config.builds.map((item) => [item.src, item.use]));
+  assert.equal(builders.get('api/router.js'), '@vercel/node');
+  assert.equal(builders.get('*.html'), '@vercel/static');
+  assert.equal(builders.get('assets/**'), '@vercel/static');
+  assert.equal(builders.get('css/**'), '@vercel/static');
+  assert.equal(builders.get('data/**'), '@vercel/static');
+  assert.equal(builders.get('js/**'), '@vercel/static');
+  assert.equal(config.rewrites.some((route) => (
+    route.source === '/api/:route*' && route.destination === '/api/router.js?route=:route*'
+  )), true);
   assert.equal(config.rewrites.some((route) => route.source === '/app'), true);
+});
+
+test('Vercel Hobby 部署通过单一网关保留全部业务 API', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'api', 'router.js'), 'utf8');
+  for (const route of [
+    'ai-chat', 'ai-reading', 'alipay', 'alipay-notify', 'auth-login',
+    'auth-logout', 'auth-recover', 'auth-signup', 'balance', 'check-order',
+    'consume-credit', 'redeem', 'session', 'user-data'
+  ]) {
+    assert.match(source, new RegExp(`['\"]${route}['\"]\\s*:`), route + ' missing');
+  }
 });

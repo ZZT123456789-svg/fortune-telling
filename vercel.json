@@ -13,7 +13,16 @@
       "main": true
     }
   },
+  "builds": [
+    { "src": "api/router.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "assets/**", "use": "@vercel/static" },
+    { "src": "css/**", "use": "@vercel/static" },
+    { "src": "data/**", "use": "@vercel/static" },
+    { "src": "js/**", "use": "@vercel/static" }
+  ],
   "rewrites": [
+    { "source": "/api/:route*", "destination": "/api/router.js?route=:route*" },
     { "source": "/app", "destination": "/index" },
     { "source": "/library", "destination": "/library.html" }
   ],
