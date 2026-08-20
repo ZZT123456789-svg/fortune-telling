@@ -978,6 +978,83 @@ body {
 .analysis-card h4 { color: var(--gold); font-size: 0.95rem; margin-bottom: 0.3rem; }
 .analysis-card p { color: var(--text); font-size: 0.88rem; line-height: 1.7; }
 
+.bazi-pattern-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0;
+}
+
+.bazi-pattern-visual {
+  position: relative;
+  height: clamp(170px, 24vw, 230px);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(201, 169, 110, 0.5);
+  border-radius: var(--radius-md);
+  background: #080807;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+}
+
+.bazi-pattern-visual.is-primary { grid-column: 1 / -1; height: clamp(200px, 32vw, 300px); }
+
+.bazi-pattern-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.04) 35%, rgba(0,0,0,0.9) 100%);
+  pointer-events: none;
+}
+
+.bazi-pattern-visual img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.bazi-pattern-visual figcaption {
+  position: absolute;
+  z-index: 1;
+  right: 1rem;
+  bottom: 0.85rem;
+  left: 1rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+  color: #f4ead6;
+  text-shadow: 0 2px 8px #000;
+}
+
+.bazi-pattern-visual figcaption span { color: #c9a96e; font-size: 0.72rem; letter-spacing: 0.12em; }
+.bazi-pattern-visual figcaption strong { font-family: KaiTi, STKaiti, serif; font-size: 1.35rem; letter-spacing: 0.12em; }
+
+.bazi-pattern-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.bazi-pattern-visual figcaption .bazi-pattern-title em {
+  color: rgba(244, 234, 214, 0.82);
+  font-size: 0.72rem;
+  font-style: normal;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 640px) {
+  .bazi-pattern-gallery { grid-template-columns: 1fr; }
+  .bazi-pattern-visual,
+  .bazi-pattern-visual.is-primary { grid-column: auto; height: 200px; }
+  .bazi-pattern-visual figcaption { right: 0.8rem; bottom: 0.7rem; left: 0.8rem; }
+  .bazi-pattern-visual figcaption strong { font-size: 1.15rem; }
+  .bazi-pattern-visual figcaption .bazi-pattern-title em { font-size: 0.68rem; }
+}
+
 /* ========== MBTI QUIZ ========== */
 .quiz-progress {
   display: flex;

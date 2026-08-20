@@ -36,3 +36,26 @@ test('八字 AI 解读只发送一次服务端扣费请求', () => {
   assert.doesNotMatch(bazi, /Paywall\.deduct\(\)/);
   assert.match(bazi, /data\.balance != null[\s\S]*Paywall\._setBalance/);
 });
+
+test('八字十三类格局均有黑金视觉图并支持特殊格局追加展示', () => {
+  const bazi = fs.readFileSync(path.join(ROOT, 'js', 'bazi.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
+  const imageDir = path.join(ROOT, 'assets', 'bazi-patterns');
+  const imageNames = [
+    'zheng-guan', 'qi-sha', 'zheng-yin', 'pian-yin', 'shi-shen',
+    'shang-guan', 'zheng-cai', 'pian-cai', 'jian-lu', 'yue-ren',
+    'cong-qiang', 'cong-ruo', 'hua-qi'
+  ];
+
+  assert.match(bazi, /_buildPatternVisuals:\s*function/);
+  assert.match(bazi, /specialKeys\.push\(\{name:'从强格',key:'cong-qiang',tagline:'顺其旺势，聚力而行'\}\)/);
+  assert.match(bazi, /specialKeys\.push\(\{name:'从弱格',key:'cong-ruo',tagline:'借势而成，以柔应变'\}\)/);
+  assert.match(bazi, /specialKeys\.push\(\{name:'化气格',key:'hua-qi',tagline:'阴阳交融，化而新生'\}\)/);
+  assert.match(bazi, /正官:\{key:'zheng-guan',tagline:'端方守正，秩序有成'\}/);
+  assert.match(bazi, /bazi-pattern-title/);
+  assert.match(css, /\.bazi-pattern-gallery\s*\{/);
+  assert.match(css, /object-fit:\s*cover/);
+  imageNames.forEach((name) => {
+    assert.equal(fs.existsSync(path.join(imageDir, `${name}.webp`)), true, `${name}.webp should exist`);
+  });
+});

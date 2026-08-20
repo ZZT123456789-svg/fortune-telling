@@ -452,7 +452,7 @@ var BaziModule = {
     try { lifeTraj = this._getLifeTrajectory(r, r.daYun, bodyStrength); } catch(e) { lifeTraj = ''; }
     try { nameAnalysis = this._getNameBaziRelation(r.name, r, bodyStrength, favorableElements); } catch(e) { nameAnalysis = ''; }
     try { detailedDaYun = this._getDetailedDaYun(r, r.daYun, bodyStrength); } catch(e) { detailedDaYun = ''; }
-    try { pattern = this._getPattern(r, bodyStrength); } catch(e) { pattern = {patterns:[],level:'',levelDesc:''}; }
+    try { pattern = this._getPattern(r, bodyStrength); } catch(e) { pattern = {patterns:[],level:'',levelDesc:'',specialKeys:[]}; }
     try { healthAnalysis = this._getHealthAnalysis(r, bodyStrength, r.wxCount); } catch(e) { healthAnalysis = ''; }
     try { cautions = this._getCautions(r, bodyStrength, r.wxCount); } catch(e) { cautions = ''; }
 
@@ -526,12 +526,13 @@ var BaziModule = {
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
     var geju = this._getGeJu(r);
+    var patternVisualHtml = this._buildPatternVisuals(geju, pattern);
 
     // === AI深度解读(优先) 或 规则解读(降级) ===
     var paidHtml = '';
     if (Paywall.hasBalance()) {
       // AI解读占位(异步加载)
-      paidHtml = '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
+      paidHtml = patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
         '<p style=\"font-size:2rem;\">🤖</p>' +
         '<p style=\"color:var(--gold);font-weight:bold;\">AI 正在生成深度解读...</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
@@ -540,7 +541,7 @@ var BaziModule = {
         '</div></div>';
     } else {
       // 规则解读(降级)
-      paidHtml = self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
+      paidHtml = patternVisualHtml + self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     }
 
 
@@ -704,6 +705,18 @@ var BaziModule = {
     // 月令十神定格
     var geju='', level='', desc='';
     var gejuNames={正官:'正官格',七杀:'七杀格',正印:'正印格',偏印:'偏印格',食神:'食神格',伤官:'伤官格',正财:'正财格',偏财:'偏财格',比肩:'建禄格',劫财:'月刃格'};
+    var gejuImages={
+      正官:{key:'zheng-guan',tagline:'端方守正，秩序有成'},
+      七杀:{key:'qi-sha',tagline:'果决担当，化压为权'},
+      正印:{key:'zheng-yin',tagline:'厚德载物，学识护身'},
+      偏印:{key:'pian-yin',tagline:'灵思独悟，另辟蹊径'},
+      食神:{key:'shi-shen',tagline:'才华流露，福禄自来'},
+      伤官:{key:'shang-guan',tagline:'锐意破局，才情见锋'},
+      正财:{key:'zheng-cai',tagline:'踏实经营，积少成多'},
+      偏财:{key:'pian-cai',tagline:'顺势取机，财路广开'},
+      比肩:{key:'jian-lu',tagline:'根基稳固，自立有成'},
+      劫财:{key:'yue-ren',tagline:'刚毅果断，持刃有度'}
+    };
 
     if (ss&&gejuNames[ss]) geju=gejuNames[ss];
     else geju='月令' + mZ + '格';
@@ -723,7 +736,27 @@ var BaziModule = {
     else if (score>=1) {level='中等';desc='格局有成，但需大运配合方能发挥潜力。后天努力可以弥补先天不足。';}
     else {level='平常';desc='格局一般，但平凡中见真章。找准适合自己的方向，厚积薄发。';}
 
-    return{name:geju,level:level,desc:desc,ss:ss,score:score};
+    var visual=gejuImages[ss]||{};
+    return{name:geju,level:level,desc:desc,ss:ss,score:score,imageKey:visual.key||'',tagline:visual.tagline||''};
+  },
+
+  /** 为主格与特殊格局生成统一的黑金视觉卡片。 */
+  _buildPatternVisuals: function(gj, pt) {
+    var items = [];
+    if (gj && gj.imageKey) items.push({name:gj.name,key:gj.imageKey,label:'命局主格',tagline:gj.tagline});
+    (pt.specialKeys||[]).forEach(function(item) {
+      items.push({name:item.name,key:item.key,label:'特殊格局倾向',tagline:item.tagline});
+    });
+    if (!items.length) return '';
+
+    return '<section class=\"bazi-pattern-gallery\" aria-label=\"八字格局视觉解读\">' +
+      items.map(function(item, index) {
+        return '<figure class=\"bazi-pattern-visual'+(index===0?' is-primary':'')+'\">' +
+          '<img src=\"assets/bazi-patterns/'+item.key+'.webp\" alt=\"'+item.name+'黑金水墨意象图\" loading=\"lazy\" decoding=\"async\">' +
+          '<figcaption><span>'+item.label+'</span><span class=\"bazi-pattern-title\"><strong>'+item.name+'</strong><em>'+item.tagline+'</em></span></figcaption>' +
+        '</figure>';
+      }).join('') +
+    '</section>';
   },
 
   /** 生成独一无二的深层分析 */
@@ -1219,6 +1252,7 @@ var BaziModule = {
   // ==== 八字格局分析 ====
   _getPattern: function(r, bodyStrength) {
     var patterns = [];
+    var specialKeys = [];
     var dayMaster = r.dayMaster;
     var monthZhi = r.monthP.zhi;
 
@@ -1254,11 +1288,13 @@ var BaziModule = {
     // 从强格: 几乎全是帮扶
     if (supportCount >= 3 && bodyStrength.level.indexOf('强') !== -1) {
       patterns.push('命局有<b>从强格</b>倾向：日主极旺，顺势而为，不畏克泄。这种格局的人往往在某一领域有超常天赋。');
+      specialKeys.push({name:'从强格',key:'cong-qiang',tagline:'顺其旺势，聚力而行'});
       hasSpecial = true;
     }
     // 从弱格: 几乎没有帮扶
     else if (supportCount <= 1 && bodyStrength.level.indexOf('弱') !== -1) {
       patterns.push('命局有<b>从弱格</b>倾向：日主极弱而从，宜顺势配合他人，借助外力成功。这种格局的人往往善于借力和合作。');
+      specialKeys.push({name:'从弱格',key:'cong-ruo',tagline:'借势而成，以柔应变'});
       hasSpecial = true;
     }
 
@@ -1266,6 +1302,7 @@ var BaziModule = {
     var huaMap = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
     if (huaMap[dayMaster] === r.monthP.gan) {
       patterns.push('日主与月干<b>天干五合</b>，有化气之象。若得时得地，可成化气格。人际关系和合作运较强。');
+      specialKeys.push({name:'化气格',key:'hua-qi',tagline:'阴阳交融，化而新生'});
     }
 
     // 月令格局
@@ -1278,7 +1315,7 @@ var BaziModule = {
     else if (supportCount >= 2) { level = '中等'; levelDesc = '命局结构正常，人生发展靠后天努力，稳扎稳打可获不错的成就。'; }
     else { level = '需调和'; levelDesc = '命局偏颇较大，需要注意五行平衡。但偏颇之中也有独特之处，找到适合的方向可化劣势为优势。'; }
 
-    return {patterns: patterns, level: level, levelDesc: levelDesc};
+    return {patterns: patterns, level: level, levelDesc: levelDesc, specialKeys: specialKeys};
   },
 
   // ==== 动态健康分析 ====
