@@ -2644,8 +2644,7 @@ body::after { content: none; display: none; }
 
 .header-top-right button,
 .redeem-btn,
-.contact-btn,
-#loginBtn {
+.contact-btn {
   margin: 0 !important;
   min-height: 39px;
   padding: .56rem .92rem !important;
@@ -2662,8 +2661,7 @@ body::after { content: none; display: none; }
 }
 .header-top-right button:hover,
 .redeem-btn:hover,
-.contact-btn:hover,
-#loginBtn:hover {
+.contact-btn:hover {
   color: var(--dao-cinnabar-deep) !important;
   border-color: rgba(157,48,41,.42) !important;
   background: rgba(255,249,238,.96) !important;
@@ -2679,8 +2677,6 @@ body::after { content: none; display: none; }
   color: #fff !important;
   background: linear-gradient(145deg, #886832, #64491f) !important;
 }
-#loginBtn::before { content: ""; }
-
 .contact-popup {
   background: rgba(250,245,235,.97) !important;
   border: 1px solid var(--dao-line-strong) !important;
@@ -3238,8 +3234,7 @@ textarea:focus-visible {
   .header-top-right { gap: .32rem; }
   .header-top-right button,
   .redeem-btn,
-  .contact-btn,
-  #loginBtn {
+  .contact-btn {
     min-height: 34px;
     padding: .42rem .63rem !important;
     font-size: .76rem !important;
@@ -3296,23 +3291,12 @@ textarea:focus-visible {
   .dao-reveal { opacity: 1 !important; transform: none !important; }
 }
 
-/* ===== 直接集成补充：首屏层级、登录按钮、加载后内容动效 ===== */
+/* ===== 直接集成补充：首屏层级、加载后内容动效 ===== */
 body > .header,
 body > .section-header,
 body > .tools-grid,
 body > .disclaimer-section { position: relative; z-index: 1; }
 
-#loginBtn.dao-header-action,
-#loginBtn {
-  color: #fff8ed !important;
-  background: linear-gradient(145deg, #486959, #344c40) !important;
-  border: 1px solid rgba(47, 73, 61, .35) !important;
-  border-radius: 7px !important;
-  box-shadow: 0 5px 12px rgba(48, 70, 58, .13) !important;
-  font-family: var(--font-body) !important;
-  font-weight: 700 !important;
-}
-#loginBtn:hover { transform: translateY(-2px); filter: brightness(1.04); }
 .copy-success { color: var(--dao-jade) !important; }
 
 .dao-reveal {
@@ -3352,7 +3336,7 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
 }
 
 /* ============================================================
-   道问 · 体验优化 V2（登录 / 账号中心 / 首页层级 / 动画性能）
+   道问 · 体验优化 V2（首页层级 / 动画性能）
    ============================================================ */
 
 /* 顶部操作区：减少“按钮堆叠感”，统一为轻量工具栏 */
@@ -3367,8 +3351,7 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
 }
 .header-top-right > button,
 .redeem-btn,
-.contact-btn,
-#loginBtn {
+.contact-btn {
   min-height: 38px !important;
   padding: .5rem .8rem !important;
   border-radius: 8px !important;
@@ -3376,11 +3359,6 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
   letter-spacing: .025em;
   white-space: nowrap;
 }
-#loginBtn.is-logged-in {
-  background: linear-gradient(145deg,#4f705f,#385246) !important;
-  border-color: rgba(48,76,62,.36) !important;
-}
-
 /* 首页信息层级：传统气质保留，减少装饰对正文的竞争 */
 .header { max-width: 980px; margin-inline: auto; }
 .site-subtitle { max-width: 32rem; margin-inline: auto; }
@@ -3414,172 +3392,6 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
 .tool-card:focus-visible {
   transform: translateY(-2px);
 }
-
-/* 登录弹窗：独立视觉层级 */
-#loginOverlay,
-#accountOverlay { z-index: 11000 !important; }
-#loginOverlay .tool-modal.auth-modal,
-.auth-account-modal {
-  width: min(92vw, 440px) !important;
-  max-width: 440px !important;
-  padding: 1.8rem 1.35rem 1.35rem !important;
-  overflow: hidden !important;
-}
-.auth-brand-mark {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  margin: 0 auto .75rem;
-  color: #fff8ed;
-  background: var(--dao-cinnabar);
-  border: 1px solid rgba(110,32,27,.38);
-  border-radius: 7px 5px 8px 5px;
-  font: 700 1.45rem/1 var(--font-display);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.11), 0 7px 16px rgba(104,43,34,.12);
-  transform: rotate(-2deg);
-}
-#loginOverlay .modal-title,
-.auth-account-modal .modal-title {
-  font-size: 1.42rem !important;
-  margin-bottom: .35rem !important;
-}
-#loginOverlay .modal-desc,
-.auth-account-modal .modal-desc {
-  margin-bottom: 1.05rem !important;
-}
-#loginOverlay .form-input {
-  width: 100%;
-  min-height: 46px;
-  margin: 0 0 .7rem !important;
-  padding: .72rem .82rem !important;
-  font-size: .92rem !important;
-}
-.auth-password-wrap {
-  position: relative;
-}
-.auth-password-wrap .form-input {
-  padding-right: 4.3rem !important;
-}
-.auth-password-toggle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  height: 30px;
-  min-width: 46px;
-  padding: 0 .55rem;
-  border: 0;
-  border-left: 1px solid rgba(82,68,47,.12);
-  color: #766d5e;
-  background: transparent;
-  font: 600 .72rem/1 var(--font-body);
-  cursor: pointer;
-}
-.auth-password-toggle:hover { color: var(--dao-cinnabar-deep); }
-#loginOverlay .btn-row {
-  display: grid !important;
-  grid-template-columns: 1.1fr .9fr;
-  gap: .65rem !important;
-  margin-top: .25rem;
-}
-#loginOverlay .btn-row .btn-primary,
-#loginOverlay .btn-row .btn-secondary,
-#loginRecoveryActions .btn-primary {
-  width: 100%;
-  min-height: 44px;
-}
-#loginForgotWrap {
-  margin-top: .72rem !important;
-}
-#loginForgotWrap a {
-  color: #786f60 !important;
-  text-decoration: none;
-  border-bottom: 1px dotted rgba(102,84,57,.34);
-}
-#loginForgotWrap a:hover { color: var(--dao-cinnabar-deep) !important; }
-.auth-status {
-  margin: .75rem 0;
-  padding: .68rem .78rem;
-  border-radius: 8px;
-  font-size: .82rem;
-  line-height: 1.6;
-  border: 1px solid transparent;
-}
-.auth-status.info { background: rgba(79,106,84,.07); color: #526357; }
-.auth-status.success { background: rgba(53,124,83,.08); color: #286c49; border-color: rgba(53,124,83,.17); }
-.auth-status.error { background: rgba(157,48,41,.075); color: #8b332c; border-color: rgba(157,48,41,.16); }
-.auth-security-note {
-  margin: .95rem 0 0;
-  padding-top: .72rem;
-  border-top: 1px solid rgba(80,67,47,.12);
-  color: #8a8172;
-  font-size: .70rem;
-  line-height: 1.65;
-}
-#loginRecoveryActions .form-input { margin-bottom: .65rem !important; }
-#loginOverlay button:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
-#loginOverlay .auth-busy { cursor: progress; }
-
-/* 账号中心 */
-.auth-account-card {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  padding: .82rem;
-  margin-bottom: .75rem;
-  border: 1px solid rgba(83,67,45,.13);
-  border-radius: 10px;
-  background: rgba(255,252,245,.62);
-}
-.auth-account-avatar {
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff8ed;
-  background: linear-gradient(145deg,#557363,#3b5548);
-  font: 700 .92rem/1 var(--font-display);
-}
-.auth-account-copy { min-width: 0; display: flex; flex-direction: column; gap: .12rem; }
-.auth-account-copy strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #35342e;
-  font-size: .88rem;
-}
-.auth-account-copy span { color: #82796c; font-size: .70rem; }
-.auth-account-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .6rem;
-  margin-bottom: .72rem;
-}
-.auth-account-stats > div {
-  padding: .72rem .7rem;
-  border: 1px solid rgba(83,67,45,.12);
-  border-radius: 9px;
-  background: rgba(247,240,228,.58);
-}
-.auth-account-stats span { display: block; color: #82796c; font-size: .67rem; margin-bottom: .18rem; }
-.auth-account-stats strong { color: #4c4438; font-size: .93rem; }
-.auth-account-stats strong[data-daowen-balance] { color: var(--dao-cinnabar-deep); font-size: 1.12rem; }
-.auth-ok-dot::before { content: "●"; color: #3f7d59; font-size: .62rem; margin-right: .3rem; }
-.auth-refresh-balance { width: 100%; margin-bottom: .65rem; }
-.auth-account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .58rem; }
-.auth-danger-btn {
-  min-height: 41px;
-  padding: .55rem .72rem;
-  color: #8c3932;
-  background: rgba(157,48,41,.055);
-  border: 1px solid rgba(157,48,41,.20);
-  border-radius: 8px;
-  font: 650 .78rem/1.2 var(--font-body);
-  cursor: pointer;
-}
-.auth-danger-btn:hover { background: rgba(157,48,41,.10); border-color: rgba(157,48,41,.30); }
 
 /* 开场：有品牌感但不强制停留 */
 .dao-splash-progress {
@@ -3618,18 +3430,14 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
   }
   .header-top-right > button,
   .redeem-btn,
-  .contact-btn,
-  #loginBtn {
+  .contact-btn {
     flex: 1 1 0;
     min-width: 0;
     padding: .48rem .36rem !important;
     font-size: .70rem !important;
   }
-  #loginBtn { overflow: hidden; text-overflow: ellipsis; }
   .tool-overlay { align-items: flex-end !important; padding: .35rem !important; }
-  .tool-modal,
-  #loginOverlay .tool-modal.auth-modal,
-  .auth-account-modal {
+  .tool-modal {
     width: 100% !important;
     max-width: none !important;
     max-height: min(88vh, 760px) !important;
@@ -3637,9 +3445,6 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
     border-radius: 18px 18px 12px 12px !important;
     padding: 1.45rem .9rem 1rem !important;
   }
-  #loginOverlay .btn-row { grid-template-columns: 1fr; }
-  .auth-account-actions { grid-template-columns: 1fr; }
-  .auth-account-stats { gap: .45rem; }
   .site-title { margin-top: .4rem; }
   .splash-hint { bottom: 8.1vh !important; }
   .dao-splash-progress { bottom: 5.9vh; width: 180px; }

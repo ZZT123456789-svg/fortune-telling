@@ -69,7 +69,6 @@
       </div>
     </div>
     <div class="dao-account-actions">
-      <button id="loginBtn" type="button" onclick="DaoWenAuth.openLogin()">登录</button>
       <div class="dao-balance" aria-label="当前积分余额"><span>余额</span><b data-daowen-balance>—</b></div>
       <button class="dao-redeem" type="button" onclick="Paywall.openRedeem()" aria-label="兑换码">兑换码</button>
       <button class="dao-recharge" type="button" onclick="Paywall.openShop()">充值</button>
@@ -336,52 +335,6 @@
     </div>
   </div>
 
-  <!-- ====== 登录 / 注册（邮箱+密码，无邮件确认）+ 信任留存码 ====== -->
-  <div class="tool-overlay" id="loginOverlay">
-    <div class="tool-modal auth-modal">
-      <button class="modal-close" onclick="DaoWenAuth.closeLogin()" aria-label="关闭">✕</button>
-      <div class="auth-brand-mark">☯</div>
-      <h3 class="modal-title" id="authTitle">登录</h3>
-      <p class="modal-desc" id="authDesc">登录后可跨设备保存余额与记录</p>
-
-      <div id="authFormBlock">
-        <input type="email" id="authEmail" class="form-input" placeholder="邮箱" autocomplete="username">
-        <div class="auth-password-wrap">
-          <input type="password" id="authPassword" class="form-input" placeholder="密码（6-72 位）" autocomplete="current-password">
-          <button type="button" class="auth-password-toggle" onclick="DaoWenAuth.togglePassword()">显示</button>
-        </div>
-        <div class="auth-status" id="authStatus" style="display:none;"></div>
-        <div class="btn-row">
-          <button type="button" class="btn-primary" id="authSubmitBtn" onclick="DaoWenAuth.submit()">登录</button>
-          <button type="button" class="btn-secondary" id="authToggleBtn" onclick="DaoWenAuth.toggleMode()">没有账号？去注册</button>
-        </div>
-        <div id="loginForgotWrap" style="text-align:center;">
-          <a href="javascript:DaoWenAuth.showRecover()">忘记密码？用留存码找回</a>
-        </div>
-      </div>
-
-      <div id="loginRecoveryActions" style="display:none;">
-        <input type="email" id="recoverEmail" class="form-input" placeholder="邮箱">
-        <input type="text" id="recoverCode" class="form-input" placeholder="留存码 DW-XXXXX-XXXXX-XXXXX-XXXXX" style="text-transform:uppercase;">
-        <div class="auth-status" id="recoverStatus" style="display:none;"></div>
-        <div class="btn-row">
-          <button type="button" class="btn-primary" onclick="DaoWenAuth.submitRecover()">找回账号</button>
-          <button type="button" class="btn-secondary" onclick="DaoWenAuth.showLogin()">返回登录</button>
-        </div>
-      </div>
-
-      <div id="recoveryCodeBlock" style="display:none;">
-        <div class="auth-status success" id="recoveryCodeText"></div>
-        <div class="btn-row">
-          <button type="button" class="btn-primary" onclick="DaoWenAuth.copyRecoveryCode()">📋 复制留存码</button>
-          <button type="button" class="btn-secondary" onclick="DaoWenAuth.closeLogin()">完成</button>
-        </div>
-      </div>
-
-      <p class="auth-security-note">密码由 Supabase 安全加密存储，本站不发送任何邮件。留存码是找回账号的唯一凭据，请妥善保存。</p>
-    </div>
-  </div>
-
   <!-- ====== 免责声明 ====== -->
   <div class="disclaimer-section">
     <div class="disclaimer-box" style="margin-bottom:0.8rem;border-color:var(--gold);background:rgba(201,169,110,0.05);">
@@ -404,7 +357,7 @@
         <span>🔒 隐私政策</span><span class="toggle-arrow">▸</span>
       </div>
       <div class="disclaimer-content">
-        <p><b>基础功能：</b>无需登录即可使用。命理工具输入和必要记录默认保存在当前浏览器；注册并登录后，余额与记录可跨设备保存，忘记密码可用留存码找回。</p>
+        <p><b>基础功能：</b>无需登录即可使用。首次访问会自动生成匿名游客身份，余额、订单与必要记录通过该身份绑定保存；清除浏览器 Cookie 或更换设备后将无法自动恢复原身份。</p>
         <p><b>全能解读：</b>只有你主动发起请求时，服务才会处理你填写的问题、本次工具输入、真太阳时和结构化结果。</p>
         <p><b>服务端处理：</b>全能解读由服务端调用第三方模型服务生成，服务密钥仅保存在服务端环境变量。系统会保存必要的使用记录用于风控和后台查看。</p>
       </div>
@@ -882,7 +835,6 @@
   </div>
 
   <script src="js/visitor-identity.js"></script>
-  <script src="js/auth-ui.js"></script>
   <script src="js/user-data.js"></script>
   <script src="js/paywall.js"></script>
   <script src="js/ai-chat.js"></script>

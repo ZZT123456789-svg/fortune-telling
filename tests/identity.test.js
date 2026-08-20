@@ -50,25 +50,19 @@ test('篡改匿名 Cookie 后自动换新身份', async () => {
   }
 });
 
-test('登录系统存在：邮箱+密码登录（无邮件确认）+ 信任留存码', () => {
+test('前台登录系统已删除，游客身份和服务端数据绑定保持可用', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.match(html, /id="loginBtn"/);
-  assert.match(html, /id="loginOverlay"/);
-  assert.equal(fs.existsSync(path.join(ROOT, 'js', 'auth-ui.js')), true);
-  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-login.js')), true);
-  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-signup.js')), true);
-  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-logout.js')), true);
-  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'auth-recover.js')), true);
-
-  // 无邮件确认：注册走 Supabase admin users + email_confirm:true，不发邮件
-  const signup = fs.readFileSync(path.join(ROOT, 'api', 'auth-signup.js'), 'utf8');
-  assert.match(signup, /email_confirm:\s*true/);
-
-  // 身份模块不落明文密码、不存明文留存码；留存码由 HMAC 派生
-  const auth = fs.readFileSync(path.join(ROOT, 'api', '_auth.js'), 'utf8');
-  assert.doesNotMatch(auth, /password_hash|bcrypt/i);
-  assert.match(auth, /recover:/);
-  assert.match(auth, /daowen_account/);
+  const identity = fs.readFileSync(path.join(ROOT, 'js', 'visitor-identity.js'), 'utf8');
+  assert.doesNotMatch(html, /id="loginBtn"|id="loginOverlay"|DaoWenAuth|auth-ui\.js/);
+  assert.equal(fs.existsSync(path.join(ROOT, 'js', 'auth-ui.js')), false);
+  assert.match(html, /data-daowen-balance/);
+  assert.match(html, /Paywall\.openRedeem\(\)/);
+  assert.match(html, /Paywall\.openShop\(\)/);
+  assert.match(identity, /\/api\/session/);
+  assert.match(identity, /daowen:identity-changed/);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'session.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'user-data.js')), true);
+  assert.equal(fs.existsSync(path.join(ROOT, 'api', 'balance.js')), true);
 });
 
 test('数据库业务表直接绑定匿名 UUID，不依赖用户表', () => {
