@@ -76,7 +76,7 @@ var SolarTermModule = {
         '<div style="color:var(--text-secondary);margin-top:0.3rem;">季节：' + termInfo.season + '季</div>' +
         '<div style="color:var(--text-muted);margin-top:0.5rem;">下一节气：' + termInfo.next.name + '（约' + termInfo.next.approx[0] + '月' + termInfo.next.approx[1] + '日）</div>' +
       '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.8rem;">⚠ 节气日期为近似值，精确日期每年有1-2天偏差</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.8rem;"><i class="dao-inline-mark">注</i> 节气日期为近似值，精确日期每年有1-2天偏差</p>' +
       '<button class="btn-secondary" onclick="SolarTermModule.close()">🔙 返回</button>';
     Paywall.blockAll('solarTermResult');
   }

@@ -1,0 +1,351 @@
+/* 道问 UI 精修层：统一首页、应用、弹窗、支付、书库与插件视觉。 */
+:root {
+  --dw-bg: #070808;
+  --dw-surface: rgba(16, 18, 17, .92);
+  --dw-surface-soft: rgba(23, 24, 22, .78);
+  --dw-gold: #d3a653;
+  --dw-gold-bright: #f2d38b;
+  --dw-gold-pale: #f7e8bd;
+  --dw-ivory: #f2ede3;
+  --dw-muted: #aaa294;
+  --dw-line: rgba(221, 180, 93, .26);
+  --dw-line-strong: rgba(235, 195, 115, .5);
+  --dw-shadow: 0 24px 70px rgba(0, 0, 0, .46);
+  --dw-ease: cubic-bezier(.2, .72, .25, 1);
+}
+
+html { scrollbar-color: rgba(211, 166, 83, .45) #080909; }
+body { background-color: var(--dw-bg); }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+.tool-card:focus-visible {
+  outline: 2px solid var(--dw-gold-bright) !important;
+  outline-offset: 3px !important;
+}
+
+/* 顶部导航 */
+.dao-nav {
+  border-color: rgba(229, 191, 112, .3) !important;
+  background: linear-gradient(180deg, rgba(20, 21, 20, .91), rgba(8, 9, 9, .88)) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 241, 208, .045) !important;
+  backdrop-filter: blur(22px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.08) !important;
+}
+.dao-nav::after {
+  content: "";
+  position: absolute;
+  left: 7%; right: 7%; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(237, 198, 119, .75), transparent);
+  pointer-events: none;
+}
+.dao-brand { color: var(--dw-ivory) !important; letter-spacing: .08em; }
+.dao-nav-scroll > a, .dao-nav-scroll > button, .dao-more-trigger {
+  position: relative;
+  color: #c9c1b2 !important;
+  transition: color .2s ease, background .2s ease, transform .2s ease !important;
+}
+.dao-nav-scroll > a:hover, .dao-nav-scroll > button:hover, .dao-more-trigger:hover {
+  transform: translateY(-1px);
+}
+.dao-nav-scroll > a.active::after {
+  content: "";
+  position: absolute;
+  left: 28%; right: 28%; bottom: 3px;
+  height: 1px;
+  background: var(--dw-gold-bright);
+  box-shadow: 0 0 9px rgba(242, 211, 139, .8);
+}
+.dao-balance, .dao-redeem, .dao-recharge {
+  border-color: rgba(222, 181, 95, .34) !important;
+  box-shadow: inset 0 1px rgba(255, 244, 217, .035);
+}
+.dao-balance b { color: var(--dw-gold-bright) !important; }
+.dao-recharge {
+  background: linear-gradient(125deg, #a96f23, #efd28d 50%, #a76a20) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .28), inset 0 1px rgba(255, 255, 255, .38) !important;
+}
+.dao-more-menu {
+  padding: 8px !important;
+  background: rgba(9, 10, 10, .97) !important;
+  border: 1px solid var(--dw-line-strong) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--dw-shadow) !important;
+  backdrop-filter: blur(20px) !important;
+}
+.dao-more-menu button { border-radius: 8px !important; }
+
+/* 首页主视觉 */
+.dao-hero::before {
+  background: radial-gradient(circle at 50% 35%, transparent 0 12%, rgba(3,4,4,.12) 42%, rgba(2,3,3,.68) 100%) !important;
+}
+.dao-hero-shade {
+  background: linear-gradient(90deg, rgba(2,3,3,.48), transparent 27% 73%, rgba(2,3,3,.48)),
+    linear-gradient(180deg, rgba(3,4,4,.2), transparent 25% 64%, rgba(3,4,4,.7)),
+    radial-gradient(ellipse at 50% 59%, rgba(0,0,0,.22), transparent 54%) !important;
+}
+.dao-hero-content { position: relative; z-index: 1; }
+.dao-hero-content::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 12% 4% -8%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(6,7,7,.48), transparent 68%);
+  filter: blur(12px);
+}
+.dao-eyebrow {
+  border: 1px solid rgba(231, 192, 113, .27) !important;
+  background: rgba(6, 7, 7, .61) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.035), 0 8px 25px rgba(0,0,0,.24);
+  backdrop-filter: blur(10px);
+}
+.dao-hero h1 { color: #fbf7ec !important; text-shadow: 0 0 18px rgba(255, 239, 197, .38), 0 10px 36px #000 !important; }
+.dao-roman { color: #d8bb76 !important; }
+.dao-moon { color: #efd18b !important; filter: drop-shadow(0 0 8px rgba(238,201,126,.38)); }
+.dao-hero-lead, .dao-hero-sub { text-shadow: 0 3px 14px #000, 0 1px 2px #000; }
+.dao-hero-actions button { overflow: hidden; position: relative; }
+.dao-hero-actions button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 22%, rgba(255,255,255,.2) 48%, transparent 74%);
+  transform: translateX(-130%);
+  transition: transform .65s var(--dw-ease);
+}
+.dao-hero-actions button:hover::before { transform: translateX(130%); }
+.dao-enter-btn { box-shadow: 0 13px 35px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.58) !important; }
+.dao-fortune-btn { background: rgba(6,7,7,.72) !important; backdrop-filter: blur(10px); }
+
+/* 应用首页与功能卡片 */
+.dao-app-home { padding-bottom: 80px !important; }
+.dao-app-home > .section-header, .dao-app-home > .tools-grid, .dao-app-home > .disclaimer-section {
+  width: min(1180px, calc(100% - 32px)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.section-header {
+  margin-top: 3.6rem !important;
+  margin-bottom: 1.2rem !important;
+  padding: 0 4px 1rem !important;
+  text-align: left !important;
+  border-bottom: 1px solid rgba(222, 180, 93, .17);
+}
+.section-header::after { display: none !important; }
+.section-h2 { color: var(--dw-gold-pale) !important; font-size: clamp(1.35rem, 2vw, 1.72rem) !important; letter-spacing: .09em; }
+.section-h2::before, .section-h2::after { display: none !important; }
+.section-lead { margin-top: .35rem !important; color: #918a7e !important; font-size: .8rem !important; letter-spacing: .09em; }
+.tools-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  padding: 0 !important;
+}
+.tool-card {
+  --glow-x: 50%;
+  --glow-y: 0%;
+  min-height: 238px !important;
+  padding: 26px 20px 20px !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  border-radius: 16px !important;
+  isolation: isolate;
+  transition: transform .3s var(--dw-ease), border-color .3s ease, box-shadow .3s ease !important;
+}
+.tool-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 7px !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: -1;
+  border: 1px solid rgba(237, 199, 122, .08) !important;
+  border-radius: 11px !important;
+  pointer-events: none;
+}
+.tool-card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -2;
+  width: auto !important;
+  height: auto !important;
+  opacity: 0;
+  background: radial-gradient(240px circle at var(--glow-x) var(--glow-y), rgba(222, 177, 88, .18), transparent 62%) !important;
+  transform: none !important;
+  transition: opacity .3s ease !important;
+}
+.tool-card:hover::after, .tool-card:focus-visible::after { opacity: 1; }
+.tool-card:hover { transform: translateY(-6px) !important; }
+.tc-icon { transition: transform .3s var(--dw-ease), box-shadow .3s ease !important; }
+.tool-card:hover .tc-icon { transform: translateY(-2px) scale(1.045); box-shadow: inset 0 0 0 3px rgba(239,205,133,.06), 0 10px 28px rgba(0,0,0,.4), 0 0 22px rgba(227,184,96,.22) !important; }
+.tc-name { margin-top: .3rem !important; color: #f4e6c3 !important; font-size: 1.14rem !important; font-weight: 800 !important; }
+.tc-desc { margin-top: .55rem !important; color: #aaa397 !important; font-size: .78rem !important; line-height: 1.72 !important; text-align: center; }
+.tc-tag { margin-top: auto !important; padding: .28rem .7rem !important; color: #c9a65e !important; background: rgba(211,166,83,.055) !important; border: 1px solid rgba(211,166,83,.2) !important; border-radius: 999px !important; font-size: .66rem !important; letter-spacing: .07em; }
+
+/* 弹窗、表单、结果 */
+.tool-overlay { background: rgba(2, 3, 3, .8) !important; backdrop-filter: blur(13px) saturate(.8) !important; }
+.tool-modal { padding: clamp(22px, 3vw, 36px) !important; }
+.modal-title {
+  margin-bottom: .35rem !important;
+  color: #f5dfaa !important;
+  font-size: clamp(1.55rem, 2.6vw, 2.15rem) !important;
+  letter-spacing: .08em;
+}
+.modal-desc { margin-bottom: 1.35rem !important; line-height: 1.75 !important; }
+.modal-close {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  transition: color .2s ease, background .2s ease, transform .2s ease !important;
+}
+.modal-close:hover { color: #17130c !important; background: var(--dw-gold-bright) !important; transform: rotate(6deg); }
+.form-row { gap: 12px !important; }
+.form-group { margin-bottom: 13px !important; }
+.form-group > label { display: block; margin-bottom: 6px; color: #bdb5a7 !important; font-size: .77rem !important; letter-spacing: .045em; }
+.form-group input, .form-group select, .form-group textarea,
+.form-input, .form-select, .form-textarea {
+  min-height: 47px !important;
+  padding: .7rem .85rem !important;
+  border-radius: 9px !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,.2);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
+}
+.btn-primary, .btn-secondary {
+  min-height: 48px !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .06em;
+  transition: transform .2s var(--dw-ease), box-shadow .2s ease !important;
+}
+.btn-primary { box-shadow: 0 10px 24px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.42) !important; }
+.btn-primary:hover, .btn-secondary:hover { transform: translateY(-2px); }
+.result-section, .result-card, .analysis-card, .bazi-card, .almanac-card, .hexagram-card {
+  border-color: rgba(220, 179, 91, .22) !important;
+  background: linear-gradient(145deg, rgba(26,27,25,.86), rgba(9,10,10,.9)) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.025), 0 14px 35px rgba(0,0,0,.18) !important;
+}
+.disclaimer-section { margin-top: 4.2rem !important; }
+.disclaimer-box {
+  border-color: rgba(220, 178, 91, .2) !important;
+  border-radius: 13px !important;
+  background: rgba(13,14,13,.72) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.02);
+}
+
+/* 联系我们插件 */
+.dao-inline-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.55em;
+  height: 1.55em;
+  margin-right: .32em;
+  border: 1px solid rgba(232, 192, 108, .52);
+  border-radius: 5px;
+  color: #f2d28e;
+  background: rgba(15, 13, 9, .82);
+  box-shadow: inset 0 0 0 1px rgba(255, 236, 190, .04), 0 0 12px rgba(210, 163, 69, .1);
+  font: 700 .72em/1 "Noto Serif SC", "Songti SC", serif;
+  font-style: normal;
+  vertical-align: .08em;
+}
+.bazi-mode-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+
+.dw-contact-menu .dw-contact-trigger {
+  border-color: rgba(226, 187, 107, .34) !important;
+  background: rgba(8, 9, 9, .52) !important;
+  transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease !important;
+}
+.dw-contact-menu .dw-contact-trigger:hover { transform: translateY(-1px); }
+.dw-contact-panel {
+  padding: 22px 16px 12px !important;
+  border-color: rgba(235, 195, 115, .5) !important;
+  background: radial-gradient(circle at 88% 5%, rgba(208,161,70,.12), transparent 30%), rgba(7,8,8,.98) !important;
+  box-shadow: 0 28px 80px rgba(0,0,0,.7), inset 0 1px rgba(255,240,204,.04) !important;
+  animation: dwPanelIn .2s var(--dw-ease);
+}
+@keyframes dwPanelIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+.dw-contact-close { border: 1px solid rgba(218,177,91,.22) !important; }
+.dw-contact-row { border-radius: 9px; transition: background .2s ease; }
+.dw-contact-row:hover { background: rgba(255,255,255,.025); }
+.dw-contact-copy { transition: color .2s ease, background .2s ease, transform .2s ease !important; }
+.dw-contact-copy:active { transform: scale(.96); }
+
+/* AI 插件 */
+.ai-chat-fab { width: 58px !important; height: 58px !important; border-radius: 19px 19px 19px 6px !important; }
+.ai-chat-fab::after { content: "AI"; position: absolute; right: -4px; top: -5px; min-width: 24px; padding: 3px 5px; color: #f5e3b7; background: #171713; border: 1px solid rgba(231,191,110,.48); border-radius: 999px; font: 700 9px/1 sans-serif; }
+.ai-chat-window {
+  overflow: hidden !important;
+  border: 1px solid rgba(231, 190, 108, .46) !important;
+  border-radius: 20px !important;
+  background: rgba(9,10,10,.97) !important;
+  box-shadow: 0 32px 90px rgba(0,0,0,.72), inset 0 1px rgba(255,240,204,.04) !important;
+  backdrop-filter: blur(20px) !important;
+}
+.ai-chat-header { background: linear-gradient(90deg, rgba(177,126,42,.2), rgba(13,14,13,.96)) !important; border-bottom: 1px solid rgba(218,175,88,.2); }
+.ai-msg { line-height: 1.7 !important; border-radius: 12px !important; }
+.ai-msg.assistant { border: 1px solid rgba(218,175,88,.16); background: rgba(255,240,202,.04) !important; }
+.ai-msg.user { background: linear-gradient(135deg, #a87127, #d2aa60) !important; color: #17120b !important; }
+.ai-chat-input { border-top: 1px solid rgba(218,175,88,.19) !important; background: rgba(6,7,7,.96) !important; }
+
+/* 支付页 */
+.dw-payment-shell { overflow: hidden; position: relative; }
+.dw-payment-shell::before { content:""; position:absolute; left:8%; right:8%; top:0; height:1px; background:linear-gradient(90deg,transparent,#f0cf86,transparent); box-shadow:0 0 15px rgba(237,197,117,.5); }
+.dw-plan-card { overflow: hidden; }
+.dw-plan-card::before { content:""; position:absolute; inset:7px; border:1px solid rgba(235,195,114,.07); border-radius:11px; pointer-events:none; }
+.dw-plan-card:hover > i { filter: brightness(1.07); }
+.dw-payment-assurance span { transition: border-color .2s ease, background .2s ease; }
+.dw-payment-assurance span:hover { border-color: rgba(221,180,93,.35); background: rgba(211,166,83,.045); }
+
+/* 书库 */
+.lib-nav { box-shadow: 0 15px 45px rgba(0,0,0,.28); }
+.lib-hero { position: relative; }
+.lib-hero::after { content:""; display:block; width:min(560px,70vw); height:1px; margin:34px auto 0; background:linear-gradient(90deg,transparent,rgba(224,184,103,.45),transparent); }
+.book-card { overflow: hidden; transition: transform .28s var(--dw-ease), border-color .28s ease, box-shadow .28s ease; }
+.book-card::after { content:""; position:absolute; inset:0; opacity:0; background:radial-gradient(circle at 0 0,rgba(229,190,107,.12),transparent 45%); pointer-events:none; transition:opacity .25s ease; }
+.book-card:hover { transform: translateY(-5px); border-color: rgba(235,195,113,.48); box-shadow: 0 27px 65px rgba(0,0,0,.38); }
+.book-card:hover::after { opacity:1; }
+.book-info { position: relative; z-index: 1; }
+.book-info button { transition: transform .2s ease, filter .2s ease; }
+.book-info button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+@media (max-width: 980px) {
+  .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 760px) {
+  .dao-app-home > .section-header, .dao-app-home > .tools-grid, .dao-app-home > .disclaimer-section { width: calc(100% - 20px) !important; }
+  .section-header { margin-top: 2.7rem !important; }
+  .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .tool-card { min-height: 200px !important; padding: 19px 11px 15px !important; border-radius: 13px !important; }
+  .tc-name { font-size: 1rem !important; }
+  .tc-desc { font-size: .72rem !important; line-height: 1.58 !important; }
+  .tc-tag { font-size: .61rem !important; }
+  .tool-modal { padding: calc(1.2rem + env(safe-area-inset-top)) .9rem calc(1rem + env(safe-area-inset-bottom)) !important; }
+  .modal-title { font-size: 1.48rem !important; }
+  .form-group input, .form-group select, .form-group textarea { min-height: 49px !important; font-size: 16px !important; }
+  .ai-chat-window { inset: auto 0 0 !important; width: 100vw !important; height: min(78dvh, 650px) !important; border-width: 1px 0 0 !important; border-radius: 20px 20px 0 0 !important; }
+  .ai-chat-fab { right: 14px !important; bottom: calc(14px + env(safe-area-inset-bottom)) !important; }
+  .dw-contact-panel { top: 62px !important; }
+}
+
+@media (max-width: 430px) {
+  .dao-brand > span:last-child { font-size: .88rem; }
+  .dao-hero h1 { font-size: clamp(4.3rem, 22vw, 6rem) !important; }
+  .dao-hero-lead { letter-spacing: .09em !important; }
+  .tool-card { min-height: 192px !important; }
+  .tc-desc { min-height: 3.1em; }
+  .dw-contact-menu .dw-contact-trigger { font-size: .62rem !important; }
+}
+
+@media (hover: none) {
+  .tool-card:hover, .book-card:hover, .dao-hero-actions button:hover { transform: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dw-contact-panel { animation: none; }
+  .dao-hero-actions button::before { display: none; }
+}

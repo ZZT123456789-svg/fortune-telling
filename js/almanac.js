@@ -155,7 +155,7 @@ var AlmanacModule = {
       '<div class="almanac-yi"><span class="alabel">宜：</span>' + yiJi.yi.join('、') + '</div>' +
       '<div class="almanac-ji"><span class="alabel">忌：</span>' + yiJi.ji.join('、') + '</div>' +
       '<div style="font-size:0.8rem;color:var(--text-muted);padding:0.3rem;">彭祖百忌：' + pengZuDay + ' ' + pengZuZhi + '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">⚠ 农历日期与干支由统一历法引擎计算；宜忌内容仅供传统文化参考</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;"><i class="dao-inline-mark">注</i> 农历日期与干支由统一历法引擎计算；宜忌内容仅供传统文化参考</p>' +
       '<button class="btn-secondary" onclick="AlmanacModule.close()">🔙 返回</button>';
     Paywall.blockAll('almanacResult');
   }

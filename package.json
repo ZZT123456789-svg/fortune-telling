@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node scripts/build-static.mjs",
-    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js tests/calendar.test.js tests/ziwei.test.js tests/ziwei-engine.test.js tests/library.test.js tests/contact-menu.test.js tests/icon-ui.test.js tests/deployment.test.js",
+    "test": "node --test tests/identity.test.js tests/flows.test.js tests/bazi-ui.test.js tests/calendar.test.js tests/ziwei.test.js tests/ziwei-engine.test.js tests/library.test.js tests/contact-menu.test.js tests/icon-ui.test.js tests/ui-polish.test.js tests/deployment.test.js",
     "check": "node --check js/visitor-identity.js && node --check js/user-data.js && node --check js/paywall.js && node --check js/ai-chat.js && node --check js/lunar.js && node --check js/bazi.js && node --check js/almanac.js && node --check js/ziwei.js && node --check js/library.js && node --check data/library-books.js && node --check api/_auth.js && node --check api/_lib.js && node --check api/session.js && node --check api/user-data.js"
   },
   "repository": {

@@ -470,7 +470,7 @@ var BaziModule = {
     var infoHtml = '<div style=\"padding:0.5rem;background:var(--bg-card);border-radius:8px;margin-bottom:0.5rem;\">' +
       '<p><b>八字：</b>' + r.yearP.gan+r.yearP.zhi + ' ' + r.monthP.gan+r.monthP.zhi + ' ' + r.dayP.gan+r.dayP.zhi + ' ' + r.hourP.gan+r.hourP.zhi + '</p>' +
       '<p><b>日主：</b>' + r.dayMaster + '（' + r.dmElement + '）&nbsp;<b>性别：</b>' + r.gender + '&nbsp;<b>生肖：</b>' + (self.shengXiao[r.yearP.zhiIdx]||'') + '&nbsp;<b>纳音：</b>' + (r.naYin||'') + '</p>' +
-      '<p><b>🌞 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
+      '<p><b><i class="dao-inline-mark">时</i> 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
       '（校正 ' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分）</p></div>';
 
     // 五行条形图
@@ -502,7 +502,7 @@ var BaziModule = {
     else if (isSummer && hasWater) diTianHou = '全局夏月有水润燥，寒热平衡，五行流通有度。';
     else diTianHou = '全局气候平和，不寒不燥，调候非急务，以格局旺衰为主。';
 
-    var freeHtml = '<div class=\"result-header\">☯️ ' + r.name + ' 八字命理全盘</div>' + infoHtml +
+    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml +
       '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4>🔥 《滴天髓》调候总纲（第一优先级）</h4>' +
         '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
@@ -522,7 +522,7 @@ var BaziModule = {
       })() +
       '<div class=\"analysis-card\"><h4>🔗 十神（以日主' + r.dayMaster + '为中心）</h4>' +
         '<table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div>' +
-      '<div class=\"analysis-card\"><h4>🌡️ 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
+      '<div class=\"analysis-card\"><h4><i class="dao-inline-mark">调</i> 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
         '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
 
     var geju = this._getGeJu(r);
@@ -551,7 +551,7 @@ var BaziModule = {
         '<p style="font-family:KaiTi,STKaiti,serif;font-size:1.2rem;color:var(--gold);letter-spacing:0.15em;">天行健，君子以自强不息</p>' +
         '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
       '</div>' +
-      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;"><i class="dao-inline-mark">注</i> 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>' +
       '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;">问 AI</button>';
 
@@ -607,7 +607,7 @@ var BaziModule = {
     else dzRel='两人日支无冲无合，感情基础需日常经营。';
 
     ctn.innerHTML =
-      '<div class="result-header">👫 ' + a.name + ' & ' + b.name + ' 双人合盘</div>' +
+      '<div class="result-header"><i class="dao-inline-mark">合</i> ' + a.name + ' & ' + b.name + ' 双人合盘</div>' +
       // 两人信息卡片
       '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">' +
         '<div style="flex:1;min-width:200px;padding:0.8rem;background:var(--bg-card);border-radius:var(--radius-sm);border-left:3px solid var(--gold);">' +
@@ -829,9 +829,9 @@ var BaziModule = {
       tiaoHouDesc = '日主'+dm+'生于'+sz[mx]+'月，调候：'+th.yongShen+'。喜用神：'+(bs.level.indexOf('强')>=0?'克泄耗为主。':'生扶为主。');
     }
 
-    h+='<div class=\"analysis-card\"><h4>⚖️ 调候与用神（穷通宝鉴·第一优先级）</h4><p>'+tiaoHouDesc+'</p></div>';
-    h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4>🏛️ 子平法格局</h4><p>格局：<b style=\"color:var(--gold);font-size:1.1rem;\">'+gj.name+'</b></p><p>月令十神为<b>'+gj.ss+'</b>，格局层次：<b>'+gj.level+'</b> — '+gj.desc+'</p></div>';
-    h+='<div class=\"analysis-card\"><h4>🏛️ 格局</h4><p>月令格局分析，层次：<b style=\"color:var(--gold);\">'+pt.level+'</b></p><p>'+pt.levelDesc+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4><i class="dao-inline-mark">调</i> 调候与用神（穷通宝鉴·第一优先级）</h4><p>'+tiaoHouDesc+'</p></div>';
+    h+='<div class=\"analysis-card\" style=\"border-left:3px solid var(--gold);\"><h4><i class="dao-inline-mark">格</i> 子平法格局</h4><p>格局：<b style=\"color:var(--gold);font-size:1.1rem;\">'+gj.name+'</b></p><p>月令十神为<b>'+gj.ss+'</b>，格局层次：<b>'+gj.level+'</b> — '+gj.desc+'</p></div>';
+    h+='<div class=\"analysis-card\"><h4><i class="dao-inline-mark">格</i> 格局</h4><p>月令格局分析，层次：<b style=\"color:var(--gold);\">'+pt.level+'</b></p><p>'+pt.levelDesc+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💼 事业</h4><p>'+ca+'</p><p style=\"font-size:0.85rem;\">🧭 方位：'+bd+' | 🏭 行业：'+ind+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💰 财运</h4><p>'+caT+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💕 婚姻</h4><p>'+maT+'</p></div>';
@@ -1326,7 +1326,7 @@ var BaziModule = {
 
     var over=[], miss=[];
     Object.keys(wxCount).forEach(function(k){if(wxCount[k]>=3)over.push(k);if(wxCount[k]===0)miss.push(k);});
-    if (over.length) h.push('<p><b>⚠ 过旺风险：</b>'+over.map(function(e){return e+'过旺→'+map[e].o+'负担较重。';}).join('')+'</p>');
+    if (over.length) h.push('<p><b><i class="dao-inline-mark">警</i> 过旺风险：</b>'+over.map(function(e){return e+'过旺→'+map[e].o+'负担较重。';}).join('')+'</p>');
     if (miss.length) h.push('<p><b>💡 缺失提醒：</b>'+miss.map(function(e){return '缺'+e+'→需关注'+map[e].o+'功能，可通过饮食和环境补益。';}).join('')+'</p>');
 
     // 地支冲克健康提示
