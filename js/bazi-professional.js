@@ -198,7 +198,7 @@ var BaziProfessional = (function() {
 
   function renderSummary(data) {
     return '<section class="bazi-evidence-summary">'+
-      '<div class="bazi-conclusion"><span>结论</span><strong>'+data.strength.level+'</strong><em>可信度：'+data.strength.confidence+'</em></div>'+
+      '<div class="bazi-conclusion"><span>结论</span><strong>'+data.strength.level+'</strong></div>'+
       '<div class="bazi-evidence-columns"><div><h4>支持依据</h4>'+list(data.strength.evidence)+'</div><div><h4>反向条件</h4>'+list(data.strength.counterEvidence)+'</div></div>'+
       '<p class="bazi-basis-line"><b>格局：</b>'+escapeHtml(data.pattern.name)+'；'+escapeHtml(data.pattern.basis)+'</p>'+
       '<p class="bazi-basis-line"><b>喜用方向：</b>'+data.useful.favorable.join('、')+'；<b>慎用：</b>'+(data.useful.unfavorable.join('、')||'结合岁运')+'。'+escapeHtml(data.useful.basis)+'</p>'+
@@ -222,7 +222,7 @@ var BaziProfessional = (function() {
       '<section class="analysis-card bazi-pro-section"><h4>透干 · 通根 · 得令 · 得地 · 得势</h4><div class="bazi-status-grid">'+
         '<span><b>得令</b>'+(data.strength.order?'是':'否')+'</span><span><b>通根</b>'+(data.strength.rootPlaces.join('、')||'不足')+'</span><span><b>得地</b>'+(data.strength.terrainPlaces.join('、')||'不足')+'</span><span><b>得势</b>'+(data.strength.momentumPlaces.join('、')||'不足')+'</span></div></section>'+
       '<section class="analysis-card bazi-pro-section"><h4>合冲刑害破 · 三合三会</h4><div class="bazi-relation-grid">'+relations+'</div></section>'+
-      '<section class="analysis-card bazi-pro-section"><h4>格局与用神证据</h4><p><b>'+data.pattern.name+'</b>：'+escapeHtml(data.pattern.basis)+'</p><p><b>支持：</b>'+escapeHtml(data.pattern.supports.join('；'))+'</p><p><b>限制：</b>'+escapeHtml(data.pattern.counters.join('；'))+'</p><p><b>喜用方向：</b>'+data.useful.favorable.join('、')+'；依据：'+escapeHtml(data.useful.basis)+'；可信度：'+data.useful.confidence+'</p></section>'+
+      '<section class="analysis-card bazi-pro-section"><h4>格局与用神证据</h4><p><b>'+data.pattern.name+'</b>：'+escapeHtml(data.pattern.basis)+'</p><p><b>支持：</b>'+escapeHtml(data.pattern.supports.join('；'))+'</p><p><b>限制：</b>'+escapeHtml(data.pattern.counters.join('；'))+'</p><p><b>喜用方向：</b>'+data.useful.favorable.join('、')+'；依据：'+escapeHtml(data.useful.basis)+'</p></section>'+
       '<section class="analysis-card bazi-pro-section"><h4>核心神煞</h4><div class="bazi-star-grid">'+stars+'</div><p class="bazi-method-note">神煞仅作辅助，不能替代月令、旺衰、格局与岁运判断。</p></section>'+
       '<section class="analysis-card bazi-pro-section"><h4>大运与流年 · 真实起运</h4>'+yunHtml+'</section>';
   }

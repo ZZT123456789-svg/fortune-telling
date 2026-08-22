@@ -32,7 +32,7 @@ test('专业命盘完整输出天干十神、藏干层级、长生与空亡', ()
   assert.equal(pro.distribution.reduce((sum,item) => sum + item.percent, 0), 100);
 });
 
-test('旺衰、格局和喜用均给出依据、反向条件与可信度', () => {
+test('旺衰、格局和喜用均给出依据与反向条件', () => {
   const context = loadContext();
   const result = context.BaziModule._analyzeSingle('固定命例', '男', 2003, 2, 20, 20, 0, '1');
   const pro = result.professional;
@@ -66,6 +66,8 @@ test('专业模式包含关系、核心神煞、十神展开和手机横向命�
   assert.ok(pro.relations.some(x => x.type === '六害' && x.value === '未子六害'));
   assert.ok(pro.relations.some(x => x.type === '六破' && x.value === '未戌六破'));
   assert.ok(pro.shenSha.some(x => x.name === '天乙贵人'));
+  assert.doesNotMatch(context.BaziProfessional.renderSummary(pro), /可信度/);
+  assert.doesNotMatch(context.BaziProfessional.renderProfessional(pro), /可信度/);
   const source = fs.readFileSync(path.join(ROOT, 'js/bazi.js'), 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'css/ui-polish.css'), 'utf8');
   assert.match(source, /简明解读/);
@@ -80,5 +82,7 @@ test('AI 深度解读只读取结构化专业命盘，不自行重算四柱', ()
   const api = fs.readFileSync(path.join(ROOT, 'api/ai-reading.js'), 'utf8');
   assert.match(front, /professional:\s*r\.professional/);
   assert.match(api, /不得重新计算或改写四柱/);
-  assert.match(api, /结论、依据、反向条件、可信度/);
+  assert.match(api, /结论、依据、反向条件/);
+  assert.match(api, /不要输出“可信度”字样/);
+  assert.doesNotMatch(front, /<em>可信度/);
 });

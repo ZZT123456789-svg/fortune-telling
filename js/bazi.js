@@ -560,7 +560,7 @@ var BaziModule = {
       // AI解读占位(异步加载)
       paidHtml = patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
         '<p><span class=\"dao-title-mark\">问</span></p>' +
-        '<p style=\"color:var(--gold);font-weight:bold;\">AI 正在生成深度解读...</p>' +
+        '<p class=\"ai-reading-loading-title\">正在生成 AI 深度解读…</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
         '<div style=\"width:60px;height:4px;background:var(--border-subtle);margin:1rem auto;border-radius:2px;overflow:hidden;\">' +
           '<div style=\"width:100%;height:100%;background:var(--gold);animation:loadingBar 1.5s ease-in-out infinite;\"></div></div>' +
@@ -709,10 +709,10 @@ var BaziModule = {
       professional: r.professional ? {
         pillars:r.professional.pillars,
         distribution:r.professional.distribution,
-        strength:r.professional.strength,
+        strength:{level:r.professional.strength.level,score:r.professional.strength.score,evidence:r.professional.strength.evidence,counterEvidence:r.professional.strength.counterEvidence,order:r.professional.strength.order,rootPlaces:r.professional.strength.rootPlaces,terrainPlaces:r.professional.strength.terrainPlaces,momentumPlaces:r.professional.strength.momentumPlaces},
         relations:r.professional.relations,
         pattern:r.professional.pattern,
-        useful:r.professional.useful,
+        useful:{favorable:r.professional.useful.favorable,unfavorable:r.professional.useful.unfavorable,basis:r.professional.useful.basis},
         shenSha:r.professional.shenSha,
         yun:{forward:r.professional.yun.forward,start:r.professional.yun.start,startSolar:r.professional.yun.startSolar}
       } : null
