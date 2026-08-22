@@ -1,6 +1,6 @@
 /**
  * 道问 · 紫微斗数
- * 排盘引擎：iztro 2.5.8（浏览器 UMD）
+ * 排盘引擎：iztro 2.6.0（浏览器 UMD）
  *
  * 设计原则：
  * 1) 不再使用“公历月份≈农历月份”和“12项循环紫微星表”的近似算法。
@@ -9,7 +9,7 @@
  * 4) 保留 ZiweiModule.open/close/calculate 与 _renderSVG 兼容接口，避免影响其他模块。
  */
 var ZiweiModule = {
-  ENGINE_URL: '/js/vendor/iztro-2.5.8.min.js',
+  ENGINE_URL: '/js/vendor/iztro-2.6.0.min.js',
   _enginePromise: null,
   _lastChart: null,
   _lastInput: null,
@@ -127,7 +127,7 @@ var ZiweiModule = {
       script.src = self.ENGINE_URL;
       script.async = true;
       script.crossOrigin = 'anonymous';
-      script.setAttribute('data-daowen-iztro', '2.5.8');
+      script.setAttribute('data-daowen-iztro', '2.6.0');
       script.onload = function() {
         if (window.iztro && window.iztro.astro) resolve(window.iztro);
         else reject(new Error('引擎加载后未找到 iztro.astro'));
@@ -149,7 +149,7 @@ var ZiweiModule = {
   },
 
   /**
-   * iztro 2.5.8 官方参数适配层。
+   * iztro 2.6.0 官方参数适配层。
    * bySolar(date, timeIndex, gender, fixLeap, language)
    * byLunar(date, timeIndex, gender, isLeapMonth, fixLeap, language)
    */

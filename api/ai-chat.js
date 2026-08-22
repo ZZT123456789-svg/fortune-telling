@@ -1,4 +1,4 @@
-/** AI命理助手：匿名浏览器身份 + 服务端原子扣 2 次 + 失败自动退款 */
+/** AI命理助手：匿名浏览器身份 + 服务端原子扣 2 次；扣费后失败不退款 */
 const { noStore, readJson, serviceRpc, randomRequestId } = require('./_lib');
 const { requireUser } = require('./_auth');
 const { callDeepSeek } = require('./_deepseek');
@@ -25,9 +25,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   let debitId = '';
-  let user = null;
+  let debited = false;
   try {
-    user = await requireUser(req, res);
+    const user = await requireUser(req, res);
 
     const body = await readJson(req);
     const messages = cleanMessages(body.messages);
@@ -46,6 +46,7 @@ module.exports = async function handler(req, res) {
       }
       return res.status(409).json({ success: false, error: '扣费失败，请刷新余额后重试' });
     }
+    debited = true;
 
     const fullMessages = [
       { role: 'system', content: '你是“道问”的传统文化命理辅助解读助手。只能依据用户给出的命盘、卦象或牌面信息做文化性解释，不编造用户未提供的命盘数据。用清晰、克制的中文回答；涉及医学、法律、投资等重要事项时明确提示不能替代专业建议。' }
@@ -54,19 +55,12 @@ module.exports = async function handler(req, res) {
     const content = await callDeepSeek(fullMessages, { maxTokens: 1200, temperature: 0.7 });
     return res.status(200).json({ success: true, content, cost: COST, balance: Number(debit.balance || 0) });
   } catch (e) {
-    if (user && debitId) {
-      try {
-        await serviceRpc('api_refund_credits', {
-          p_user_id: user.id,
-          p_amount: COST,
-          p_request_id: debitId,
-          p_reason: 'ai-chat-failure'
-        });
-      } catch (refundErr) {
-        console.error('[ai-chat] refund failed:', refundErr.message);
-      }
-    }
     console.error('[ai-chat]', e.message);
-    return res.status(503).json({ success: false, error: 'AI 服务暂不可用，本次已自动退回次数' });
+    return res.status(503).json({
+      success: false,
+      charged: debited,
+      cost: debited ? COST : 0,
+      error: debited ? 'AI 服务暂不可用，本次解读次数已扣除' : 'AI 服务暂不可用'
+    });
   }
 };

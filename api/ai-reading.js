@@ -1,4 +1,4 @@
-/** AI八字深度解读：匿名浏览器身份 + 服务端原子扣 1 次 + 失败自动退款 */
+/** AI八字深度解读：匿名浏览器身份 + 服务端原子扣 1 次；扣费后失败不退款 */
 const { noStore, readJson, serviceRpc, randomRequestId } = require('./_lib');
 const { requireUser } = require('./_auth');
 const { callDeepSeek } = require('./_deepseek');
@@ -27,9 +27,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   let debitId = '';
-  let user = null;
+  let debited = false;
   try {
-    user = await requireUser(req, res);
+    const user = await requireUser(req, res);
 
     const body = await readJson(req);
     const chart = body.chart;
@@ -53,24 +53,18 @@ module.exports = async function handler(req, res) {
       }
       return res.status(409).json({ success: false, error: '扣费失败，请刷新余额后重试' });
     }
+    debited = true;
 
     const prompt = buildPrompt(chart);
     const content = await callDeepSeek([{ role: 'user', content: prompt }], { maxTokens: 2200, temperature: 0.65 });
     return res.status(200).json({ success: true, content, cost: COST, balance: Number(debit.balance || 0) });
   } catch (e) {
-    if (user && debitId) {
-      try {
-        await serviceRpc('api_refund_credits', {
-          p_user_id: user.id,
-          p_amount: COST,
-          p_request_id: debitId,
-          p_reason: 'ai-reading-failure'
-        });
-      } catch (refundErr) {
-        console.error('[ai-reading] refund failed:', refundErr.message);
-      }
-    }
     console.error('[ai-reading]', e.message);
-    return res.status(503).json({ success: false, error: 'AI 服务暂不可用，本次已自动退回次数' });
+    return res.status(503).json({
+      success: false,
+      charged: debited,
+      cost: debited ? COST : 0,
+      error: debited ? 'AI 服务暂不可用，本次解读次数已扣除' : 'AI 服务暂不可用'
+    });
   }
 };

@@ -56,7 +56,6 @@ test('首页游客 → AI 扣积分 → 创建支付 → 回调入账 → 查询
         state.balance -= payload.p_amount;
         return { success: true, balance: state.balance };
       }
-      if (name === 'api_refund_credits') { state.balance += payload.p_amount; return { success: true, balance: state.balance }; }
       if (name === 'api_create_payment_order') {
         state.lastOrderUser = payload.p_user_id;
         state.orders.set(payload.p_order_no, { userId: payload.p_user_id, amount: payload.p_amount_cents, credits: payload.p_credits, paid: false });
@@ -147,9 +146,9 @@ test('命理输入快照通过 user-data API 绑定当前游客 ID', async () =>
   assert.deepEqual(get.body.data, payload);
 });
 
-test('八字 AI 解读仅扣一次，生成失败时自动退还', async () => {
+test('八字 AI 解读仅扣一次，生成失败后不开放退款通道', async () => {
   const identity = { id: 'guest-ai-reading-1', is_guest: true };
-  const state = { balance: 3, consumeCount: 0, refundCount: 0 };
+  const state = { balance: 3, consumeCount: 0 };
   const libStub = {
     noStore() {},
     async readJson(req) { return req.body || {}; },
@@ -159,11 +158,6 @@ test('八字 AI 解读仅扣一次，生成失败时自动退还', async () => {
       if (name === 'api_consume_credits') {
         state.consumeCount += 1;
         state.balance -= payload.p_amount;
-        return { success: true, balance: state.balance };
-      }
-      if (name === 'api_refund_credits') {
-        state.refundCount += 1;
-        state.balance += payload.p_amount;
         return { success: true, balance: state.balance };
       }
       throw new Error('unexpected RPC ' + name);
@@ -189,7 +183,19 @@ test('八字 AI 解读仅扣一次，生成失败时自动退还', async () => {
   });
   const failed = await invoke(failingHandler, { method: 'POST', body: { chart } });
   assert.equal(failed.statusCode, 503);
+  assert.equal(failed.body.charged, true);
+  assert.equal(failed.body.cost, 1);
+  assert.match(failed.body.error, /已扣除/);
   assert.equal(state.consumeCount, 2);
-  assert.equal(state.refundCount, 1);
-  assert.equal(state.balance, 2);
+  assert.equal(state.balance, 1);
+});
+
+test('AI 接口与数据库脚本均关闭积分退款 RPC', () => {
+  for (const file of ['api/ai-reading.js', 'api/ai-chat.js']) {
+    const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    assert.doesNotMatch(source, /api_refund_credits|自动退回|自动退款/);
+  }
+  const schema = fs.readFileSync(path.join(ROOT, 'sql', 'secure-credits.sql'), 'utf8');
+  assert.doesNotMatch(schema, /create\s+or\s+replace\s+function\s+public\.api_refund_credits/i);
+  assert.match(schema, /drop\s+function\s+if\s+exists\s+public\.api_refund_credits/i);
 });

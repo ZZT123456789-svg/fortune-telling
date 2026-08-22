@@ -13,9 +13,9 @@ function loadEngine() {
   context.globalThis = context;
   vm.createContext(context);
   vm.runInContext(
-    fs.readFileSync(path.join(ROOT, 'js', 'vendor', 'iztro-2.5.8.min.js'), 'utf8'),
+    fs.readFileSync(path.join(ROOT, 'js', 'vendor', 'iztro-2.6.0.min.js'), 'utf8'),
     context,
-    { filename: 'iztro-2.5.8.min.js' }
+    { filename: 'iztro-2.6.0.min.js' }
   );
   return context.iztro;
 }
@@ -76,7 +76,7 @@ test('网站展示层完整显示全部杂曜并输出三方四正连线', () =>
 
 test('紫微引擎固定文件与许可证随网站部署', () => {
   const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
-  assert.match(ziweiSource, /ENGINE_URL:\s*'\/js\/vendor\/iztro-2\.5\.8\.min\.js'/);
-  assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'iztro-2.5.8.min.js')).size > 400000);
+  assert.match(ziweiSource, /ENGINE_URL:\s*'\/js\/vendor\/iztro-2\.6\.0\.min\.js'/);
+  assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'iztro-2.6.0.min.js')).size > 700000);
   assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'iztro-LICENSE.txt')).size > 500);
 });

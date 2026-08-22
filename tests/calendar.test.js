@@ -17,7 +17,7 @@ function loadContext() {
   context.self = context;
   context.globalThis = context;
   vm.createContext(context);
-  for (const file of ['js/vendor/iztro-2.5.8.min.js', 'js/lunar.js', 'js/bazi-db.js', 'js/bazi.js', 'js/almanac.js', 'js/ziwei.js']) {
+  for (const file of ['js/vendor/iztro-2.6.0.min.js', 'js/vendor/lunar-javascript-1.7.7.js', 'js/lunar.js', 'js/bazi-db.js', 'js/bazi.js', 'js/almanac.js', 'js/ziwei.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), context, { filename:file });
   }
   return context;
@@ -26,6 +26,7 @@ function loadContext() {
 const context = loadContext();
 
 test('农历与公历双向转换覆盖普通月、春节和闰月', () => {
+  assert.deepEqual(JSON.parse(JSON.stringify(context.DaoCalendar.engine)), { name: 'lunar-javascript', version: '1.7.7' });
   assert.deepEqual(JSON.parse(JSON.stringify(context.DaoCalendar.lunarToSolar(2003, 1, 20, false))), {year:2003,month:2,day:20});
   assert.deepEqual(JSON.parse(JSON.stringify(context.DaoCalendar.lunarToSolar(2003, 2, 20, false))), {year:2003,month:3,day:22});
   assert.deepEqual(JSON.parse(JSON.stringify(context.DaoCalendar.solarToLunar(2024, 2, 10))), {year:2024,month:1,day:1,isLeap:false});
@@ -64,10 +65,28 @@ test('紫微拒绝与输入不一致的闰月结果', () => {
   }), /没有这个闰月/);
 });
 
-test('页面先加载固定历法引擎，并提供八字闰月选择', () => {
+test('页面先加载固定排盘与历法引擎，并提供八字闰月选择', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.ok(html.indexOf('js/vendor/iztro-2.5.8.min.js') < html.indexOf('js/lunar.js'));
+  assert.ok(html.indexOf('js/vendor/iztro-2.6.0.min.js') < html.indexOf('js/lunar.js'));
+  assert.ok(html.indexOf('js/vendor/lunar-javascript-1.7.7.js') < html.indexOf('js/lunar.js'));
+  assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'lunar-javascript-1.7.7.js')).size > 400000);
+  assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'lunar-javascript-LICENSE.txt')).size > 500);
   assert.match(html, /id="baziLeapMonth1"/);
   assert.match(html, /<select id="baziMonth1">/);
   assert.match(fs.readFileSync(path.join(ROOT, 'js/bazi.js'), 'utf8'), /'正月'.*'腊月'/);
+});
+
+test('成熟历法引擎输出固定八字案例，并与现有八字日柱口径一致', () => {
+  const result = context.calculateBazi(2003, 2, 20, 20, '男');
+  assert.equal(result.yearPillar, '癸未');
+  assert.equal(result.monthPillar, '甲寅');
+  assert.equal(result.dayPillar, '甲子');
+  assert.equal(result.hourPillar, '甲戌');
+  assert.equal(result.dayPillar, context.BaziModule._getDayPillar(2003, 2, 20).gan + context.BaziModule._getDayPillar(2003, 2, 20).zhi);
+
+  const ziweiCalendar = context.iztro.astro.bySolar('2003-2-20', 10, '男', true, 'zh-CN').rawDates.chineseDate;
+  assert.equal(result.yearPillar, ziweiCalendar.yearly.join(''));
+  assert.equal(result.monthPillar, ziweiCalendar.monthly.join(''));
+  assert.equal(result.dayPillar, ziweiCalendar.daily.join(''));
+  assert.equal(result.hourPillar, ziweiCalendar.hourly.join(''));
 });

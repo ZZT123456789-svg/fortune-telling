@@ -306,58 +306,8 @@ begin
 end;
 $$;
 
--- 9) AI 调用失败时退款；只允许 service_role 使用
-create or replace function public.api_refund_credits(
-  p_user_id uuid,
-  p_amount integer,
-  p_request_id text,
-  p_reason text default 'service_failure'
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_balance integer;
-  v_refund_id text := 'refund:' || coalesce(p_request_id, '');
-begin
-  if p_user_id is null or p_amount is null or p_amount < 1 then
-    return jsonb_build_object('success', false, 'code', 'BAD_REQUEST');
-  end if;
-
-  if not exists (
-    select 1 from public.credit_ledger
-    where user_id = p_user_id and request_id = p_request_id and delta = -p_amount
-  ) then
-    return jsonb_build_object('success', false, 'code', 'NO_DEBIT');
-  end if;
-
-  if exists (
-    select 1 from public.credit_ledger
-    where user_id = p_user_id and request_id = v_refund_id
-  ) then
-    select balance into v_balance from public.user_balances where user_id = p_user_id;
-    return jsonb_build_object('success', true, 'code', 'IDEMPOTENT', 'balance', coalesce(v_balance, 0));
-  end if;
-
-  select balance into v_balance
-    from public.user_balances
-    where user_id = p_user_id
-    for update;
-
-  update public.user_balances
-    set balance = balance + p_amount,
-        updated_at = now()
-    where user_id = p_user_id
-    returning balance into v_balance;
-
-  insert into public.credit_ledger(user_id, delta, balance_after, reason, request_id, ref_type, ref_id)
-    values (p_user_id, p_amount, v_balance, left(coalesce(p_reason, 'service_failure'), 80), v_refund_id, 'refund', p_request_id);
-
-  return jsonb_build_object('success', true, 'code', 'OK', 'balance', v_balance);
-end;
-$$;
+-- 9) 退款通道关闭：重复执行本脚本也会移除旧版本遗留的退款 RPC。
+drop function if exists public.api_refund_credits(uuid, integer, text, text);
 
 -- 10) 创建支付订单
 create or replace function public.api_create_payment_order(
@@ -493,7 +443,6 @@ $$;
 revoke all on function public.api_get_balance(uuid) from public, anon, authenticated;
 revoke all on function public.api_redeem_code(uuid, text) from public, anon, authenticated;
 revoke all on function public.api_consume_credits(uuid, integer, text, text) from public, anon, authenticated;
-revoke all on function public.api_refund_credits(uuid, integer, text, text) from public, anon, authenticated;
 revoke all on function public.api_create_payment_order(text, uuid, text, integer, integer) from public, anon, authenticated;
 revoke all on function public.api_complete_payment(text, text, integer) from public, anon, authenticated;
 revoke all on function public.api_payment_status(uuid, text) from public, anon, authenticated;
@@ -501,7 +450,6 @@ revoke all on function public.api_payment_status(uuid, text) from public, anon, 
 grant execute on function public.api_get_balance(uuid) to service_role;
 grant execute on function public.api_redeem_code(uuid, text) to service_role;
 grant execute on function public.api_consume_credits(uuid, integer, text, text) to service_role;
-grant execute on function public.api_refund_credits(uuid, integer, text, text) to service_role;
 grant execute on function public.api_create_payment_order(text, uuid, text, integer, integer) to service_role;
 grant execute on function public.api_complete_payment(text, text, integer) to service_role;
 grant execute on function public.api_payment_status(uuid, text) to service_role;
