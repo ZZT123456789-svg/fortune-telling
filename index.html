@@ -378,11 +378,16 @@
 
       <!-- 单人排盘 -->
       <div id="baziSinglePanel">
+        <div class="bazi-entry-progress" aria-label="排盘步骤">
+          <span class="active"><b>1</b>基本资料</span><span><b>2</b>出生时间</span><span><b>3</b>校正确认</span>
+        </div>
+        <h3 class="bazi-entry-heading"><span>01</span> 基本资料</h3>
         <div class="form-row">
           <div class="form-group"><label>姓名</label><input type="text" id="baziName1" placeholder="输入姓名"></div>
           <div class="form-group"><label>性别</label><select id="baziGender1"><option value="男">男</option><option value="女">女</option></select></div>
           <div class="form-group"><label>日历类型</label><select id="baziCalType1"><option value="solar">阳历（公历）</option><option value="lunar">农历（阴历）</option></select><label id="baziLeapWrap1" class="calendar-leap-toggle" hidden><input type="checkbox" id="baziLeapMonth1"> 这是闰月</label></div>
         </div>
+        <h3 class="bazi-entry-heading"><span>02</span> 出生时间</h3>
         <div class="form-row">
           <div class="form-group"><label>出生年份</label><input type="number" id="baziYear1" placeholder="1990" min="1900" max="2100"></div>
           <div class="form-group"><label>出生月份</label><select id="baziMonth1"><option value="">请选择月份</option><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
@@ -393,6 +398,9 @@
           <div class="form-group"><label>出生分钟</label><input type="number" id="baziMinute1" placeholder="0-59" min="0" max="59" value="0"></div>
         </div>
         <p style="font-size:0.74rem;color:var(--text-muted);text-align:center;margin-top:-0.2rem;">若出生时间不详，可默认 12:00，会对结果有一定影响</p>
+        <details class="bazi-advanced-settings">
+          <summary><span><b>03</b> 高级排盘</span><small>真太阳时与出生地校正</small></summary>
+          <div class="bazi-advanced-body">
         <label class="calendar-leap-toggle true-solar-toggle"><input type="checkbox" id="baziUseTrueSolar1"> 使用真太阳时（需选择出生地）</label>
         <!-- 真太阳时显示 -->
         <div class="true-solar-display" id="trueSolar1" style="display:none;">
@@ -404,6 +412,12 @@
           <div class="form-group"><label>&nbsp;</label><select id="baziCity1" class="address-select"><option value="">市/区</option></select></div>
           <div class="form-group"><label>&nbsp;</label><select id="baziDistrict1" class="address-select"><option value="">县/区</option></select></div>
         </div>
+          </div>
+        </details>
+        <section class="bazi-input-summary" id="baziInputSummary1" aria-live="polite">
+          <div><span>排盘信息确认</span><b>请填写完整的出生日期和时间</b></div>
+          <p>基础命盘免费生成；AI 深度解读按当前余额规则单独使用。</p>
+        </section>
       </div>
 
       <!-- 双人合盘 -->
@@ -460,7 +474,7 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn-primary" onclick="BaziModule.calculate()">排盘测算</button>
+        <button class="btn-primary bazi-submit-btn" onclick="BaziModule.calculate()"><span>开启推演</span><small>生成结构化命盘</small></button>
       </div>
       <div class="result-container" id="baziResult" style="display:none;"></div>
     </div>

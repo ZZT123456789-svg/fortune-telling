@@ -37,6 +37,32 @@ test('八字 AI 解读只发送一次服务端扣费请求', () => {
   assert.match(bazi, /data\.balance != null[\s\S]*Paywall\._setBalance/);
 });
 
+test('八字录入采用分步确认，高级校正折叠且结果有七段阅读路径', () => {
+  const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const bazi = fs.readFileSync(path.join(ROOT, 'js', 'bazi.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'ui-polish.css'), 'utf8');
+  assert.match(home, /class="bazi-entry-progress"/);
+  assert.match(home, /<details class="bazi-advanced-settings">/);
+  assert.match(home, /id="baziInputSummary1"/);
+  assert.match(home, /开启推演/);
+  assert.match(bazi, /_updateEntrySummary:\s*function/);
+  assert.match(bazi, /class="bazi-reading-route"/);
+  assert.equal((bazi.match(/BaziModule\.openResultSection/g) || []).length, 7);
+  assert.match(bazi, /<span>AI 解读<\/span>/);
+  assert.match(css, /\.bazi-reading-route/);
+});
+
+test('AI 数据契约锁定四柱并携带编号证据与古籍来源', () => {
+  const front = fs.readFileSync(path.join(ROOT, 'js', 'bazi.js'), 'utf8');
+  const api = fs.readFileSync(path.join(ROOT, 'api', 'ai-reading.js'), 'utf8');
+  assert.match(front, /schemaVersion:\s*'daowen-bazi-reading\/v1'/);
+  assert.match(front, /calculationAuthority:\s*'DaoCalendar \/ lunar-javascript'/);
+  assert.match(front, /evidencePacket:/);
+  assert.match(front, /pillarsLocked:\s*true/);
+  assert.match(api, /每个主要结论至少引用一个证据包编号/);
+  assert.match(api, /古籍内容只能引用证据包中已经提供的原文与释义/);
+});
+
 test('八字十三类格局均有黑金视觉图并支持特殊格局追加展示', () => {
   const bazi = fs.readFileSync(path.join(ROOT, 'js', 'bazi.js'), 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
