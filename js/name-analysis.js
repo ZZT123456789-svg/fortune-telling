@@ -88,7 +88,7 @@ var NameModule = {
     var ctn = document.getElementById('nameResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">📛 姓名分析：「' + name + '」</div>' +
+      '<div class="result-header"><span class="dao-title-mark">名</span>姓名分析：「' + name + '」</div>' +
       '<div style="text-align:center;padding:0.5rem;">' +
         '<span style="font-size:1.5rem;letter-spacing:0.3em;">' + name + '</span>' +
       '</div>' +

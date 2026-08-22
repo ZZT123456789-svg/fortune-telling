@@ -14,7 +14,7 @@ var LiuyaoModule = {
     document.getElementById('liuyaoResult').style.display='none';
     document.getElementById('yaoDisplay').innerHTML='';
     document.getElementById('coinResultText').textContent='';
-    for(var c=1;c<=3;c++){var el=document.getElementById('coin'+c);if(el){el.textContent='🪙';el.className='coin-img';}}
+    for(var c=1;c<=3;c++){var el=document.getElementById('coin'+c);if(el){el.textContent='乾';el.className='coin-img';}}
   },
 
   start:function(){
@@ -32,7 +32,7 @@ var LiuyaoModule = {
   shake:function(){
     var self=this;
     for(var c=1;c<=3;c++){var el=document.getElementById('coin'+c);if(el)el.classList.add('shaking');}
-    document.getElementById('coinResultText').textContent='🪙 铜钱翻滚中...';
+    document.getElementById('coinResultText').textContent='铜钱翻滚中…';
     setTimeout(function(){
       for(var c=1;c<=3;c++){var el=document.getElementById('coin'+c);if(el)el.classList.remove('shaking');}
       self._doShake();
@@ -79,7 +79,7 @@ var LiuyaoModule = {
     var ysYao=najia.lines.filter(function(l){return l.liuQin===ys;})[0]||najia.lines[0];
     var shiYao=najia.lines.filter(function(l){return l.role==='世';})[0];
 
-    var h='<div class="result-header">🪙 六爻纳甲 — '+najia.name+'</div>';
+    var h='<div class="result-header"><span class="dao-title-mark">易</span>六爻纳甲 — '+najia.name+'</div>';
     h+='<div style="text-align:center;padding:0.2rem;color:var(--text-secondary);font-size:0.85rem;">'+najia.palace+'宫·属'+najia.palaceElem+' | 日辰 '+dGZ.gan+dGZ.zhi+' | 月建 '+monthZhi+'</div>';
     h+='<p style="text-align:center;font-size:0.85rem;color:var(--gold);">'+(q||'综合问事')+' → 用神:<b>'+ys+'</b></p>';
 
@@ -124,7 +124,7 @@ var LiuyaoModule = {
     h+='</p></div>';
 
     h+='<p style="font-size:0.72rem;color:var(--text-muted);text-align:center;">六爻纳甲排盘·仅供娱乐参考</p>';
-    h+='<button class="btn-secondary" onclick="LiuyaoModule.start()">🪙 重新摇卦</button>';
+    h+='<button class="btn-secondary" onclick="LiuyaoModule.start()">重新摇卦</button>';
     h+='<button class="btn-secondary" onclick="LiuyaoModule.close()">🔙 返回</button>';
     document.getElementById('liuyaoResult').innerHTML=h;
   }

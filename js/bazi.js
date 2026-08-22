@@ -361,8 +361,8 @@ var BaziModule = {
     var sxA=this.shengXiao[a.yearP.zhiIdx],sxB=this.shengXiao[b.yearP.zhiIdx];
     var compat={鼠:['牛','龙','猴'],牛:['鼠','蛇','鸡'],虎:['马','狗','猪'],兔:['羊','狗','猪'],龙:['鼠','猴','鸡'],蛇:['牛','鸡','猴'],马:['虎','羊','狗'],羊:['兔','马','猪'],猴:['鼠','龙','蛇'],鸡:['牛','龙','蛇'],狗:['虎','兔','马'],猪:['虎','兔','羊']};
     var clashCheck=(a.yearP.zhiIdx+6)%12===b.yearP.zhiIdx;
-    if(compat[sxA]&&compat[sxA].indexOf(sxB)>=0){relation+=' ✅ 生肖相合（三合/六合），缘分基础好。';score+=10;}
-    else if(clashCheck){relation+=' ⚠️ 生肖六冲，需要更多包容和理解。';score-=15;}
+    if(compat[sxA]&&compat[sxA].indexOf(sxB)>=0){relation+=' 生肖相合（三合/六合），缘分基础好。';score+=10;}
+    else if(clashCheck){relation+=' 生肖六冲，需要更多包容和理解。';score-=15;}
     else{score+=5;}
 
     // 日支(夫妻宫)关系
@@ -533,7 +533,7 @@ var BaziModule = {
     if (Paywall.hasBalance()) {
       // AI解读占位(异步加载)
       paidHtml = patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
-        '<p style=\"font-size:2rem;\">🤖</p>' +
+        '<p><span class=\"dao-title-mark\">问</span></p>' +
         '<p style=\"color:var(--gold);font-weight:bold;\">AI 正在生成深度解读...</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
         '<div style=\"width:60px;height:4px;background:var(--border-subtle);margin:1rem auto;border-radius:2px;overflow:hidden;\">' +
@@ -553,7 +553,7 @@ var BaziModule = {
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;">⚠ 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
       '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>' +
-      '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;background:linear-gradient(135deg,#7c3aed,#a855f7);">🤖 问AI</button>';
+      '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;">问 AI</button>';
 
     // 排盘免费 + AI深度解读付费
     // 全内容渲染 + 付费墙覆盖
@@ -566,16 +566,16 @@ var BaziModule = {
       // 独立显示付费提示，避免提示被垂直居中在整份超长报告中间。
       ctn.innerHTML =
         '<div class="bazi-paywall-prompt">'+
-          '<div><div style="font-size:3rem;">🔒</div>'+
+          '<div><div><span class="dao-title-mark">锁</span></div>'+
           '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
           '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
-          '<button class="btn-primary" onclick="Paywall.openShop()" style="margin-top:0.5rem;padding:0.6rem 2rem;">🎫 购买解读次数</button>'+
+          '<button class="btn-primary" onclick="Paywall.openShop()" style="margin-top:0.5rem;padding:0.6rem 2rem;">购买解读次数</button>'+
           '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>'+
           '</div></div>';
       ctn.style.position = '';
       self._focusResult(ctn);
     }
-    } catch(e) { ctn.innerHTML = '<div class="result-header">⚠️ 渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
+    } catch(e) { ctn.innerHTML = '<div class="result-header">渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
   _renderDual: function(a, b, compat) {
     var ctn = document.getElementById('baziResult');
@@ -625,8 +625,8 @@ var BaziModule = {
       '<div class="analysis-card"><h4>🌿 五行互补</h4><p>'+comp+'</p></div>' +
       // 生肖配对
       '<div class="analysis-card"><h4>🐾 生肖配对</h4><p>' +
-        (sxMatch?'✅ 生肖相合（三合/六合），缘分基础不错。':'⚠️ 生肖无合，但也不冲，正常缘分。') +
-        (clashZhi?' ⚠️ 但生肖六冲，需注意沟通方式，多包容。':'') +
+        (sxMatch?'生肖相合（三合/六合），缘分基础不错。':'生肖无合，但也不冲，正常缘分。') +
+        (clashZhi?' 但生肖六冲，需注意沟通方式，多包容。':'') +
       '</p></div>' +
       // 日柱夫妻宫
       '<div class="analysis-card"><h4>💑 日柱（夫妻宫）关系</h4><p>'+dzRel+'</p></div>' +
@@ -680,7 +680,7 @@ var BaziModule = {
           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
           .replace(/\n\n/g, '</p><p style="line-height:1.9;">')
           .replace(/\n- /g, '<br/>• ');
-        container.innerHTML = '<div class="analysis-card" style="border-left:3px solid #7c3aed;"><h4>🤖 AI深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由AI基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
+        container.innerHTML = '<div class="analysis-card" style="border-left:3px solid var(--gold);"><h4><span class="dao-title-mark">问</span>AI 深度解读</h4><p style="line-height:1.9;">' + html + '</p><p style="font-size:0.74rem;color:var(--text-muted);margin-top:0.5rem;">由 AI 基于《滴天髓》《穷通宝鉴》《子平真诠》生成</p></div>';
       } else {
         // AI失败，降级到规则解读
         container.innerHTML = self._buildDeepAnalysis(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj);
@@ -836,7 +836,7 @@ var BaziModule = {
     h+='<div class=\"analysis-card\"><h4>💰 财运</h4><p>'+caT+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>💕 婚姻</h4><p>'+maT+'</p></div>';
     h+='<div class=\"analysis-card\"><h4>🏥 健康</h4>'+ha+'</div>';
-    h+='<div class=\"analysis-card\"><h4>⚠️ 注意事项</h4>'+ct+'</div>';
+    h+='<div class=\"analysis-card\"><h4><span class=\"dao-title-mark\">注</span>注意事项</h4>'+ct+'</div>';
     h+='<div class=\"analysis-card\"><h4>📅 大运走势</h4>'+dyHtml+'</div>';
     h+='<div class=\"analysis-card\"><h4>📅 每步大运详解</h4>'+ddYun+'</div>';
     h+='<div class=\"analysis-card\"><h4>📈 人生起伏</h4><p style=\"line-height:1.8;\">'+lt+'</p></div>';
@@ -1073,7 +1073,7 @@ var BaziModule = {
     var nameAdvice = '';
     if (nameHelps) {
       nameScore = 75 + helpfulChars.length * 10;
-      nameAdvice = '✅ 名字中的' + helpfulChars.join('、') + '元素对八字有利，能够补充命局所需。名字与八字配合较好。';
+      nameAdvice = '名字中的' + helpfulChars.join('、') + '元素对八字有利，能够补充命局所需。名字与八字配合较好。';
     } else {
       nameScore = 50;
       nameAdvice = '名字中的五行元素与八字所需不完全匹配。如果能增加' + favorableElements.favorable.join('或') + '元素的字，会更加有利。';
@@ -1115,7 +1115,7 @@ var BaziModule = {
         if(allZ[zi]===dy.zhi)clash+=['年','月','日','时'][zi]+'支与运支同为'+dy.zhi+'（伏吟） ';
       }
 
-      var age=dy.age,label=isFav?'✅':'⚠️';
+      var age=dy.age,label=isFav?'吉':'慎';
       var advice=isFav?'此十年运势向好，建议积极进取。':'此十年宜稳守，积累实力等待时机。';
       if(clash)advice+=' 注意：'+clash.trim()+',此期间相关宫位事务有变动。';
 

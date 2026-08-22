@@ -87,7 +87,7 @@ var CeziModule = {
     var ctn = document.getElementById('ceziResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">✍️ 测字：「' + ch + '」</div>' +
+      '<div class="result-header"><span class="dao-title-mark">字</span>测字：「' + ch + '」</div>' +
       '<div style="text-align:center;font-size:4rem;padding:0.5rem;">' + ch + '</div>' +
       '<div style="text-align:center;color:var(--text-secondary);">五行属' + element + '</div>' +
       '<div style="color:var(--gold-pale);padding:0.5rem;line-height:1.7;">' + meaning + '</div>' +

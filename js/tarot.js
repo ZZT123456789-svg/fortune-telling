@@ -218,7 +218,7 @@ var TarotModule = {
     else if (revCount === 1) summary = '一张逆位，在特定阶段需多加留意。整体运势尚可，调整心态即可化解。';
     else if (revCount === 2) summary = '两张逆位，可能正处于转折期。挑战是成长的必经之路。';
     else summary = '三张皆逆位，能量较为阻滞。但逆位提醒我们停下来反思、修正方向。沉淀之后必有更好的出发。';
-    html += '<div class="reading-summary"><h4>🔮 综合解读</h4><p>' + summary + '</p></div>';
+    html += '<div class="reading-summary"><h4><span class="dao-title-mark">解</span>综合解读</h4><p>' + summary + '</p></div>';
     reading.innerHTML = html;
     Paywall.blockAll('tarotReading');
   },

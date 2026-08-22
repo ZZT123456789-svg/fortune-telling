@@ -70,7 +70,7 @@ var SolarTermModule = {
     var ctn = document.getElementById('solarTermResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">🌿 ' + year + '年' + month + '月' + day + '日 节气</div>' +
+      '<div class="result-header"><span class="dao-title-mark">节</span>' + year + '年' + month + '月' + day + '日 节气</div>' +
       '<div style="text-align:center;padding:0.8rem;">' +
         '<div style="font-size:1.5rem;color:var(--gold);">当前节气：<b>' + termInfo.current.name + '</b></div>' +
         '<div style="color:var(--text-secondary);margin-top:0.3rem;">季节：' + termInfo.season + '季</div>' +

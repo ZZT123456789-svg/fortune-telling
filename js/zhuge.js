@@ -101,7 +101,7 @@ var ZhugeModule = {
     var ctn = document.getElementById('zhugeResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">📜 诸葛神数 — 第' + lot.no + '签</div>' +
+      '<div class="result-header"><span class="dao-title-mark">签</span>诸葛神数 — 第' + lot.no + '签</div>' +
       (s1 ? '<div style="text-align:center;color:var(--text-secondary);font-size:0.82rem;">三字：' + words + '（笔画' + s1 + ' + ' + s2 + ' + ' + s3 + '）</div>' : '') +
       '<div style="text-align:center;padding:0.5rem;"><span style="font-size:1.3rem;color:var(--gold);">' + lot.level + '签</span></div>' +
       '<div class="lot-poem">' + lot.poem + '</div>' +

@@ -2399,7 +2399,7 @@ body::after { content: none; display: none; }
   line-height: 2.4;
 }
 .dao-ink-bagua-watermark::after {
-  content: "☯";
+  content: "道";
   position: absolute;
   inset: 0;
   display: grid;
@@ -2474,7 +2474,7 @@ body::after { content: none; display: none; }
   animation: daoRingBreath 5s ease-in-out infinite !important;
 }
 .splash-ring-glow::before {
-  content: "☯";
+  content: "道";
   position: absolute;
   inset: 0;
   display: grid;
@@ -3491,7 +3491,7 @@ body:not(.dao-entered) #starCanvas { opacity: .10 !important; }
   box-shadow:0 0 16px rgba(255,208,115,.55);
 }
 #paywallShopOverlay .tool-modal.pw-premium-modal::after {
-  content:"☯" !important; left:auto !important; right:-4.5rem !important; bottom:-6.5rem !important;
+  content:"道" !important; left:auto !important; right:-4.5rem !important; bottom:-6.5rem !important;
   width:auto !important; height:auto !important; color:rgba(210,168,85,.035) !important;
   background:none !important; filter:none !important; font:20rem/1 serif; pointer-events:none;
 }
@@ -3812,4 +3812,113 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .dw-cancel-payment { min-height:43px; padding:0 20px; }
 @media(max-width:700px){
   .dw-payment-page{padding:7px 0 0}.dw-payment-nav{min-height:54px;margin:0 7px 8px;width:auto;border-radius:18px}.dw-payment-nav .dao-brand span:last-child{display:none}.dw-payment-back{padding:0 10px;font-size:.74rem}.dw-payment-balance{padding:0 5px;font-size:.68rem}.dw-payment-shell{min-height:calc(100dvh - 69px);padding:25px 12px calc(22px + env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:0}.dw-plan-grid{grid-template-columns:1fr;gap:10px}.dw-plan-card{min-height:210px;padding:19px 18px}.dw-plan-card>b{font-size:3rem}.dw-payment-assurance{grid-template-columns:1fr 1fr}.dw-order-actions{flex-direction:column}.dw-order-actions button{width:100%!important}
+}
+
+/* 统一东方字印图标：避免系统 Emoji 在不同设备上出现彩色与风格差异。 */
+.dao-brand-mark {
+  position: relative;
+  overflow: hidden;
+  padding: 0 !important;
+  color: transparent !important;
+  background:
+    radial-gradient(circle at 50% 25%, #171816 0 9%, #e7deca 10% 25%, transparent 26%),
+    radial-gradient(circle at 50% 75%, #e7deca 0 9%, #171816 10% 25%, transparent 26%),
+    linear-gradient(90deg, #e7deca 0 50%, #171816 50% 100%) !important;
+  border-color: rgba(226,190,115,.58) !important;
+  box-shadow: inset 0 0 0 2px rgba(8,9,9,.24), 0 0 18px rgba(224,192,118,.14) !important;
+}
+.dao-heading-mark,
+.dao-title-mark,
+.dao-notice-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #f5dfaa;
+  border: 2px solid rgba(236,201,127,.66);
+  background: linear-gradient(145deg,rgba(18,18,16,.98),rgba(4,5,5,.98));
+  font-family: "STKaiti","KaiTi","Songti SC","SimSun",serif;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: none;
+  box-shadow: inset 0 0 0 1px rgba(255,241,205,.045),0 0 12px rgba(220,176,86,.14);
+}
+.dao-heading-mark {
+  width: 1.85rem;
+  height: 1.85rem;
+  margin-right: .55rem;
+  border-radius: 50%;
+  font-size: .72rem;
+  vertical-align: .2rem;
+}
+.dao-title-mark {
+  width: 2rem;
+  height: 2rem;
+  margin-right: .48rem;
+  border-radius: 6px 4px 7px 4px;
+  font-size: .94rem;
+  vertical-align: .22rem;
+}
+.dao-notice-mark {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-right: .48rem;
+  border-radius: 50%;
+  font-size: .62rem;
+  vertical-align: .08rem;
+}
+.tc-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto .45rem;
+  color: #f7e5b6 !important;
+  background: radial-gradient(circle at 45% 35%, rgba(62,50,27,.3), rgba(4,5,5,.98) 72%);
+  border: 2px solid rgba(235,197,118,.68);
+  border-radius: 50%;
+  font: 800 20px/1 "STKaiti","KaiTi","Songti SC","SimSun",serif !important;
+  filter: none !important;
+  text-shadow: 0 0 8px rgba(255,224,157,.18);
+  box-shadow: inset 0 0 0 3px rgba(239,205,133,.045),0 8px 24px rgba(0,0,0,.32),0 0 15px rgba(220,174,80,.15);
+}
+.tc-name {
+  margin-top: 0 !important;
+  font-size: 1.08rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: .06em;
+}
+.coin-img {
+  color: #e5c67e !important;
+  font-family: var(--font-display) !important;
+  font-size: 1rem !important;
+  background: radial-gradient(circle, rgba(204,159,72,.2), rgba(11,12,12,.94)) !important;
+  border-color: rgba(229,190,109,.58) !important;
+}
+.ai-chat-fab {
+  color: #1b150c !important;
+  background: linear-gradient(145deg,#b47b2b,#efd18a 52%,#a96f23) !important;
+  border: 1px solid rgba(246,218,154,.72) !important;
+  font: 800 1rem/1 var(--font-display) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.42),0 0 20px rgba(207,158,65,.15) !important;
+}
+.ai-chat-fab:hover { box-shadow: 0 13px 34px rgba(0,0,0,.52),0 0 24px rgba(218,172,78,.22) !important; }
+
+@media (max-width: 760px) {
+  .tc-icon {
+    width: 42px !important;
+    height: 42px !important;
+    margin-bottom: .38rem;
+    font-size: 18px !important;
+    border-width: 2px;
+  }
+  .tc-name {
+    font-size: .96rem !important;
+    line-height: 1.3 !important;
+  }
+  .dao-title-mark {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: .88rem;
+  }
 }

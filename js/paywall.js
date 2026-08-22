@@ -164,7 +164,7 @@ var Paywall = {
     var bar = document.createElement('div');
     bar.id = 'pw_bar';
     bar.className = 'paywall-bar';
-    bar.innerHTML = '🔒 完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">🎫 购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>';
+    bar.innerHTML = '<span class="dao-title-mark">锁</span>完整解读需要解读次数 &nbsp;|&nbsp; <button onclick="Paywall.openShop()" class="btn-primary" style="width:auto;padding:.4rem 1rem;font-size:.85rem;">购买次数</button> &nbsp;|&nbsp; <a href="javascript:Paywall.openRedeem()" style="color:var(--gold);font-size:.8rem;">兑换码</a>';
     el.insertBefore(bar, el.firstChild);
     return true;
   },
@@ -179,10 +179,10 @@ var Paywall = {
     var block = document.createElement('div');
     block.className = 'paywall-block';
     block.setAttribute('style', 'position:absolute;inset:0;background:rgba(17,17,15,.96);z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;min-height:200px;');
-    block.innerHTML = '<div><div style="font-size:3rem;">🔒</div>' +
+    block.innerHTML = '<div><div><span class="dao-title-mark">锁</span></div>' +
       '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>' +
       '<p style="color:#aaa;font-size:.85rem;">拥有解读次数后即可解锁</p>' +
-      '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:.6rem 2rem;margin-top:.5rem;">🎫 购买解读次数</button>' +
+      '<button class="btn-primary" onclick="Paywall.openShop()" style="padding:.6rem 2rem;margin-top:.5rem;">购买解读次数</button>' +
       '<p style="color:#999;font-size:.76rem;margin-top:.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p></div>';
     el.appendChild(block);
     return false;
@@ -271,19 +271,19 @@ var Paywall = {
     if (!code) { alert('请输入兑换码'); return; }
 
     var btn = document.querySelector('#paywallRedeemOverlay .btn-primary');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ 验证中...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '验证中…'; }
     if (resultEl) resultEl.innerHTML = '';
 
     var result = await this.redeemCode(code);
     if (result.success) {
-      if (resultEl) resultEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">✅ ' + this._escape(result.msg) + '</p><p>当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
+      if (resultEl) resultEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">' + this._escape(result.msg) + '</p><p>当前剩余：<b>' + this.getBalance() + '</b> 次</p>';
       input.value = '';
       this.refreshWalls();
       this._refreshModules();
     } else {
-      if (resultEl) resultEl.innerHTML = '<p style="color:#a33;">❌ ' + this._escape(result.msg) + '</p>';
+      if (resultEl) resultEl.innerHTML = '<p style="color:#a33;">' + this._escape(result.msg) + '</p>';
     }
-    if (btn) { btn.disabled = false; btn.textContent = '✅ 兑换'; }
+    if (btn) { btn.disabled = false; btn.textContent = '确认兑换'; }
   },
 
   _escape: function(value) {
@@ -326,7 +326,7 @@ var Paywall = {
     }
 
     var stEl = document.getElementById('alipayStatus');
-    if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">⏳ 正在由服务端核对支付状态...</p>';
+    if (stEl) stEl.innerHTML = '<p style="color:var(--gold);margin:0;">正在由服务端核对支付状态…</p>';
     try {
       if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
       var resp = await fetch('/api/check-order?order=' + encodeURIComponent(order), { method: 'GET', cache: 'no-store' });
@@ -335,15 +335,15 @@ var Paywall = {
         localStorage.removeItem(this.PENDING_ORDER_KEY);
         await this.syncBalance(true);
         this.refreshWalls();
-        if (stEl) stEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">✅ 支付已验证，' + Number(data.credits || 0) + ' 次解读已到账。当前余额：' + this.getBalance() + '</p>';
-        if (!silent && !stEl) alert('✅ 支付成功，次数已到账。');
+        if (stEl) stEl.innerHTML = '<p style="color:#28784f;font-weight:bold;">支付已验证，' + Number(data.credits || 0) + ' 次解读已到账。当前余额：' + this.getBalance() + '</p>';
+        if (!silent && !stEl) alert('支付成功，次数已到账。');
         return true;
       }
       if (stEl) stEl.innerHTML = '<p style="color:#a66;">暂未检测到支付成功。</p><button class="btn-primary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.4rem 1.2rem;">🔄 重新检查</button>';
       else if (!silent) alert('暂未检测到支付成功，请确认付款后重试。');
       return false;
     } catch (err) {
-      if (stEl) stEl.innerHTML = '<p style="color:#a33;">❌ ' + this._escape(err.message || '支付验证暂不可用') + '</p><button class="btn-primary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.4rem 1.2rem;">🔄 重新检查</button>';
+      if (stEl) stEl.innerHTML = '<p style="color:#a33;">' + this._escape(err.message || '支付验证暂不可用') + '</p><button class="btn-primary" onclick="Paywall._checkPayment(false)" style="width:auto;padding:.4rem 1.2rem;">重新检查</button>';
       else if (!silent) alert('支付验证暂不可用，请稍后重试。');
       return false;
     }
@@ -366,7 +366,7 @@ async function showBuyContact(tier) {
   var old = document.getElementById('alipayPayPanel'); if (old) old.remove();
   var loading = document.createElement('div');
   loading.id = 'alipayLoading';
-  loading.innerHTML = '<p style="text-align:center;padding:1rem;">⏳ 正在创建安全订单...</p>';
+  loading.innerHTML = '<p style="text-align:center;padding:1rem;">正在创建安全订单…</p>';
   shopContent.appendChild(loading);
 
   try {

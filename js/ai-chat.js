@@ -23,7 +23,7 @@ var AIChat = {
 
   toggle: function() {
     if (this.contextReady || this.messages.length > 0) this._show();
-    else alert('💡 请先完成排盘或占卜，再从结果区点击“🤖 问AI”。');
+    else alert('请先完成排盘或占卜，再从结果区点击“问 AI”。');
   },
 
   _show: function() {
@@ -56,7 +56,7 @@ var AIChat = {
     if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
 
     if (window.Paywall && Paywall._balanceLoaded && Paywall.getBalance() < 2) {
-      this._addMsg('assistant', '🎫 当前解读次数不足。AI 助手每次需要 2 次额度。');
+      this._addMsg('assistant', '当前解读次数不足。AI 助手每次需要 2 次额度。');
       Paywall.openShop();
       return;
     }
@@ -65,7 +65,7 @@ var AIChat = {
     input.disabled = true;
     this._addMsg('user', question);
     this.messages.push({ role: 'user', content: question });
-    var loadId = this._addMsg('assistant', '⏳ 正在生成解读...');
+    var loadId = this._addMsg('assistant', '正在生成解读…');
 
     try {
       var resp = await fetch('/api/ai-chat', {
@@ -80,9 +80,9 @@ var AIChat = {
       if (loadEl) loadEl.remove();
 
       if (resp.status === 401 || data.code === 'IDENTITY_REQUIRED') {
-        this._addMsg('assistant', '🔐 游客身份初始化失败，请刷新页面后重试。');
+        this._addMsg('assistant', '游客身份初始化失败，请刷新页面后重试。');
       } else if (resp.status === 402 || data.code === 'INSUFFICIENT') {
-        this._addMsg('assistant', '🎫 解读次数不足。AI 助手每次需要 2 次额度。');
+        this._addMsg('assistant', '解读次数不足。AI 助手每次需要 2 次额度。');
         if (window.Paywall) {
           Paywall._setBalance(Number(data.balance || 0));
           Paywall.openShop();
@@ -95,16 +95,16 @@ var AIChat = {
           else Paywall.syncBalance(true).catch(function() {});
         }
       } else {
-        this._addMsg('assistant', '❌ ' + (data.error || 'AI 服务暂不可用，本次不会重复扣费。'));
+        this._addMsg('assistant', '未能完成：' + (data.error || 'AI 服务暂不可用，本次不会重复扣费。'));
         if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
       }
     } catch (e) {
       var pending = document.getElementById(loadId);
       if (pending) pending.remove();
       if (e && e.code === 'IDENTITY_REQUIRED') {
-        this._addMsg('assistant', '🔐 游客身份初始化失败，请刷新页面后重试。');
+        this._addMsg('assistant', '游客身份初始化失败，请刷新页面后重试。');
       } else {
-        this._addMsg('assistant', '❌ 网络错误，请稍后重试。');
+        this._addMsg('assistant', '网络错误，请稍后重试。');
       }
       if (window.Paywall) Paywall.syncBalance(true).catch(function() {});
     } finally {

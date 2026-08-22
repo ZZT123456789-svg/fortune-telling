@@ -47,7 +47,7 @@ var AuspiciousDateModule = {
     var ctn = document.getElementById('ausDateResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">🗓️ ' + y + '年' + m + '月' + d + '日 择日结果</div>' +
+      '<div class="result-header"><span class="dao-title-mark">择</span>' + y + '年' + m + '月' + d + '日 择日结果</div>' +
       '<div style="text-align:center;padding:0.8rem;">' +
         '<div style="font-size:1.3rem;color:' + levelColor + ';font-weight:bold;">' + level + '</div>' +
         '<div style="color:var(--text-secondary);">事项：' + eventName + '</div>' +

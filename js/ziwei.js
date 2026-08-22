@@ -245,7 +245,7 @@ var ZiweiModule = {
     html += '</div>';
     html += '<div class="zw-actions">' +
       '<button class="btn-secondary" type="button" onclick="ZiweiModule.close()">返回</button>' +
-      '<button class="btn-primary" type="button" onclick="AIChat.openWithContext(\'ziweiResult\')">🤖 问 AI 解读</button>' +
+      '<button class="btn-primary" type="button" onclick="AIChat.openWithContext(\'ziweiResult\')">问 AI 解读</button>' +
       '</div>';
     html += '</div>';
 

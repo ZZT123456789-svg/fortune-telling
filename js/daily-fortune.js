@@ -183,7 +183,7 @@ var DailyModule = {
         '<span class="lucky-item">🧭 幸运方向：<b>' + this._randomPick(dirs) + '</b></span>' +
         '<span class="lucky-item">🍎 幸运水果：<b>' + this._randomPick(fruits) + '</b></span>' +
         '<span class="lucky-item">📅 宜：<b>' + this._randomPick(['出行','会友','签约','学习','投资','表白','求职']) + '</b></span>' +
-        '<span class="lucky-item">⚠️ 忌：<b>' + this._randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累']) + '</b></span>' +
+        '<span class="lucky-item">忌：<b>' + this._randomPick(['冲动消费','熬夜','争吵','独断专行','过度劳累']) + '</b></span>' +
         '</div>';
     }
     Paywall.blockAll('stickResult');

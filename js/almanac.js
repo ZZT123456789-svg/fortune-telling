@@ -142,7 +142,7 @@ var AlmanacModule = {
     var ctn = document.getElementById('almanacResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">📆 ' + year + '年' + month + '月' + day + '日 黄历</div>' +
+      '<div class="result-header"><span class="dao-title-mark">历</span>' + year + '年' + month + '月' + day + '日 黄历</div>' +
       '<div class="almanac-grid">' +
         '<div class="almanac-item"><span class="alabel">农历年份</span><br/><span class="avalue">' + yearGZ.gan + yearGZ.zhi + '年（' + shengxiao + '年）</span></div>' +
         '<div class="almanac-item"><span class="alabel">农历日期</span><br/><span class="avalue">' + this._lunarDateText(lunar) + '</span></div>' +
@@ -152,9 +152,9 @@ var AlmanacModule = {
         '<div class="almanac-item"><span class="alabel">建除</span><br/><span class="avalue">' + jianChuDay + '日</span></div>' +
         '<div class="almanac-item"><span class="alabel">冲煞</span><br/><span class="avalue">冲' + clashZhi + '（' + clashSx + '）</span></div>' +
       '</div>' +
-      '<div class="almanac-yi"><span class="alabel">✅ 宜：</span>' + yiJi.yi.join('、') + '</div>' +
-      '<div class="almanac-ji"><span class="alabel">❌ 忌：</span>' + yiJi.ji.join('、') + '</div>' +
-      '<div style="font-size:0.8rem;color:var(--text-muted);padding:0.3rem;">📜 彭祖百忌：' + pengZuDay + ' ' + pengZuZhi + '</div>' +
+      '<div class="almanac-yi"><span class="alabel">宜：</span>' + yiJi.yi.join('、') + '</div>' +
+      '<div class="almanac-ji"><span class="alabel">忌：</span>' + yiJi.ji.join('、') + '</div>' +
+      '<div style="font-size:0.8rem;color:var(--text-muted);padding:0.3rem;">彭祖百忌：' + pengZuDay + ' ' + pengZuZhi + '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">⚠ 农历日期与干支由统一历法引擎计算；宜忌内容仅供传统文化参考</p>' +
       '<button class="btn-secondary" onclick="AlmanacModule.close()">🔙 返回</button>';
     Paywall.blockAll('almanacResult');

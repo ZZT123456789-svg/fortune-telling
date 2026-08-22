@@ -140,7 +140,7 @@ var MeihuaModule = {
     var ctn = document.getElementById('meihuaResult');
     ctn.style.display = 'block';
     ctn.innerHTML =
-      '<div class="result-header">🌸 梅花易数排盘</div>' +
+      '<div class="result-header"><span class="dao-title-mark">梅</span>梅花易数排盘</div>' +
       '<div style="text-align:center;padding:0.6rem;">' +
         '<div style="font-size:2rem;">' + r.benGua.lower.symbol + ' ' + r.benGua.upper.symbol + '</div>' +
         '<div style="color:var(--gold);font-weight:bold;font-size:1.1rem;">本卦：' + r.benGua.name + '</div>' +

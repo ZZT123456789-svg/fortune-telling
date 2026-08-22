@@ -66,7 +66,7 @@ var XiaoLiuRenModule = {
     ctn.style.display = 'block';
     var p = result.final;
     ctn.innerHTML =
-      '<div class="result-header">🖐️ 掌诀推算结果</div>' +
+      '<div class="result-header"><span class="dao-title-mark">壬</span>掌诀推算结果</div>' +
       '<div style="text-align:center;padding:0.8rem;">' +
         '<span style="font-size:2rem;color:' + p.color + ';">' + p.name + '</span>' +
         '<div style="color:var(--text-secondary);margin-top:0.3rem;">' + p.level + ' · 五行属' + p.element + ' · ' + p.direction + '</div>' +

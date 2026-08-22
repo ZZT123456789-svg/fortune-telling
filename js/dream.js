@@ -78,15 +78,15 @@ var DreamModule = {
     ctn.style.display = 'block';
     if (entry) {
       ctn.innerHTML =
-        '<div class="result-header">💭 梦见「' + keyword + '」</div>' +
+        '<div class="result-header"><span class="dao-title-mark">梦</span>梦见「' + keyword + '」</div>' +
         '<div style="text-align:center;padding:0.3rem;"><span style="font-size:1.1rem;color:var(--gold);">吉凶：' + entry.result + '</span></div>' +
-        '<div style="color:var(--gold-pale);line-height:1.7;padding:0.5rem;margin-top:0.3rem;">📖 <b>传统解读：</b>' + entry.desc + '</div>' +
-        '<div style="color:var(--text);line-height:1.7;padding:0.5rem;">🧠 <b>心理提示：</b>' + entry.psy + '</div>' +
+        '<div style="color:var(--gold-pale);line-height:1.7;padding:0.5rem;margin-top:0.3rem;"><span class="dao-title-mark">古</span><b>传统解读：</b>' + entry.desc + '</div>' +
+        '<div style="color:var(--text);line-height:1.7;padding:0.5rem;"><span class="dao-title-mark">心</span><b>心理提示：</b>' + entry.psy + '</div>' +
         '<p style="text-align:center;color:var(--text-muted);font-size:0.76rem;">仅供娱乐参考，梦境的解释因人而异</p>' +
         '<button class="btn-secondary" onclick="DreamModule.close()">🔙 返回</button>';
     } else {
       ctn.innerHTML =
-        '<div class="result-header">💭 梦见「' + keyword + '」</div>' +
+        '<div class="result-header"><span class="dao-title-mark">梦</span>梦见「' + keyword + '」</div>' +
         '<p style="text-align:center;color:var(--text-secondary);padding:1rem;">暂未收录此梦境关键词，建议尝试其他关键词（如水、蛇、飞、掉牙等）。</p>' +
         '<button class="btn-secondary" onclick="DreamModule.close()">🔙 返回</button>';
     }
