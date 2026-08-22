@@ -98,11 +98,28 @@
     return { ganZhi: value, gan: gan, zhi: zhi };
   }
 
-  function detailsFromSolar(year, month, day, hour) {
-    var solar = createSolar(year, month, day, hour);
+  function detailsFromSolar(year, month, day, hour, minute, dayBoundary) {
+    if (!validSolarDate(year, month, day)) throw new Error('公历日期不存在，请检查年月日');
+    hour = integer(hour) ? hour : 0;
+    minute = integer(minute) ? minute : 0;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) throw new Error('出生时间不存在，请检查时分');
+    var solar;
+    try {
+      solar = engine().Solar.fromYmdHms(year, month, day, hour, minute, 0);
+    } catch (error) {
+      throw new Error('公历日期不存在，请检查年月日');
+    }
     var lunar = solar.getLunar();
     var eightChar = lunar.getEightChar();
+    // sect=1 表示晚子时（23:00）换日；与本站原有排盘口径一致。
+    eightChar.setSect(dayBoundary === 'midnight' ? 2 : 1);
     var lunarMonth = lunar.getMonth();
+    var hiddenStems = [
+      { stems:eightChar.getYearHideGan(), tenGods:eightChar.getYearShiShenZhi() },
+      { stems:eightChar.getMonthHideGan(), tenGods:eightChar.getMonthShiShenZhi() },
+      { stems:eightChar.getDayHideGan(), tenGods:eightChar.getDayShiShenZhi() },
+      { stems:eightChar.getTimeHideGan(), tenGods:eightChar.getTimeShiShenZhi() }
+    ];
     return {
       solar: { year: solar.getYear(), month: solar.getMonth(), day: solar.getDay() },
       lunar: { year: lunar.getYear(), month: Math.abs(lunarMonth), day: lunar.getDay(), isLeap: lunarMonth < 0 },
@@ -110,7 +127,43 @@
       yearPillar: pillar(eightChar.getYear()),
       monthPillar: pillar(eightChar.getMonth()),
       dayPillar: pillar(eightChar.getDay()),
-      hourPillar: pillar(eightChar.getTime())
+      hourPillar: pillar(eightChar.getTime()),
+      yearNaYin: eightChar.getYearNaYin(),
+      stemTenGods: [eightChar.getYearShiShenGan(), eightChar.getMonthShiShenGan(), '日主', eightChar.getTimeShiShenGan()],
+      hiddenStems: hiddenStems,
+      diShi: [eightChar.getYearDiShi(), eightChar.getMonthDiShi(), eightChar.getDayDiShi(), eightChar.getTimeDiShi()],
+      xunKong: [eightChar.getYearXunKong(), eightChar.getMonthXunKong(), eightChar.getDayXunKong(), eightChar.getTimeXunKong()]
+    };
+  }
+
+  function yunFromSolar(year, month, day, hour, minute, gender, dayBoundary) {
+    var solar = engine().Solar.fromYmdHms(year, month, day, hour, minute || 0, 0);
+    var eightChar = solar.getLunar().getEightChar();
+    eightChar.setSect(dayBoundary === 'midnight' ? 2 : 1);
+    // 起运采用分钟级折算法（sect=2），男=1、女=0。
+    var yun = eightChar.getYun(gender === '男' ? 1 : 0, 2);
+    var startSolar = yun.getStartSolar();
+    var daYun = yun.getDaYun(9).slice(1).map(function(item) {
+      var ganZhi = item.getGanZhi();
+      return {
+        ganZhi: ganZhi,
+        gan: ganZhi.charAt(0),
+        zhi: ganZhi.charAt(1),
+        startAge: item.getStartAge(),
+        endAge: item.getEndAge(),
+        startYear: item.getStartYear(),
+        endYear: item.getEndYear(),
+        xunKong: item.getXunKong(),
+        years: item.getLiuNian(10).map(function(yearItem) {
+          return {year:yearItem.getYear(), age:yearItem.getAge(), ganZhi:yearItem.getGanZhi(), xunKong:yearItem.getXunKong()};
+        })
+      };
+    });
+    return {
+      forward: yun.isForward(),
+      start: {year:yun.getStartYear(), month:yun.getStartMonth(), day:yun.getStartDay(), hour:yun.getStartHour()},
+      startSolar: {year:startSolar.getYear(), month:startSolar.getMonth(), day:startSolar.getDay(), hour:startSolar.getHour(), minute:startSolar.getMinute()},
+      daYun: daYun
     };
   }
 
@@ -139,7 +192,7 @@
   }
 
   function calculateBazi(year, month, day, hour, gender) {
-    var details = detailsFromSolar(year, month, day, hour);
+    var details = detailsFromSolar(year, month, day, hour, 0, 'late-zi');
     var pillars = {
       year: details.yearPillar,
       month: details.monthPillar,
@@ -169,6 +222,8 @@
     validSolarDate: validSolarDate,
     solarToLunar: solarToLunar,
     lunarToSolar: lunarToSolar,
+    baziDetails: detailsFromSolar,
+    baziYun: yunFromSolar,
     solarDetails: solarDetails
   };
   root.solarToLunar = solarToLunar;

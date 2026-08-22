@@ -37,7 +37,7 @@ var BaziModule = {
     this.currentMode = 'single';
     this._updateModeUI();
     this._initAddressCascades();
-    this._syncCalendarUI();
+    this._syncAllCalendarUI();
   },
 
   close: function() {
@@ -137,18 +137,24 @@ var BaziModule = {
     var coord = null;
     if (city) coord = BaziDB.getCityCoord(city);
     if (!coord && prov) coord = BaziDB.getProvCoord(prov);
-    return coord ? coord.lng : 116;
+    return coord ? coord.lng : null;
   },
 
   _isValidSolarDate: function(year, month, day) {
     return typeof DaoCalendar !== 'undefined' && DaoCalendar.validSolarDate(year, month, day);
   },
 
-  _syncCalendarUI: function() {
-    var type = document.getElementById('baziCalType1');
-    var wrap = document.getElementById('baziLeapWrap1');
-    var leap = document.getElementById('baziLeapMonth1');
-    var month = document.getElementById('baziMonth1');
+  _syncAllCalendarUI: function() {
+    var self = this;
+    ['1', 'A', 'B'].forEach(function(prefix) { self._syncCalendarUI(prefix); });
+  },
+
+  _syncCalendarUI: function(prefix) {
+    prefix = prefix || '1';
+    var type = document.getElementById('baziCalType' + prefix);
+    var wrap = document.getElementById('baziLeapWrap' + prefix);
+    var leap = document.getElementById('baziLeapMonth' + prefix);
+    var month = document.getElementById('baziMonth' + prefix);
     var lunar = !!(type && type.value === 'lunar');
     if (wrap) wrap.hidden = !lunar;
     if (!lunar && leap) leap.checked = false;
@@ -161,12 +167,17 @@ var BaziModule = {
       }
       month.value = selected;
     }
-    this._updateTrueSolar('1');
+    this._updateTrueSolar(prefix);
   },
 
   /** 真太阳时计算 */
   _calcTrueSolar: function(year, month, day, hour, minute, prefix) {
+    var enabled = document.getElementById('baziUseTrueSolar' + prefix);
+    if (!enabled || !enabled.checked) {
+      return {hour: hour, minute: minute, dayOffset: 0, lngCorrection: 0, eot: 0, applied: false};
+    }
     var longitude = this._getLongitude(prefix);
+    if (longitude == null) throw new Error('启用真太阳时后，请选择出生省市');
     var timeZoneMeridian = 120;
     var lngCorrection = (longitude - timeZoneMeridian) * 4;
 
@@ -176,20 +187,22 @@ var BaziModule = {
     var B_rad = B * Math.PI / 180;
     var eot = 9.87 * Math.sin(2 * B_rad) - 7.53 * Math.cos(B_rad) - 1.5 * Math.sin(B_rad);
 
-    var totalMinutes = hour * 60 + minute + lngCorrection + eot;
-    totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+    var rawMinutes = hour * 60 + minute + lngCorrection + eot;
+    var dayOffset = Math.floor(rawMinutes / 1440);
+    var totalMinutes = ((rawMinutes % 1440) + 1440) % 1440;
 
     var trueHour = Math.floor(totalMinutes / 60);
     var trueMinute = Math.round(totalMinutes % 60);
     if (trueMinute >= 60) { trueHour++; trueMinute -= 60; }
-    if (trueHour >= 24) trueHour -= 24;
-
-    return {hour: trueHour, minute: trueMinute, lngCorrection: Math.round(lngCorrection), eot: Math.round(eot)};
+    if (trueHour >= 24) { trueHour -= 24; dayOffset += 1; }
+    return {hour: trueHour, minute: trueMinute, dayOffset: dayOffset, lngCorrection: Math.round(lngCorrection), eot: Math.round(eot), applied: true};
   },
 
   _updateTrueSolar: function(prefix) {
     var display = document.getElementById('trueSolar' + prefix);
     if (!display) return;
+    var enabled = document.getElementById('baziUseTrueSolar' + prefix);
+    if (!enabled || !enabled.checked) { display.style.display = 'none'; return; }
     var year = parseInt(document.getElementById('baziYear' + prefix).value);
     var month = parseInt(document.getElementById('baziMonth' + prefix).value);
     var day = parseInt(document.getElementById('baziDay' + prefix).value);
@@ -197,11 +210,11 @@ var BaziModule = {
     var minute = parseInt(document.getElementById('baziMinute' + prefix).value) || 0;
     if (isNaN(hour)) return;
     if (!year || !month || !day) { year = 1990; month = 1; day = 1; }
-    if (prefix === '1') {
-      var type = document.getElementById('baziCalType1');
+    if (prefix === '1' || prefix === 'A' || prefix === 'B') {
+      var type = document.getElementById('baziCalType' + prefix);
       if (type && type.value === 'lunar') {
         try {
-          var leap = !!(document.getElementById('baziLeapMonth1') && document.getElementById('baziLeapMonth1').checked);
+          var leap = !!(document.getElementById('baziLeapMonth' + prefix) && document.getElementById('baziLeapMonth' + prefix).checked);
           var converted = this._lunarToSolar(year, month, day, leap);
           year = converted.year; month = converted.month; day = converted.day;
         } catch (error) {
@@ -211,7 +224,9 @@ var BaziModule = {
       }
     }
     if (!this._isValidSolarDate(year, month, day)) { display.style.display = 'none'; return; }
-    var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
+    var ts;
+    try { ts = this._calcTrueSolar(year, month, day, hour, minute, prefix); }
+    catch (error) { display.style.display = 'none'; return; }
     display.style.display = 'block';
     document.getElementById('trueSolarTime' + prefix).textContent =
       String(ts.hour).padStart(2,'0') + ':' + String(ts.minute).padStart(2,'0') +
@@ -298,49 +313,79 @@ var BaziModule = {
   },
 
   _analyzeSingle: function(name, gender, year, month, day, hour, minute, prefix) {
-    // 先算真太阳时
+    if (typeof DaoCalendar === 'undefined' || !DaoCalendar.baziDetails) throw new Error('统一历法引擎未加载');
     var ts = this._calcTrueSolar(year, month, day, hour, minute, prefix);
-    var trueHour = ts.hour;
-
-    // 子时换日：真太阳时≥23点，日柱算次日
-    var calcDay = day, calcMonth = month, calcYear = year;
-    if (trueHour >= 23) {
-      var nextDate = new Date(year, month - 1, day + 1);
-      calcYear = nextDate.getFullYear(); calcMonth = nextDate.getMonth() + 1; calcDay = nextDate.getDate();
+    var effectiveDate = new Date(Date.UTC(year, month - 1, day + ts.dayOffset));
+    var calcYear = effectiveDate.getUTCFullYear();
+    var calcMonth = effectiveDate.getUTCMonth() + 1;
+    var calcDay = effectiveDate.getUTCDate();
+    var details = DaoCalendar.baziDetails(calcYear, calcMonth, calcDay, ts.hour, ts.minute, 'late-zi');
+    var self = this;
+    function adapt(p) {
+      return {gan:self.tianGan[p.gan], zhi:self.diZhi[p.zhi], ganIdx:p.gan, zhiIdx:p.zhi};
     }
-    var yearP = this._getYearPillar(calcYear, calcMonth, calcDay, trueHour);
-    var monthP = this._getMonthPillar(yearP.ganIdx, calcMonth, calcDay, trueHour, calcYear);
-    var dayP = this._getDayPillar(calcYear, calcMonth, calcDay);
-    var hourP = this._getHourPillar(dayP.ganIdx, trueHour);
+    var yearP = adapt(details.yearPillar);
+    var monthP = adapt(details.monthPillar);
+    var dayP = adapt(details.dayPillar);
+    var hourP = adapt(details.hourPillar);
 
     var dayMaster = dayP.gan;
     var dmElement = this.wuXingMap[dayMaster];
 
     var wxCount = {金:0,木:0,水:0,火:0,土:0};
     var pillars = [yearP, monthP, dayP, hourP];
-    var self = this;
     pillars.forEach(function(p) {
       wxCount[self.wuXingMap[p.gan]] = (wxCount[self.wuXingMap[p.gan]] || 0) + 1;
       wxCount[self.wuXingMap[p.zhi]] = (wxCount[self.wuXingMap[p.zhi]] || 0) + 1;
     });
 
-    var naYinIdx = (yearP.ganIdx * 6 + yearP.zhiIdx) % 30;
-    var naYinName = this.naYin[naYinIdx] || '未知';
+    var naYinName = details.yearNaYin || '未知';
 
     var shiShen = pillars.map(function(p) {
       return {ganSS: self._getShiShen(dayMaster, p.gan)};
     });
 
-    var daYun = this._getDaYun(yearP, monthP, gender);
+    var yun = DaoCalendar.baziYun(calcYear, calcMonth, calcDay, ts.hour, ts.minute, gender, 'late-zi');
+    var daYun = yun.daYun.map(function(item) {
+      return {gan:item.gan, zhi:item.zhi, age:item.startAge, startAge:item.startAge, endAge:item.endAge, startYear:item.startYear, endYear:item.endYear, years:item.years, xunKong:item.xunKong};
+    });
 
-    return {
+    var result = {
       name: name, gender: gender,
       yearP: yearP, monthP: monthP, dayP: dayP, hourP: hourP,
       dayMaster: dayMaster, dmElement: dmElement,
       wxCount: wxCount, naYin: naYinName,
       shiShen: shiShen, daYun: daYun,
-      trueSolar: ts
+      trueSolar: ts,
+      solarDate: {year:year, month:month, day:day, hour:hour, minute:minute},
+      effectiveDate: {year:calcYear, month:calcMonth, day:calcDay, hour:ts.hour, minute:ts.minute},
+      engineDetails: details,
+      yun: yun
     };
+    if (typeof BaziProfessional !== 'undefined') result.professional = BaziProfessional.build(result);
+    return result;
+  },
+
+  _readBirthInput: function(prefix) {
+    var name = document.getElementById('baziName' + prefix).value || '未命名';
+    var gender = document.getElementById('baziGender' + prefix).value;
+    var year = parseInt(document.getElementById('baziYear' + prefix).value);
+    var month = parseInt(document.getElementById('baziMonth' + prefix).value);
+    var day = parseInt(document.getElementById('baziDay' + prefix).value);
+    var hour = parseInt(document.getElementById('baziHour' + prefix).value);
+    var minute = parseInt(document.getElementById('baziMinute' + prefix).value) || 0;
+    if (!year || !month || !day || isNaN(hour)) return null;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) throw new Error('出生时间不存在，请检查时分');
+    var calTypeNode = document.getElementById('baziCalType' + prefix);
+    var calType = calTypeNode ? calTypeNode.value : 'solar';
+    if (calType === 'lunar') {
+      var leapNode = document.getElementById('baziLeapMonth' + prefix);
+      var solar = this._lunarToSolar(year, month, day, !!(leapNode && leapNode.checked));
+      year = solar.year; month = solar.month; day = solar.day;
+    } else if (!this._isValidSolarDate(year, month, day)) {
+      throw new Error('公历日期不存在，请检查年月日');
+    }
+    return {name:name, gender:gender, year:year, month:month, day:day, hour:hour, minute:minute};
   },
 
   _analyzeDual: function(a, b) {
@@ -377,27 +422,10 @@ var BaziModule = {
 
   calculate: function() {
     try {
-        if (this.currentMode === 'single') {
-      var name = document.getElementById('baziName1').value || '未命名';
-      var gender = document.getElementById('baziGender1').value;
-      var year = parseInt(document.getElementById('baziYear1').value);
-      var month = parseInt(document.getElementById('baziMonth1').value);
-      var day = parseInt(document.getElementById('baziDay1').value);
-      var hour = parseInt(document.getElementById('baziHour1').value);
-      var minute = parseInt(document.getElementById('baziMinute1').value) || 0;
-      if (!year || !month || !day || isNaN(hour)) { alert('请填写完整的出生日期和时间'); return; }
-
-      // 农历先严格转换成公历；八字年、月柱仍按节气判定。
-      var calType = document.getElementById('baziCalType1').value;
-      if (calType === 'lunar') {
-        var isLeap = !!(document.getElementById('baziLeapMonth1') && document.getElementById('baziLeapMonth1').checked);
-        var solar = this._lunarToSolar(year, month, day, isLeap);
-        year = solar.year; month = solar.month; day = solar.day;
-      } else if (!this._isValidSolarDate(year, month, day)) {
-        throw new Error('公历日期不存在，请检查年月日');
-      }
-
-      var result = this._analyzeSingle(name, gender, year, month, day, hour, minute, '1');
+      if (this.currentMode === 'single') {
+      var person = this._readBirthInput('1');
+      if (!person) { alert('请填写完整的出生日期和时间'); return; }
+      var result = this._analyzeSingle(person.name, person.gender, person.year, person.month, person.day, person.hour, person.minute, '1');
       this._lastResult = result;
         this._renderSingle(result);
     } else {
@@ -413,16 +441,9 @@ var BaziModule = {
   },
 
   _getDualPerson: function(suffix) {
-    var name = document.getElementById('baziName' + suffix).value || '未命名';
-    var gender = document.getElementById('baziGender' + suffix).value;
-    var year = parseInt(document.getElementById('baziYear' + suffix).value);
-    var month = parseInt(document.getElementById('baziMonth' + suffix).value);
-    var day = parseInt(document.getElementById('baziDay' + suffix).value);
-    var hour = parseInt(document.getElementById('baziHour' + suffix).value);
-    var minute = parseInt(document.getElementById('baziMinute' + suffix).value) || 0;
-    if (!year || !month || !day || isNaN(hour)) return null;
-    if (!this._isValidSolarDate(year, month, day)) throw new Error('合盘中的公历日期不存在，请检查年月日');
-    return this._analyzeSingle(name, gender, year, month, day, hour, minute, suffix);
+    var person = this._readBirthInput(suffix);
+    if (!person) return null;
+    return this._analyzeSingle(person.name, person.gender, person.year, person.month, person.day, person.hour, person.minute, suffix);
   },
 
   _buildPillarHtml: function(label, p) {
@@ -467,11 +488,12 @@ var BaziModule = {
     }
 
     // 基本信息
-    var infoHtml = '<div style=\"padding:0.5rem;background:var(--bg-card);border-radius:8px;margin-bottom:0.5rem;\">' +
+    var timeLabel = r.trueSolar.applied ? '真太阳时' : '北京时间';
+    var timeNote = r.trueSolar.applied ? '（经度校正 ' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分，跨日 ' + r.trueSolar.dayOffset + '）' : '（未启用真太阳时）';
+    var infoHtml = '<div class=\"bazi-result-meta\">' +
       '<p><b>八字：</b>' + r.yearP.gan+r.yearP.zhi + ' ' + r.monthP.gan+r.monthP.zhi + ' ' + r.dayP.gan+r.dayP.zhi + ' ' + r.hourP.gan+r.hourP.zhi + '</p>' +
       '<p><b>日主：</b>' + r.dayMaster + '（' + r.dmElement + '）&nbsp;<b>性别：</b>' + r.gender + '&nbsp;<b>生肖：</b>' + (self.shengXiao[r.yearP.zhiIdx]||'') + '&nbsp;<b>纳音：</b>' + (r.naYin||'') + '</p>' +
-      '<p><b><i class="dao-inline-mark">时</i> 真太阳时：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') +
-      '（校正 ' + (r.trueSolar.lngCorrection >= 0 ? '+' : '') + r.trueSolar.lngCorrection + '分）</p></div>';
+      '<p><b><i class="dao-inline-mark">时</i> ' + timeLabel + '：</b>' + String(r.trueSolar.hour).padStart(2,'0') + ':' + String(r.trueSolar.minute).padStart(2,'0') + timeNote + '</p></div>';
 
     // 五行条形图
     var wxBars = '', wxColors = {金:'#e8c040',木:'#4a9',水:'#59c',火:'#e55',土:'#da5'};
@@ -502,11 +524,14 @@ var BaziModule = {
     else if (isSummer && hasWater) diTianHou = '全局夏月有水润燥，寒热平衡，五行流通有度。';
     else diTianHou = '全局气候平和，不寒不燥，调候非急务，以格局旺衰为主。';
 
-    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml +
-      '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4>🔥 《滴天髓》调候总纲（第一优先级）</h4>' +
+    var professionalSummary = r.professional ? BaziProfessional.renderSummary(r.professional) : '';
+    var professionalChart = r.professional ? BaziProfessional.renderProfessional(r.professional) : '';
+    var resultTabs = '<div class="bazi-result-tabs" role="tablist"><button class="active" type="button" onclick="BaziModule.switchResultView(\'simple\',this)">简明解读</button><button type="button" onclick="BaziModule.switchResultView(\'professional\',this)">专业命盘</button></div>';
+    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
+      '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4><i class=\"dao-inline-mark\">候</i> 《滴天髓》调候总纲（第一优先级）</h4>' +
         '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
-      '<div class=\"analysis-card\"><h4>📜 《滴天髓》' + r.dayMaster + '体性</h4>' +
+      '<div class=\"analysis-card\"><h4><i class=\"dao-inline-mark\">典</i> 《滴天髓》' + r.dayMaster + '体性</h4>' +
         '<p style=\"font-family:KaiTi,serif;font-size:1.05rem;color:var(--gold-pale);line-height:1.8;\">' + dts + '</p>' +
         '<p>' + dtsBH + '</p></div>' +
       // 藏干表
@@ -518,12 +543,13 @@ var BaziModule = {
           var hidden = BaziClassics._zhiHidden(allZhi[zi]);
           hg += '<tr><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+zhiNames[zi]+'</td><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+allZhi[zi]+'</td><td style=\"padding:3px 6px;border:1px solid var(--border-subtle);\">'+hidden.map(function(h){return h+'('+(self._getShiShen(r.dayMaster,h)||'—')+')';}).join(' ')+'</td></tr>';
         }
-        return '<div class=\"analysis-card\"><h4>📦 地支藏干</h4><table style=\"width:100%;font-size:0.82rem;\"><tr><th>位置</th><th>地支</th><th>藏干(十神)</th></tr>'+hg+'</table></div>';
+        return '<div class=\"analysis-card\"><h4><i class=\"dao-inline-mark\">藏</i> 地支藏干</h4><div class=\"table-wrap\"><table style=\"width:100%;font-size:0.82rem;\"><tr><th>位置</th><th>地支</th><th>藏干(十神)</th></tr>'+hg+'</table></div></div>';
       })() +
-      '<div class=\"analysis-card\"><h4>🔗 十神（以日主' + r.dayMaster + '为中心）</h4>' +
-        '<table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div>' +
+      '<div class=\"analysis-card\"><h4><i class=\"dao-inline-mark\">神</i> 十神（以日主' + r.dayMaster + '为中心）</h4>' +
+        '<div class=\"table-wrap\"><table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div></div>' +
       '<div class=\"analysis-card\"><h4><i class="dao-inline-mark">调</i> 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
-        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div>';
+        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div></div>' +
+      '<div id="baziProfessionalView" class="bazi-result-view" hidden>' + professionalChart + '</div>';
 
     var geju = this._getGeJu(r);
     var patternVisualHtml = this._buildPatternVisuals(geju, pattern);
@@ -552,7 +578,7 @@ var BaziModule = {
         '<p style="font-size:0.82rem;color:var(--text-secondary);">地势坤，君子以厚德载物</p>' +
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;margin-top:0.5rem;"><i class="dao-inline-mark">注</i> 以上推算基于传统命理规则，仅供娱乐参考。日柱建议查万年历校准。</p>' +
-      '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>' +
+      '<button class="btn-secondary" onclick="BaziModule.close()"><i class="dao-inline-mark">返</i> 返回</button>' +
       '<button class="btn-primary" onclick="AIChat.openWithContext(\'baziResult\')" style="width:auto;padding:0.5rem 1.5rem;margin-left:0.5rem;">问 AI</button>';
 
     // 排盘免费 + AI深度解读付费
@@ -564,7 +590,7 @@ var BaziModule = {
       self._callAIReading(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     } else {
       // 独立显示付费提示，避免提示被垂直居中在整份超长报告中间。
-      ctn.innerHTML =
+      ctn.innerHTML = freeHtml +
         '<div class="bazi-paywall-prompt">'+
           '<div><div><span class="dao-title-mark">锁</span></div>'+
           '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
@@ -577,6 +603,25 @@ var BaziModule = {
     }
     } catch(e) { ctn.innerHTML = '<div class="result-header">渲染出错</div><p style="color:var(--red);">错误: ' + e.message + '</p><p style="font-size:0.8rem;">请截图联系客服: 微信 ZZT-2004-12</p>'; }
   },
+
+  switchResultView: function(mode, button) {
+    var simple = document.getElementById('baziSimpleView');
+    var professional = document.getElementById('baziProfessionalView');
+    if (!simple || !professional) return;
+    var showProfessional = mode === 'professional';
+    simple.hidden = showProfessional;
+    professional.hidden = !showProfessional;
+    simple.classList.toggle('active', !showProfessional);
+    professional.classList.toggle('active', showProfessional);
+    var tabs = button && button.parentNode ? button.parentNode.querySelectorAll('button') : [];
+    Array.prototype.forEach.call(tabs, function(item){item.classList.toggle('active', item===button);});
+  },
+
+  toggleTenGod: function(button) {
+    var expanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  },
+
   _renderDual: function(a, b, compat) {
     var ctn = document.getElementById('baziResult');
     ctn.style.display = 'block';
@@ -598,6 +643,7 @@ var BaziModule = {
     var sxComp={鼠:['牛','龙','猴'],牛:['鼠','蛇','鸡'],虎:['马','狗','猪'],兔:['羊','狗','猪'],龙:['鼠','猴','鸡'],蛇:['牛','鸡','猴'],马:['虎','羊','狗'],羊:['兔','马','猪'],猴:['鼠','龙','蛇'],鸡:['牛','龙','蛇'],狗:['虎','兔','马'],猪:['虎','兔','羊']};
     var sxMatch=(sxComp[sxA]||[]).indexOf(sxB)>=0;
     var sxClash=[0,1,2,3,4,5,6,7,8,9,10,11];var clashZhi=(a.yearP.zhiIdx+6)%12===b.yearP.zhiIdx;
+    var sxSummary = sxMatch ? '生肖相合（三合/六合），缘分基础不错。' : clashZhi ? '生肖六冲，需要更多理解和包容。' : sxA===sxB ? '生肖相同，生活节奏容易相近，也需保留彼此空间。' : '生肖无明显合冲，关系更取决于日柱、五行与实际经营。';
 
     // 日柱地支关系
     var dzRel='';
@@ -625,8 +671,7 @@ var BaziModule = {
       '<div class="analysis-card"><h4>🌿 五行互补</h4><p>'+comp+'</p></div>' +
       // 生肖配对
       '<div class="analysis-card"><h4>🐾 生肖配对</h4><p>' +
-        (sxMatch?'生肖相合（三合/六合），缘分基础不错。':'生肖无合，但也不冲，正常缘分。') +
-        (clashZhi?' 但生肖六冲，需注意沟通方式，多包容。':'') +
+        sxSummary +
       '</p></div>' +
       // 日柱夫妻宫
       '<div class="analysis-card"><h4>💑 日柱（夫妻宫）关系</h4><p>'+dzRel+'</p></div>' +
@@ -639,13 +684,13 @@ var BaziModule = {
         '<p style="text-align:center;font-size:2rem;color:var(--gold);font-weight:bold;">' + compat.score + '%</p>' +
         '<p>' + compat.relation + '</p>' +
         '<p style="font-size:0.82rem;color:var(--text-secondary);">' +
-          (compat.score>=75?'两人缘分配对较高，五行互补、生肖相合，适合长期发展。':
+          (compat.score>=75?'综合结构匹配度较高，但仍应分别参考五行、生肖与日柱依据。':
            compat.score>=60?'两人有基本的缘分基础，需要多沟通、多包容，感情可稳中求进。':
            '两人缘分有挑战，但感情的核心在于经营，用心处之依然能有好的结果。') +
         '</p>' +
       '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.74rem;">合盘分析基于传统命理规则，仅供娱乐参考。感情最重要的是两个人的用心经营。</p>' +
-      '<button class="btn-secondary" onclick="BaziModule.close()">🔙 返回</button>';
+      '<button class="btn-secondary" onclick="BaziModule.close()"><i class="dao-inline-mark">返</i> 返回</button>';
     this._focusResult(ctn);
   },
 
@@ -660,7 +705,17 @@ var BaziModule = {
       ss: r.shiShen.map(function(s){return s.ganSS||'—';}),
       strength: bs.level, tiaoHou: th.yongShen||'',
       pattern: (pt.patterns||[]).join('; '),
-      dayun: r.daYun.map(function(d){return d.age+'岁:'+d.gan+d.zhi;})
+      dayun: r.daYun.map(function(d){return {ganZhi:d.gan+d.zhi,startAge:d.startAge,endAge:d.endAge,startYear:d.startYear,endYear:d.endYear};}),
+      professional: r.professional ? {
+        pillars:r.professional.pillars,
+        distribution:r.professional.distribution,
+        strength:r.professional.strength,
+        relations:r.professional.relations,
+        pattern:r.professional.pattern,
+        useful:r.professional.useful,
+        shenSha:r.professional.shenSha,
+        yun:{forward:r.professional.yun.forward,start:r.professional.yun.start,startSolar:r.professional.yun.startSolar}
+      } : null
     };
 
     fetch('/api/ai-reading', {
@@ -696,6 +751,13 @@ var BaziModule = {
 
   /** 子平法格局判断（月令十神定格） */
   _getGeJu: function(r) {
+    if (r.professional && r.professional.pattern) {
+      var proPattern = r.professional.pattern;
+      var proGod = r.engineDetails.hiddenStems[1].tenGods[0];
+      var proImages={正官:{key:'zheng-guan',tagline:'端方守正，秩序有成'},七杀:{key:'qi-sha',tagline:'果决担当，化压为权'},正印:{key:'zheng-yin',tagline:'厚德载物，学识护身'},偏印:{key:'pian-yin',tagline:'灵思独悟，另辟蹊径'},食神:{key:'shi-shen',tagline:'才华流露，福禄自来'},伤官:{key:'shang-guan',tagline:'锐意破局，才情见锋'},正财:{key:'zheng-cai',tagline:'踏实经营，积少成多'},偏财:{key:'pian-cai',tagline:'顺势取机，财路广开'},比肩:{key:'jian-lu',tagline:'根基稳固，自立有成'},劫财:{key:'yue-ren',tagline:'刚毅果断，持刃有度'}};
+      var proVisual=proImages[proGod]||{};
+      return {name:proPattern.name,level:'证据化判断',desc:proPattern.basis+'；'+proPattern.counters.join('；'),ss:proGod,score:r.professional.strength.score,imageKey:proVisual.key||'',tagline:proVisual.tagline||''};
+    }
     var dm=r.dayMaster, allG=[r.yearP.gan,r.monthP.gan,r.dayP.gan,r.hourP.gan];
     var mG=allG[1]; // 月干
     var mZ=r.monthP.zhi; // 月支
@@ -1429,15 +1491,16 @@ var BaziModule = {
 
 // 地址变化时更新真太阳时
 document.addEventListener('change', function(e) {
-  if (e.target && (e.target.id === 'baziCalType1' || e.target.id === 'baziLeapMonth1')) {
-    BaziModule._syncCalendarUI();
+  if (e.target && /^bazi(?:CalType|LeapMonth)[1AB]$/.test(e.target.id)) {
+    var calendarPrefix = e.target.id.match(/[1AB]$/)[0];
+    BaziModule._syncCalendarUI(calendarPrefix);
     return;
   }
   if (e.target && e.target.id && e.target.id.indexOf('bazi') === 0 &&
       (e.target.id.indexOf('Province') > -1 || e.target.id.indexOf('City') > -1 ||
        e.target.id.indexOf('Year') > -1 || e.target.id.indexOf('Month') > -1 ||
        e.target.id.indexOf('Day') > -1 || e.target.id.indexOf('Hour') > -1 ||
-       e.target.id.indexOf('Minute') > -1)) {
+       e.target.id.indexOf('Minute') > -1 || e.target.id.indexOf('UseTrueSolar') > -1)) {
     var prefix = e.target.id.replace('bazi','').replace(/[^0-9AB]/g,'');
     if (BaziModule._updateTrueSolar) BaziModule._updateTrueSolar(prefix);
   }

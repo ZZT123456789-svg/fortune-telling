@@ -17,7 +17,7 @@ function loadContext() {
   context.self = context;
   context.globalThis = context;
   vm.createContext(context);
-  for (const file of ['js/vendor/iztro-2.6.0.min.js', 'js/vendor/lunar-javascript-1.7.7.js', 'js/lunar.js', 'js/bazi-db.js', 'js/bazi.js', 'js/almanac.js', 'js/ziwei.js']) {
+  for (const file of ['js/vendor/iztro-2.6.0.min.js', 'js/vendor/lunar-javascript-1.7.7.js', 'js/lunar.js', 'js/bazi-db.js', 'js/bazi-classics.js', 'js/bazi-professional.js', 'js/bazi.js', 'js/almanac.js', 'js/ziwei.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), context, { filename:file });
   }
   return context;
@@ -89,4 +89,79 @@ test('成熟历法引擎输出固定八字案例，并与现有八字日柱口�
   assert.equal(result.monthPillar, ziweiCalendar.monthly.join(''));
   assert.equal(result.dayPillar, ziweiCalendar.daily.join(''));
   assert.equal(result.hourPillar, ziweiCalendar.hourly.join(''));
+});
+
+test('单人和双人使用同一套农历转换，输入相同时四柱完全一致', () => {
+  const local = loadContext();
+  const fields = {};
+  function addPerson(prefix) {
+    fields['baziName' + prefix] = { value: prefix === '1' ? '单人' : '合盘' };
+    fields['baziGender' + prefix] = { value: '男' };
+    fields['baziCalType' + prefix] = { value: 'lunar' };
+    fields['baziLeapMonth' + prefix] = { checked: false };
+    fields['baziYear' + prefix] = { value: '2003' };
+    fields['baziMonth' + prefix] = { value: '1' };
+    fields['baziDay' + prefix] = { value: '20' };
+    fields['baziHour' + prefix] = { value: '20' };
+    fields['baziMinute' + prefix] = { value: '0' };
+    fields['baziUseTrueSolar' + prefix] = { checked: false };
+  }
+  addPerson('1');
+  addPerson('A');
+  local.document.getElementById = id => fields[id] || null;
+
+  const singleInput = local.BaziModule._readBirthInput('1');
+  const dualInput = local.BaziModule._readBirthInput('A');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify([singleInput.year, singleInput.month, singleInput.day])),
+    [2003, 2, 20]
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify([dualInput.year, dualInput.month, dualInput.day])),
+    [2003, 2, 20]
+  );
+
+  const single = local.BaziModule._analyzeSingle(singleInput.name, singleInput.gender, singleInput.year, singleInput.month, singleInput.day, singleInput.hour, singleInput.minute, '1');
+  const dual = local.BaziModule._analyzeSingle(dualInput.name, dualInput.gender, dualInput.year, dualInput.month, dualInput.day, dualInput.hour, dualInput.minute, 'A');
+  const pillars = result => [result.yearP, result.monthP, result.dayP, result.hourP].map(item => item.gan + item.zhi);
+  assert.deepEqual(pillars(single), ['癸未', '甲寅', '甲子', '甲戌']);
+  assert.deepEqual(pillars(dual), pillars(single));
+  assert.equal(single.naYin, '杨柳木');
+  assert.equal(dual.naYin, '杨柳木');
+});
+
+test('真太阳时仅在用户开启并选择出生地后生效，跨日方向正确', () => {
+  const local = loadContext();
+  const fields = {
+    baziUseTrueSolar1: { checked: false },
+    baziProvince1: { value: '' },
+    baziCity1: { value: '' }
+  };
+  local.document.getElementById = id => fields[id] || null;
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(local.BaziModule._calcTrueSolar(2003, 2, 20, 1, 5, '1'))),
+    {hour:1, minute:5, dayOffset:0, lngCorrection:0, eot:0, applied:false}
+  );
+
+  fields.baziUseTrueSolar1.checked = true;
+  fields.baziProvince1.value = '新疆';
+  fields.baziCity1.value = '乌鲁木齐';
+  const previousDay = local.BaziModule._calcTrueSolar(2003, 2, 20, 1, 5, '1');
+  assert.equal(previousDay.dayOffset, -1);
+  assert.equal(previousDay.applied, true);
+
+  fields.baziProvince1.value = '黑龙江';
+  fields.baziCity1.value = '哈尔滨';
+  const nextDay = local.BaziModule._calcTrueSolar(2026, 11, 1, 23, 50, '1');
+  assert.equal(nextDay.dayOffset, 1);
+});
+
+test('双人合盘双方都提供阳历农历、闰月和真太阳时选项', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const prefix of ['A', 'B']) {
+    assert.match(html, new RegExp('id="baziCalType' + prefix + '"'));
+    assert.match(html, new RegExp('id="baziLeapMonth' + prefix + '"'));
+    assert.match(html, new RegExp('id="baziUseTrueSolar' + prefix + '"'));
+    assert.match(html, new RegExp('<select id="baziMonth' + prefix + '">'));
+  }
 });

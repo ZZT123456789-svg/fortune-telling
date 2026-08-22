@@ -83,6 +83,18 @@ var BaziClassics = {
 
   // 身强/身弱按同元素计数（用户定义）
   judgeStrength: function(r) {
+    if (r && r.professional && r.professional.strength) {
+      var pro = r.professional.strength;
+      return {
+        level:pro.level,
+        desc:'日主旺衰采用月令、通根、得地、得势与十神分层权重综合判断。评分 '+pro.score+'/100，可信度 '+pro.confidence+'。',
+        total:pro.score,
+        same:Math.round(((r.professional.distribution.find(function(x){return x.name==='比劫';})||{}).percent||0)/10),
+        sheng:Math.round(((r.professional.distribution.find(function(x){return x.name==='印星';})||{}).percent||0)/10),
+        evidence:pro.evidence,
+        counterEvidence:pro.counterEvidence
+      };
+    }
     var dm = r.dmElement;
     var allGan = [r.yearP.gan, r.monthP.gan, r.dayP.gan, r.hourP.gan];
     var allZhi = [r.yearP.zhi, r.monthP.zhi, r.dayP.zhi, r.hourP.zhi];

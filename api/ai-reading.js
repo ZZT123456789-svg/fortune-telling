@@ -13,13 +13,14 @@ function buildPrompt(c) {
   const wx = JSON.stringify(c.wx || {}).slice(0, 1000);
   const ss = JSON.stringify(c.ss || []).slice(0, 1000);
   const dayun = JSON.stringify(c.dayun || []).slice(0, 2000);
+  const professional = JSON.stringify(c.professional || {}).slice(0, 7000);
   return '你是一位熟悉《滴天髓》《穷通宝鉴》《子平真诠》的传统命理文化解读助手。请只依据以下结构化八字数据进行解释，不补造缺失的出生信息。\n\n' +
     '八字：' + safeText(c.year) + ' ' + safeText(c.month) + ' ' + safeText(c.day) + ' ' + safeText(c.hour) + '\n' +
     '日主：' + safeText(c.dm) + '（五行' + safeText(c.de) + '）\n' +
     '性别：' + safeText(c.gender) + ' 生肖：' + safeText(c.sx) + '\n' +
     '五行分布：' + wx + '\n十神：' + ss + '\n身强弱：' + safeText(c.strength) +
-    '\n调候用神：' + safeText(c.tiaoHou) + '\n格局：' + safeText(c.pattern, 600) + '\n大运：' + dayun + '\n\n' +
-    '按“命格总览、事业财运、感情婚姻、健康提示、人生建议”分段输出。每条结论说明依据；保持文化体验性质，不把推断说成确定事实。健康内容只做一般生活方式提示，不作诊断。';
+    '\n调候用神：' + safeText(c.tiaoHou) + '\n格局：' + safeText(c.pattern, 600) + '\n大运：' + dayun + '\n专业命盘结构：' + professional + '\n\n' +
+    '不得重新计算或改写四柱，只能使用以上结构化命盘。按“命盘基础、结构判断、性格倾向、事业财运、关系与健康、大运流年”六层输出。每项使用“结论、依据、反向条件、可信度”格式；依据必须引用上面的十神位置、藏干层级、旺衰证据、合冲刑害或岁运数据。保持文化体验性质，不把推断说成确定事实。健康内容只做一般生活方式提示，不作诊断。';
 }
 
 module.exports = async function handler(req, res) {

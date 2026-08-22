@@ -292,6 +292,58 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ai-chat-input { border-top: 1px solid rgba(218,175,88,.19) !important; background: rgba(6,7,7,.96) !important; }
 
 /* 支付页 */
+.bazi-result-tabs { display:flex; gap:8px; margin:14px 0; padding:5px; border:1px solid rgba(218,175,88,.2); border-radius:12px; background:rgba(4,5,5,.7); position:sticky; top:-1.2rem; z-index:5; backdrop-filter:blur(14px); }
+.bazi-result-tabs button { flex:1; min-height:42px; border:1px solid transparent; border-radius:8px; color:var(--text-secondary); background:transparent; cursor:pointer; font-weight:700; }
+.bazi-result-tabs button.active { color:#17120a; border-color:#e4bd6c; background:linear-gradient(135deg,#f0d48f,#b67a28); box-shadow:0 8px 22px rgba(185,128,41,.18); }
+.bazi-result-meta { padding:12px 14px; margin-bottom:10px; color:#eee7d9; background:linear-gradient(145deg,rgba(24,24,21,.96),rgba(8,9,9,.96)); border:1px solid rgba(222,181,94,.24); border-radius:12px; box-shadow:inset 0 1px rgba(255,238,195,.035); }
+.bazi-result-meta p { margin:.28rem 0; color:#eee7d9; line-height:1.65; }
+.bazi-result-meta b { color:#efd28d; }
+.bazi-result-view[hidden] { display:none !important; }
+.bazi-evidence-summary { padding:16px; margin-bottom:12px; border:1px solid rgba(224,184,99,.26); border-radius:13px; background:linear-gradient(145deg,rgba(209,163,72,.08),rgba(8,9,9,.82)); }
+.bazi-conclusion { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid rgba(224,184,99,.15); }
+.bazi-conclusion > span { color:var(--text-muted); font-size:.75rem; letter-spacing:.12em; }
+.bazi-conclusion strong { color:#f2d28d; font:700 1.35rem/1.2 "Noto Serif SC","Songti SC",serif; }
+.bazi-conclusion em { margin-left:auto; color:#c8b58d; font-size:.76rem; font-style:normal; }
+.bazi-evidence-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:13px; }
+.bazi-evidence-columns h4 { margin:0 0 7px; color:#e5c27c; font-size:.83rem; }
+.bazi-evidence-columns ol { margin:0; padding-left:1.25rem; color:var(--text-secondary); font-size:.8rem; line-height:1.75; }
+.bazi-basis-line { margin:10px 0 0; color:var(--text-secondary); font-size:.82rem; line-height:1.7; }
+.bazi-pro-chart { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin-bottom:12px; }
+.bazi-pillar-card { min-width:0; padding:11px 8px; border:1px solid rgba(224,184,99,.26); border-radius:12px; text-align:center; background:radial-gradient(circle at 50% 0,rgba(215,170,81,.09),transparent 45%),rgba(7,8,8,.86); }
+.bazi-pillar-card header,.bazi-pillar-card footer { display:flex; justify-content:space-between; gap:4px; color:var(--text-muted); font-size:.66rem; }
+.bazi-pillar-card header b { color:#daba76; }
+.bazi-gan,.bazi-zhi { color:#f0d18e; font:700 2rem/1.2 "Noto Serif SC","Songti SC",serif; text-shadow:0 0 18px rgba(231,188,98,.15); }
+.bazi-zhi { margin-bottom:8px; color:#eee7d8; }
+.bazi-hidden-list { display:grid; gap:5px; min-height:94px; }
+.bazi-hidden-list > span { display:flex; justify-content:space-between; gap:5px; padding:5px; border-radius:6px; background:rgba(255,255,255,.025); color:#dcc38d; font-weight:700; font-size:.76rem; }
+.bazi-hidden-list small { color:var(--text-muted); font-size:.58rem; font-weight:400; text-align:right; }
+.bazi-pillar-card footer { margin-top:8px; padding-top:7px; border-top:1px solid rgba(224,184,99,.11); flex-direction:column; }
+.bazi-pro-section { margin-top:10px !important; }
+.ten-god-bars { display:grid; gap:7px; }
+.ten-god-bar { width:100%; padding:8px 10px; border:1px solid rgba(222,181,94,.14); border-radius:8px; color:inherit; background:rgba(0,0,0,.2); cursor:pointer; text-align:left; }
+.ten-god-bar > span { display:flex; justify-content:space-between; color:#e8d7b4; }
+.ten-god-bar em { color:#e9bf68; font-style:normal; }
+.ten-god-bar i { display:block; height:5px; margin-top:6px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.05); }
+.ten-god-bar u { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#93621e,#e5bd6b); text-decoration:none; }
+.ten-god-bar small { display:none; margin-top:8px; color:var(--text-muted); font-size:.7rem; line-height:1.6; }
+.ten-god-bar[aria-expanded="true"] small { display:block; }
+.bazi-method-note { margin-top:8px !important; color:var(--text-muted) !important; font-size:.68rem !important; }
+.bazi-status-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+.bazi-status-grid span { padding:9px; border:1px solid rgba(222,181,94,.15); border-radius:8px; color:var(--text-secondary); font-size:.76rem; }
+.bazi-status-grid b { display:block; margin-bottom:4px; color:#e4c27d; }
+.bazi-relation-grid,.bazi-star-grid { display:flex; flex-wrap:wrap; gap:7px; }
+.bazi-relation,.bazi-star { display:grid; gap:2px; padding:8px 10px; border:1px solid rgba(221,179,90,.17); border-radius:8px; color:var(--text-secondary); font-size:.75rem; background:rgba(255,255,255,.02); }
+.bazi-relation b,.bazi-star b { color:#e5bf70; }
+.bazi-relation small,.bazi-star small { color:var(--text-muted); font-size:.62rem; }
+.bazi-yun-start { color:var(--text-secondary); line-height:1.75; }
+.bazi-yun-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.bazi-yun-grid details { border:1px solid rgba(222,181,94,.17); border-radius:9px; background:rgba(0,0,0,.18); }
+.bazi-yun-grid summary { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; padding:10px; cursor:pointer; color:var(--text-secondary); }
+.bazi-yun-grid summary b { color:#edcb82; font-size:1rem; }
+.bazi-yun-grid summary small { color:var(--text-muted); }
+.bazi-yun-grid details > div { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; padding:0 9px 9px; }
+.bazi-yun-grid details > div span { display:flex; justify-content:space-between; padding:5px; border-radius:5px; color:var(--text-secondary); background:rgba(255,255,255,.025); font-size:.68rem; }
+
 .dw-payment-shell { overflow: hidden; position: relative; }
 .dw-payment-shell::before { content:""; position:absolute; left:8%; right:8%; top:0; height:1px; background:linear-gradient(90deg,transparent,#f0cf86,transparent); box-shadow:0 0 15px rgba(237,197,117,.5); }
 .dw-plan-card { overflow: hidden; }
@@ -330,6 +382,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .ai-chat-window { inset: auto 0 0 !important; width: 100vw !important; height: min(78dvh, 650px) !important; border-width: 1px 0 0 !important; border-radius: 20px 20px 0 0 !important; }
   .ai-chat-fab { right: 14px !important; bottom: calc(14px + env(safe-area-inset-bottom)) !important; }
   .dw-contact-panel { top: 62px !important; }
+  .bazi-evidence-columns { grid-template-columns:1fr; }
+  .bazi-pro-chart { overflow-x:auto; grid-template-columns:repeat(4,minmax(150px,1fr)); padding-bottom:5px; scroll-snap-type:x proximity; }
+  .bazi-pillar-card { scroll-snap-align:start; }
+  .bazi-status-grid { grid-template-columns:repeat(2,1fr); }
+  .bazi-yun-grid { grid-template-columns:1fr; }
+  .bazi-result-tabs { top:calc(-1.2rem - env(safe-area-inset-top)); }
 }
 
 @media (max-width: 430px) {

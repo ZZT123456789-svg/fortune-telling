@@ -372,7 +372,7 @@
     <div class="tool-modal">
       <button class="modal-close" onclick="BaziModule.close()">✕</button>
       <h2 class="modal-title"><span class="dao-title-mark">命</span>八字排盘</h2>
-      <p class="modal-desc">真太阳时八字排盘，多维命理解析</p>
+      <p class="modal-desc">统一历法四柱排盘，可选真太阳时校正</p>
 
       <!-- 模式切换 -->
       <div class="bazi-mode-tabs">
@@ -397,6 +397,7 @@
           <div class="form-group"><label>出生分钟</label><input type="number" id="baziMinute1" placeholder="0-59" min="0" max="59" value="0"></div>
         </div>
         <p style="font-size:0.74rem;color:var(--text-muted);text-align:center;margin-top:-0.2rem;">若出生时间不详，可默认 12:00，会对结果有一定影响</p>
+        <label class="calendar-leap-toggle true-solar-toggle"><input type="checkbox" id="baziUseTrueSolar1"> 使用真太阳时（需选择出生地）</label>
         <!-- 真太阳时显示 -->
         <div class="true-solar-display" id="trueSolar1" style="display:none;">
           <span><i class="dao-inline-mark">时</i> 真太阳时：<b id="trueSolarTime1">--</b></span>
@@ -411,20 +412,22 @@
 
       <!-- 双人合盘 -->
       <div id="baziDualPanel" style="display:none;">
-        <h3 class="dual-label">👤 第一位</h3>
+        <h3 class="dual-label"><span class="dao-inline-mark">甲</span> 第一位</h3>
         <div class="form-row">
           <div class="form-group"><label>姓名</label><input type="text" id="baziNameA" placeholder="输入姓名"></div>
           <div class="form-group"><label>性别</label><select id="baziGenderA"><option value="男">男</option><option value="女">女</option></select></div>
+          <div class="form-group"><label>日历类型</label><select id="baziCalTypeA"><option value="solar">阳历（公历）</option><option value="lunar">农历（阴历）</option></select><label id="baziLeapWrapA" class="calendar-leap-toggle" hidden><input type="checkbox" id="baziLeapMonthA"> 这是闰月</label></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>出生年份</label><input type="number" id="baziYearA" placeholder="1990" min="1900" max="2100"></div>
-          <div class="form-group"><label>月份</label><input type="number" id="baziMonthA" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>月份</label><select id="baziMonthA"><option value="">请选择月份</option><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
           <div class="form-group"><label>日期</label><input type="number" id="baziDayA" placeholder="1-31" min="1" max="31"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>小时</label><input type="number" id="baziHourA" placeholder="0-23" min="0" max="23"></div>
           <div class="form-group"><label>分钟</label><input type="number" id="baziMinuteA" placeholder="0-59" min="0" max="59" value="0"></div>
         </div>
+        <label class="calendar-leap-toggle true-solar-toggle"><input type="checkbox" id="baziUseTrueSolarA"> 使用真太阳时（需选择出生地）</label>
         <div class="true-solar-display" id="trueSolarA" style="display:none;">
           <span><i class="dao-inline-mark">时</i> 真太阳时：<b id="trueSolarTimeA">--</b></span>
         </div>
@@ -434,20 +437,22 @@
           <div class="form-group"><label>&nbsp;</label><select id="baziDistrictA" class="address-select"><option value="">县</option></select></div>
         </div>
         <hr style="border-color:var(--border-subtle);margin:1rem 0;">
-        <h3 class="dual-label">👤 第二位</h3>
+        <h3 class="dual-label"><span class="dao-inline-mark">乙</span> 第二位</h3>
         <div class="form-row">
           <div class="form-group"><label>姓名</label><input type="text" id="baziNameB" placeholder="输入姓名"></div>
           <div class="form-group"><label>性别</label><select id="baziGenderB"><option value="男">男</option><option value="女">女</option></select></div>
+          <div class="form-group"><label>日历类型</label><select id="baziCalTypeB"><option value="solar">阳历（公历）</option><option value="lunar">农历（阴历）</option></select><label id="baziLeapWrapB" class="calendar-leap-toggle" hidden><input type="checkbox" id="baziLeapMonthB"> 这是闰月</label></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>出生年份</label><input type="number" id="baziYearB" placeholder="1990" min="1900" max="2100"></div>
-          <div class="form-group"><label>月份</label><input type="number" id="baziMonthB" placeholder="1-12" min="1" max="12"></div>
+          <div class="form-group"><label>月份</label><select id="baziMonthB"><option value="">请选择月份</option><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></div>
           <div class="form-group"><label>日期</label><input type="number" id="baziDayB" placeholder="1-31" min="1" max="31"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>小时</label><input type="number" id="baziHourB" placeholder="0-23" min="0" max="23"></div>
           <div class="form-group"><label>分钟</label><input type="number" id="baziMinuteB" placeholder="0-59" min="0" max="59" value="0"></div>
         </div>
+        <label class="calendar-leap-toggle true-solar-toggle"><input type="checkbox" id="baziUseTrueSolarB"> 使用真太阳时（需选择出生地）</label>
         <div class="true-solar-display" id="trueSolarB" style="display:none;">
           <span><i class="dao-inline-mark">时</i> 真太阳时：<b id="trueSolarTimeB">--</b></span>
         </div>
@@ -843,6 +848,7 @@
   <script src="js/vendor/lunar-javascript-1.7.7.js"></script>
   <script src="js/bazi-db.js"></script>
   <script src="js/bazi-classics.js"></script>
+  <script src="js/bazi-professional.js"></script>
   <script src="js/lunar.js"></script>
   <script src="js/china-address.js"></script>
   <script src="js/bazi.js"></script>
