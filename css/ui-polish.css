@@ -357,36 +357,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .bazi-result-tabs { display:flex; gap:8px; margin:14px 0; padding:5px; border:1px solid rgba(218,175,88,.2); border-radius:12px; background:rgba(4,5,5,.7); position:sticky; top:-1.2rem; z-index:5; backdrop-filter:blur(14px); }
 .bazi-result-tabs button { flex:1; min-height:42px; border:1px solid transparent; border-radius:8px; color:var(--text-secondary); background:transparent; cursor:pointer; font-weight:700; }
 .bazi-result-tabs button.active { color:#17120a; border-color:#e4bd6c; background:linear-gradient(135deg,#f0d48f,#b67a28); box-shadow:0 8px 22px rgba(185,128,41,.18); }
-.bazi-entry-progress { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:4px 0 18px; }
-.bazi-entry-progress span { display:flex; align-items:center; justify-content:center; gap:7px; min-height:38px; color:var(--text-muted); font-size:.78rem; border-bottom:1px solid rgba(218,175,88,.18); }
-.bazi-entry-progress span b { display:grid; place-items:center; width:22px; height:22px; color:var(--gold-pale); border:1px solid rgba(218,175,88,.35); border-radius:50%; font-size:.7rem; }
-.bazi-entry-progress span.active { color:var(--text-primary); border-color:var(--gold); }
-.bazi-entry-heading { display:flex; align-items:center; gap:9px; margin:17px 0 9px; color:var(--text-primary); font-size:.96rem; letter-spacing:.08em; }
-.bazi-entry-heading span { color:var(--gold); font:700 .72rem/1 system-ui,sans-serif; letter-spacing:.08em; }
-.bazi-advanced-settings { margin:14px 0; border:1px solid rgba(218,175,88,.24); border-radius:12px; background:rgba(5,6,6,.52); overflow:hidden; }
-.bazi-advanced-settings summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:0 15px; color:var(--text-primary); cursor:pointer; list-style:none; }
-.bazi-advanced-settings summary::-webkit-details-marker { display:none; }
-.bazi-advanced-settings summary span { font-weight:700; }
-.bazi-advanced-settings summary span b { margin-right:6px; color:var(--gold); font-size:.72rem; }
-.bazi-advanced-settings summary small { color:var(--text-muted); font-size:.75rem; font-weight:400; }
-.bazi-advanced-settings summary::after { content:'＋'; color:var(--gold); font-size:1.1rem; }
-.bazi-advanced-settings[open] summary::after { content:'－'; }
-.bazi-advanced-body { padding:4px 14px 14px; border-top:1px solid rgba(218,175,88,.14); }
-.bazi-input-summary { margin:14px 0 4px; padding:14px 15px; border:1px solid rgba(218,175,88,.2); border-radius:12px; background:linear-gradient(135deg,rgba(218,175,88,.07),rgba(6,7,7,.68)); }
-.bazi-input-summary div { display:flex; flex-direction:column; gap:5px; }
-.bazi-input-summary span { color:var(--gold); font-size:.72rem; letter-spacing:.08em; }
-.bazi-input-summary b { color:var(--text-secondary); font-size:.92rem; line-height:1.55; }
-.bazi-input-summary p { margin:8px 0 0; color:var(--text-muted); font-size:.76rem; line-height:1.55; }
-.bazi-input-summary.ready { border-color:rgba(224,184,99,.42); box-shadow:0 0 24px rgba(194,139,45,.07); }
-.bazi-input-summary.ready b { color:var(--text-primary); }
-.bazi-submit-btn { display:inline-flex !important; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:210px; }
-.bazi-submit-btn small { font-size:.68rem; font-weight:500; opacity:.72; letter-spacing:.04em; }
-.bazi-reading-route { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin:14px 0 9px; }
-.bazi-reading-route button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:56px; padding:7px 4px; color:var(--text-muted); border:1px solid rgba(218,175,88,.16); border-radius:10px; background:rgba(5,6,6,.58); cursor:pointer; transition:border-color 200ms ease,color 200ms ease,background 200ms ease; }
-.bazi-reading-route button b { display:grid; place-items:center; width:20px; height:20px; color:var(--gold); border:1px solid rgba(218,175,88,.32); border-radius:50%; font-size:.65rem; }
-.bazi-reading-route button span { font-size:.72rem; white-space:nowrap; }
-.bazi-reading-route button:hover,.bazi-reading-route button.active { color:var(--text-primary); border-color:rgba(231,194,117,.55); background:rgba(218,175,88,.1); }
-#baziSummarySection,#baziChartSection,#baziStructureSection,#baziRelationsSection,#baziYunSection,#baziClassicsSection,#baziAISection { scroll-margin-top:84px; }
 .bazi-result-meta { padding:12px 14px; margin-bottom:10px; color:#eee7d9; background:linear-gradient(145deg,rgba(24,24,21,.96),rgba(8,9,9,.96)); border:1px solid rgba(222,181,94,.24); border-radius:12px; box-shadow:inset 0 1px rgba(255,238,195,.035); }
 .bazi-result-meta p { margin:.28rem 0; color:#eee7d9; line-height:1.65; }
 .bazi-result-meta b { color:#efd28d; }
@@ -461,10 +431,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 @media (max-width: 760px) {
-  .bazi-entry-progress span { gap:4px; font-size:.68rem; }
-  .bazi-entry-progress span b { width:19px; height:19px; }
-  .bazi-reading-route { display:flex; overflow-x:auto; scroll-snap-type:x proximity; padding-bottom:4px; }
-  .bazi-reading-route button { flex:0 0 88px; scroll-snap-align:start; }
   .dao-app-home > .section-header, .dao-app-home > .tools-grid, .dao-app-home > .disclaimer-section { width: calc(100% - 20px) !important; }
   .section-header { margin-top: 2.7rem !important; }
   .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }

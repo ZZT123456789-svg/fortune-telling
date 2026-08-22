@@ -38,7 +38,6 @@ var BaziModule = {
     this._updateModeUI();
     this._initAddressCascades();
     this._syncAllCalendarUI();
-    this._updateEntrySummary('1');
   },
 
   close: function() {
@@ -169,55 +168,6 @@ var BaziModule = {
       month.value = selected;
     }
     this._updateTrueSolar(prefix);
-    this._updateEntrySummary(prefix);
-  },
-
-  /** 提交前只复述用户输入，不提前推算四柱，避免录入错误被带入命盘。 */
-  _updateEntrySummary: function(prefix) {
-    prefix = prefix || '1';
-    var summary = document.getElementById('baziInputSummary' + prefix);
-    if (!summary) return;
-    var get = function(id) { return document.getElementById(id + prefix); };
-    var nameNode = get('baziName');
-    var genderNode = get('baziGender');
-    var typeNode = get('baziCalType');
-    var yearNode = get('baziYear');
-    var monthNode = get('baziMonth');
-    var dayNode = get('baziDay');
-    var hourNode = get('baziHour');
-    var minuteNode = get('baziMinute');
-    var year = parseInt(yearNode && yearNode.value);
-    var month = parseInt(monthNode && monthNode.value);
-    var day = parseInt(dayNode && dayNode.value);
-    var hour = parseInt(hourNode && hourNode.value);
-    var minute = parseInt(minuteNode && minuteNode.value) || 0;
-    var title = summary.querySelector('b');
-    var note = summary.querySelector('p');
-    if (!title || !note) return;
-    if (!year || !month || !day || isNaN(hour)) {
-      title.textContent = '请填写完整的出生日期和时间';
-      note.textContent = '基础命盘免费生成；AI 深度解读按当前余额规则单独使用。';
-      summary.classList.remove('ready');
-      return;
-    }
-    var isLunar = !!(typeNode && typeNode.value === 'lunar');
-    var isLeap = !!(get('baziLeapMonth') && get('baziLeapMonth').checked);
-    var calendarLabel = isLunar ? '农历' + (isLeap ? '闰' : '') : '公历';
-    var person = (nameNode && nameNode.value.trim()) || '未命名';
-    var gender = genderNode ? genderNode.value : '';
-    title.textContent = person + ' · ' + gender + ' · ' + calendarLabel + year + '年' + month + '月' + day + '日 ' + String(hour).padStart(2,'0') + ':' + String(minute).padStart(2,'0');
-    var trueSolar = get('baziUseTrueSolar');
-    var correction = trueSolar && trueSolar.checked ? '已启用真太阳时；将按所选出生地校正。' : '未启用真太阳时；按北京时间排盘。';
-    if (isLunar) {
-      try {
-        var converted = this._lunarToSolar(year, month, day, isLeap);
-        correction = '将先换算为公历 ' + converted.year + '-' + converted.month + '-' + converted.day + '；' + correction;
-      } catch (error) {
-        correction = '当前农历日期无法换算，请检查月份、日期和闰月选项。';
-      }
-    }
-    note.textContent = correction + ' 请确认无误后开启推演。';
-    summary.classList.add('ready');
   },
 
   /** 真太阳时计算 */
@@ -576,17 +526,9 @@ var BaziModule = {
 
     var professionalSummary = r.professional ? BaziProfessional.renderSummary(r.professional) : '';
     var professionalChart = r.professional ? BaziProfessional.renderProfessional(r.professional) : '';
-    var resultRoute = '<nav class="bazi-reading-route" aria-label="命盘阅读路径">' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'simple\',\'baziSummarySection\',this)"><b>1</b><span>命盘摘要</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'professional\',\'baziChartSection\',this)"><b>2</b><span>四柱十神</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'professional\',\'baziStructureSection\',this)"><b>3</b><span>结构依据</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'professional\',\'baziRelationsSection\',this)"><b>4</b><span>关系作用</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'professional\',\'baziYunSection\',this)"><b>5</b><span>大运流年</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'simple\',\'baziClassicsSection\',this)"><b>6</b><span>古籍依据</span></button>' +
-      '<button type="button" onclick="BaziModule.openResultSection(\'simple\',\'baziAISection\',this)"><b>7</b><span>AI 解读</span></button></nav>';
     var resultTabs = '<div class="bazi-result-tabs" role="tablist"><button class="active" type="button" onclick="BaziModule.switchResultView(\'simple\',this)">简明解读</button><button type="button" onclick="BaziModule.switchResultView(\'professional\',this)">专业命盘</button></div>';
-    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + resultRoute + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active"><section id="baziSummarySection">' + professionalSummary + '</section>' +
-      '<div id="baziClassicsSection" class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4><i class=\"dao-inline-mark\">候</i> 《滴天髓》调候总纲（第一优先级）</h4>' +
+    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
+      '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4><i class=\"dao-inline-mark\">候</i> 《滴天髓》调候总纲（第一优先级）</h4>' +
         '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
       '<div class=\"analysis-card\"><h4><i class=\"dao-inline-mark\">典</i> 《滴天髓》' + r.dayMaster + '体性</h4>' +
@@ -616,13 +558,13 @@ var BaziModule = {
     var paidHtml = '';
     if (Paywall.hasBalance()) {
       // AI解读占位(异步加载)
-      paidHtml = patternVisualHtml + '<section id="baziAISection"><div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
+      paidHtml = patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
         '<p><span class=\"dao-title-mark\">问</span></p>' +
         '<p class=\"ai-reading-loading-title\">正在生成 AI 深度解读…</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
         '<div style=\"width:60px;height:4px;background:var(--border-subtle);margin:1rem auto;border-radius:2px;overflow:hidden;\">' +
           '<div style=\"width:100%;height:100%;background:var(--gold);animation:loadingBar 1.5s ease-in-out infinite;\"></div></div>' +
-        '</div></section>';
+        '</div></div>';
     } else {
       // 规则解读(降级)
       paidHtml = patternVisualHtml + self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
@@ -649,7 +591,7 @@ var BaziModule = {
     } else {
       // 独立显示付费提示，避免提示被垂直居中在整份超长报告中间。
       ctn.innerHTML = freeHtml +
-        '<div class="bazi-paywall-prompt" id="baziAISection">'+
+        '<div class="bazi-paywall-prompt">'+
           '<div><div><span class="dao-title-mark">锁</span></div>'+
           '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
           '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
@@ -673,20 +615,6 @@ var BaziModule = {
     professional.classList.toggle('active', showProfessional);
     var tabs = button && button.parentNode ? button.parentNode.querySelectorAll('button') : [];
     Array.prototype.forEach.call(tabs, function(item){item.classList.toggle('active', item===button);});
-  },
-
-  openResultSection: function(mode, id, button) {
-    this.switchResultView(mode, null);
-    var viewTabs = document.querySelectorAll('.bazi-result-tabs button');
-    Array.prototype.forEach.call(viewTabs, function(item, index) {
-      item.classList.toggle('active', mode === 'professional' ? index === 1 : index === 0);
-    });
-    var routeButtons = document.querySelectorAll('.bazi-reading-route button');
-    Array.prototype.forEach.call(routeButtons, function(item){ item.classList.toggle('active', item === button); });
-    setTimeout(function() {
-      var target = document.getElementById(id);
-      if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
-    }, 30);
   },
 
   toggleTenGod: function(button) {
@@ -770,8 +698,6 @@ var BaziModule = {
   _callAIReading: function(r, bs, th, pt, ssHtml, dyHtml, ddYun, ca, bd, ind, ha, ct, lt, na, gj) {
     var self = this;
     var chart = {
-      schemaVersion: 'daowen-bazi-reading/v1',
-      calculationAuthority: 'DaoCalendar / lunar-javascript',
       year: r.yearP.gan+r.yearP.zhi, month: r.monthP.gan+r.monthP.zhi,
       day: r.dayP.gan+r.dayP.zhi, hour: r.hourP.gan+r.hourP.zhi,
       dm: r.dayMaster, de: r.dmElement, gender: r.gender,
@@ -780,22 +706,6 @@ var BaziModule = {
       strength: bs.level, tiaoHou: th.yongShen||'',
       pattern: (pt.patterns||[]).join('; '),
       dayun: r.daYun.map(function(d){return {ganZhi:d.gan+d.zhi,startAge:d.startAge,endAge:d.endAge,startYear:d.startYear,endYear:d.endYear};}),
-      evidencePacket: r.professional ? {
-        strength: r.professional.strength.evidence.map(function(item,index){return {id:'旺衰-'+(index+1),text:item};}),
-        limitations: r.professional.strength.counterEvidence.map(function(item,index){return {id:'反向-'+(index+1),text:item};}),
-        pattern: {id:'格局-1',name:r.professional.pattern.name,basis:r.professional.pattern.basis,supports:r.professional.pattern.supports,counters:r.professional.pattern.counters},
-        useful: {id:'喜用-1',favorable:r.professional.useful.favorable,unfavorable:r.professional.useful.unfavorable,basis:r.professional.useful.basis},
-        classics: {
-          diTianSui:{source:'滴天髓',subject:r.dayMaster+'日主',original:BaziClassics.diTianSui[r.dayMaster]||'',explanation:BaziClassics.diTianSuiBaiHua[r.dayMaster]||''},
-          qiongTongBaoJian:{source:'穷通宝鉴',subject:r.dayMaster+'日主月令调候',season:th.season||'',useful:th.yongShen||'',basis:th.desc||''}
-        }
-      } : null,
-      interpretationBoundary: {
-        pillarsLocked: true,
-        allowRecalculation: false,
-        requiredFormat: '结论 + 依据编号 + 限制条件',
-        prohibitedTerms: ['可信度']
-      },
       professional: r.professional ? {
         pillars:r.professional.pillars,
         distribution:r.professional.distribution,
@@ -1588,18 +1498,10 @@ document.addEventListener('change', function(e) {
   }
   if (e.target && e.target.id && e.target.id.indexOf('bazi') === 0 &&
       (e.target.id.indexOf('Province') > -1 || e.target.id.indexOf('City') > -1 ||
-       e.target.id.indexOf('Gender') > -1 ||
        e.target.id.indexOf('Year') > -1 || e.target.id.indexOf('Month') > -1 ||
        e.target.id.indexOf('Day') > -1 || e.target.id.indexOf('Hour') > -1 ||
        e.target.id.indexOf('Minute') > -1 || e.target.id.indexOf('UseTrueSolar') > -1)) {
     var prefix = e.target.id.replace('bazi','').replace(/[^0-9AB]/g,'');
     if (BaziModule._updateTrueSolar) BaziModule._updateTrueSolar(prefix);
-    if (BaziModule._updateEntrySummary) BaziModule._updateEntrySummary(prefix);
   }
-});
-
-document.addEventListener('input', function(e) {
-  if (!e.target || !/^bazi(?:Name|Year|Day|Hour|Minute)[1AB]$/.test(e.target.id)) return;
-  var prefix = e.target.id.match(/[1AB]$/)[0];
-  if (BaziModule._updateEntrySummary) BaziModule._updateEntrySummary(prefix);
 });

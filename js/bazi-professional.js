@@ -206,7 +206,7 @@ var BaziProfessional = (function() {
   }
 
   function renderProfessional(data) {
-    var chart = '<div class="bazi-pro-chart" id="baziChartSection">'+data.pillars.map(function(p){return '<article class="bazi-pillar-card">'+
+    var chart = '<div class="bazi-pro-chart">'+data.pillars.map(function(p){return '<article class="bazi-pillar-card">'+
       '<header><span>'+p.label+'</span><b>'+p.tenGod+'</b></header><div class="bazi-gan">'+p.gan+'</div><div class="bazi-zhi">'+p.zhi+'</div>'+
       '<div class="bazi-hidden-list">'+p.hidden.map(function(h){return '<span title="'+escapeHtml(h.tenGod)+' · '+h.layer+' · 显示权重'+h.weight+'%">'+h.stem+'<small>'+h.tenGod+' · '+h.layer+' '+h.weight+'%'+(h.exposed?' · 透干':'')+'</small></span>';}).join('')+'</div>'+
       '<footer><span>长生 '+p.diShi+'</span><span>空亡 '+p.xunKong+'</span></footer></article>';}).join('')+'</div>';
@@ -218,13 +218,13 @@ var BaziProfessional = (function() {
       '<div class="bazi-yun-grid">'+yun.daYun.map(function(d){return '<details><summary><b>'+d.ganZhi+'</b><span>'+d.startAge+'–'+d.endAge+'岁</span><small>'+d.startYear+'–'+d.endYear+'</small></summary><div>'+d.years.map(function(y){return '<span>'+y.year+' '+y.ganZhi+'<small>'+y.age+'岁</small></span>';}).join('')+'</div></details>';}).join('')+'</div>';
     return chart+
       '<section class="analysis-card bazi-pro-section"><h4>十神力量分布</h4>'+bars+'<p class="bazi-method-note">'+escapeHtml(data.weightNote)+'</p></section>'+
-      '<section class="analysis-card bazi-pro-section" id="baziStructureSection"><h4>旺衰评分依据</h4>'+renderSummary(data)+'</section>'+
+      '<section class="analysis-card bazi-pro-section"><h4>旺衰评分依据</h4>'+renderSummary(data)+'</section>'+
       '<section class="analysis-card bazi-pro-section"><h4>透干 · 通根 · 得令 · 得地 · 得势</h4><div class="bazi-status-grid">'+
         '<span><b>得令</b>'+(data.strength.order?'是':'否')+'</span><span><b>通根</b>'+(data.strength.rootPlaces.join('、')||'不足')+'</span><span><b>得地</b>'+(data.strength.terrainPlaces.join('、')||'不足')+'</span><span><b>得势</b>'+(data.strength.momentumPlaces.join('、')||'不足')+'</span></div></section>'+
-      '<section class="analysis-card bazi-pro-section" id="baziRelationsSection"><h4>合冲刑害破 · 三合三会</h4><div class="bazi-relation-grid">'+relations+'</div></section>'+
+      '<section class="analysis-card bazi-pro-section"><h4>合冲刑害破 · 三合三会</h4><div class="bazi-relation-grid">'+relations+'</div></section>'+
       '<section class="analysis-card bazi-pro-section"><h4>格局与用神证据</h4><p><b>'+data.pattern.name+'</b>：'+escapeHtml(data.pattern.basis)+'</p><p><b>支持：</b>'+escapeHtml(data.pattern.supports.join('；'))+'</p><p><b>限制：</b>'+escapeHtml(data.pattern.counters.join('；'))+'</p><p><b>喜用方向：</b>'+data.useful.favorable.join('、')+'；依据：'+escapeHtml(data.useful.basis)+'</p></section>'+
       '<section class="analysis-card bazi-pro-section"><h4>核心神煞</h4><div class="bazi-star-grid">'+stars+'</div><p class="bazi-method-note">神煞仅作辅助，不能替代月令、旺衰、格局与岁运判断。</p></section>'+
-      '<section class="analysis-card bazi-pro-section" id="baziYunSection"><h4>大运与流年 · 真实起运</h4>'+yunHtml+'</section>';
+      '<section class="analysis-card bazi-pro-section"><h4>大运与流年 · 真实起运</h4>'+yunHtml+'</section>';
   }
 
   return {build:build, renderSummary:renderSummary, renderProfessional:renderProfessional, groupOf:groupOf};
