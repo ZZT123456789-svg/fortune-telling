@@ -1,0 +1,322 @@
+/* 道问主站三种配色主题。仅由 index.html 加载，书库与独立支付页保持黑金。 */
+:root[data-dw-theme="night"] {
+  --theme-page: #070808;
+  --theme-surface: rgba(16,18,17,.96);
+  --theme-surface-soft: rgba(25,26,24,.9);
+  --theme-input: rgba(4,5,5,.76);
+  --theme-text: #f5efe4;
+  --theme-text-secondary: #ddd3c3;
+  --theme-text-muted: #bfb5a5;
+  --theme-accent: #d3a653;
+  --theme-accent-bright: #f2d38b;
+  --theme-line: rgba(226,187,104,.38);
+  --theme-overlay: rgba(3,4,4,.8);
+  --theme-shadow: rgba(0,0,0,.62);
+}
+
+:root[data-dw-theme="day"] {
+  --theme-page: #e9e0cf;
+  --theme-surface: rgba(250,246,236,.97);
+  --theme-surface-soft: rgba(240,232,215,.94);
+  --theme-input: rgba(255,252,245,.97);
+  --theme-text: #241e17;
+  --theme-text-secondary: #443a2f;
+  --theme-text-muted: #665b4d;
+  --theme-accent: #98671f;
+  --theme-accent-bright: #704510;
+  --theme-line: rgba(126,88,32,.38);
+  --theme-overlay: rgba(230,220,200,.78);
+  --theme-shadow: rgba(75,54,25,.25);
+}
+
+:root[data-dw-theme="noon"] {
+  --theme-page: #c99c4f;
+  --theme-surface: rgba(239,208,148,.97);
+  --theme-surface-soft: rgba(221,177,101,.94);
+  --theme-input: rgba(255,233,183,.97);
+  --theme-text: #26170a;
+  --theme-text-secondary: #4a2d13;
+  --theme-text-muted: #68451f;
+  --theme-accent: #8a4d0d;
+  --theme-accent-bright: #5e3207;
+  --theme-line: rgba(104,57,10,.42);
+  --theme-overlay: rgba(196,145,61,.72);
+  --theme-shadow: rgba(75,39,5,.3);
+}
+
+/* 只在用户实际点击时启用渐变；首次加载不闪烁。 */
+.dw-theme-transition body,
+.dw-theme-transition .dao-nav,
+.dw-theme-transition .dao-app-home,
+.dw-theme-transition .tool-card,
+.dw-theme-transition .tool-overlay,
+.dw-theme-transition .tool-modal,
+.dw-theme-transition .analysis-card,
+.dw-theme-transition .result-card,
+.dw-theme-transition .result-section,
+.dw-theme-transition .ai-chat-window,
+.dw-theme-transition .ai-chat-header,
+.dw-theme-transition .ai-chat-input,
+.dw-theme-transition input,
+.dw-theme-transition select,
+.dw-theme-transition textarea,
+.dw-theme-transition button,
+.dw-theme-transition .dw-contact-panel {
+  transition: color .5s ease, background-color .5s ease, background .5s ease, border-color .5s ease, box-shadow .5s ease !important;
+}
+
+/* 顶部三个紧凑单色图标。 */
+.dw-theme-switcher {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--theme-line);
+  border-radius: 999px;
+  background: var(--theme-surface);
+  background: color-mix(in srgb, var(--theme-surface) 76%, transparent);
+}
+.dw-theme-switcher button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--theme-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.dw-theme-switcher button:hover { color: var(--theme-text); }
+.dw-theme-switcher button[aria-pressed="true"] {
+  color: var(--theme-accent-bright);
+  border-color: #d2a54e;
+}
+.dw-theme-switcher svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 全局文本变量与可读性。 */
+:root[data-dw-theme] body {
+  --dw-bg: var(--theme-page);
+  --dw-surface: var(--theme-surface);
+  --dw-surface-soft: var(--theme-surface-soft);
+  --dw-gold: var(--theme-accent);
+  --dw-gold-bright: var(--theme-accent-bright);
+  --dw-gold-pale: var(--theme-accent-bright);
+  --dw-ivory: var(--theme-text);
+  --dw-muted: var(--theme-text-muted);
+  --dw-line: var(--theme-line);
+  --dw-line-strong: var(--theme-line);
+  --text: var(--theme-text);
+  --text-secondary: var(--theme-text-secondary);
+  --text-muted: var(--theme-text-muted);
+  --gold: var(--theme-accent);
+  --gold-light: var(--theme-accent-bright);
+  --gold-pale: var(--theme-accent-bright);
+  --bg-deep: var(--theme-page);
+  --bg-card: var(--theme-surface);
+  --bg-input: var(--theme-input);
+  --border-subtle: var(--theme-line);
+  color: var(--theme-text) !important;
+  background-color: var(--theme-page) !important;
+  font-weight: 500;
+}
+:root[data-dw-theme] .tc-name,
+:root[data-dw-theme] .section-h2,
+:root[data-dw-theme] .modal-title,
+:root[data-dw-theme] .result-header,
+:root[data-dw-theme] .analysis-card h3,
+:root[data-dw-theme] .analysis-card h4,
+:root[data-dw-theme] .ai-chat-header { font-weight: 700 !important; }
+:root[data-dw-theme] .tc-desc,
+:root[data-dw-theme] .section-lead,
+:root[data-dw-theme] .modal-desc,
+:root[data-dw-theme] .result-sub,
+:root[data-dw-theme] .form-group > label,
+:root[data-dw-theme] .analysis-card p,
+:root[data-dw-theme] .analysis-card li,
+:root[data-dw-theme] .analysis-card td,
+:root[data-dw-theme] .ai-msg,
+:root[data-dw-theme] .disclaimer-box { font-weight: 500 !important; }
+
+/* 主站、应用首页与导航。 */
+:root[data-dw-theme] .dao-nav {
+  color: var(--theme-text) !important;
+  background: var(--theme-surface) !important;
+  background: color-mix(in srgb, var(--theme-surface) 90%, transparent) !important;
+  border-color: var(--theme-line) !important;
+  box-shadow: 0 16px 45px var(--theme-shadow), inset 0 1px rgba(255,255,255,.1) !important;
+}
+:root[data-dw-theme] .dao-brand,
+:root[data-dw-theme] .dao-nav-scroll > a,
+:root[data-dw-theme] .dao-nav-scroll > button,
+:root[data-dw-theme] .dao-more-trigger { color: var(--theme-text) !important; }
+:root[data-dw-theme] .dao-balance,
+:root[data-dw-theme] .dao-redeem,
+:root[data-dw-theme] .dw-contact-trigger {
+  color: var(--theme-text-secondary) !important;
+  background: var(--theme-surface-soft) !important;
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, transparent) !important;
+  border-color: var(--theme-line) !important;
+}
+:root[data-dw-theme] .dao-balance span { color: var(--theme-text-muted) !important; }
+:root[data-dw-theme] .dao-balance b { color: var(--theme-accent-bright) !important; }
+:root[data-dw-theme] .dao-more-menu,
+:root[data-dw-theme] .dw-contact-panel {
+  color: var(--theme-text) !important;
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-line) !important;
+  box-shadow: 0 24px 65px var(--theme-shadow) !important;
+}
+:root[data-dw-theme] .dao-more-menu button { color: var(--theme-text-secondary) !important; }
+
+:root[data-dw-theme] .dao-app-home {
+  color: var(--theme-text) !important;
+  background: radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--theme-accent) 18%,transparent),transparent 39%),var(--theme-page) !important;
+}
+:root[data-dw-theme] .section-h2,
+:root[data-dw-theme] .tc-name { color: var(--theme-accent-bright) !important; text-shadow: none !important; }
+:root[data-dw-theme] .section-lead,
+:root[data-dw-theme] .tc-desc,
+:root[data-dw-theme] .disclaimer-section,
+:root[data-dw-theme] .disclaimer-box { color: var(--theme-text-secondary) !important; }
+:root[data-dw-theme] .tool-card,
+:root[data-dw-theme] .disclaimer-box {
+  color: var(--theme-text) !important;
+  background: linear-gradient(145deg,var(--theme-surface),var(--theme-surface-soft)) !important;
+  border-color: var(--theme-line) !important;
+  box-shadow: 0 16px 38px var(--theme-shadow), inset 0 1px rgba(255,255,255,.1) !important;
+}
+:root[data-dw-theme] .tc-tag {
+  color: var(--theme-accent-bright) !important;
+  background: var(--theme-surface-soft) !important;
+  background: color-mix(in srgb,var(--theme-accent) 12%,transparent) !important;
+  border-color: var(--theme-line) !important;
+}
+
+/* 首页山水图片不更换，仅改变遮罩和文字配色。 */
+:root[data-dw-theme="day"] .dao-hero::before { background: rgba(234,224,205,.33) !important; }
+:root[data-dw-theme="day"] .dao-hero-shade { background: radial-gradient(ellipse at 50% 56%,rgba(250,245,233,.8),rgba(225,211,187,.22) 49%,rgba(63,47,27,.27)) !important; }
+:root[data-dw-theme="day"] .dao-hero-content::before { background: radial-gradient(ellipse,rgba(249,244,233,.9),rgba(239,230,212,.42) 56%,transparent 73%) !important; }
+:root[data-dw-theme="noon"] .dao-hero::before { background: rgba(201,146,55,.2) !important; }
+:root[data-dw-theme="noon"] .dao-hero-shade { background: radial-gradient(ellipse at 50% 56%,rgba(239,200,125,.74),rgba(189,126,38,.18) 50%,rgba(55,29,7,.36)) !important; }
+:root[data-dw-theme="noon"] .dao-hero-content::before { background: radial-gradient(ellipse,rgba(244,211,147,.86),rgba(201,145,58,.34) 58%,transparent 73%) !important; }
+:root[data-dw-theme="day"] .dao-eyebrow,
+:root[data-dw-theme="noon"] .dao-eyebrow { color: var(--theme-text-secondary) !important; background: var(--theme-surface) !important; background: color-mix(in srgb,var(--theme-surface) 86%,transparent) !important; border-color: var(--theme-line) !important; }
+:root[data-dw-theme="day"] .dao-hero h1,
+:root[data-dw-theme="noon"] .dao-hero h1 { color: var(--theme-text) !important; text-shadow: 0 1px 0 rgba(255,255,255,.65),0 6px 24px rgba(255,244,219,.5) !important; }
+:root[data-dw-theme="day"] .dao-roman,
+:root[data-dw-theme="day"] .dao-moon,
+:root[data-dw-theme="noon"] .dao-roman,
+:root[data-dw-theme="noon"] .dao-moon { color: var(--theme-accent) !important; }
+:root[data-dw-theme="day"] .dao-hero-lead,
+:root[data-dw-theme="day"] .dao-hero-sub,
+:root[data-dw-theme="noon"] .dao-hero-lead,
+:root[data-dw-theme="noon"] .dao-hero-sub { color: var(--theme-text) !important; text-shadow: 0 1px 0 rgba(255,255,255,.65) !important; font-weight: 600 !important; }
+
+/* 功能弹窗、排盘结果与 AI 解读。 */
+:root[data-dw-theme] .tool-overlay { background: var(--theme-overlay) !important; }
+:root[data-dw-theme] .tool-modal {
+  --text: var(--theme-text);
+  --text-secondary: var(--theme-text-secondary);
+  --text-muted: var(--theme-text-muted);
+  --gold: var(--theme-accent);
+  --gold-light: var(--theme-accent-bright);
+  --gold-pale: var(--theme-accent-bright);
+  --border-subtle: var(--theme-line);
+  color: var(--theme-text) !important;
+  background: linear-gradient(180deg,var(--theme-surface),var(--theme-surface-soft)) !important;
+  border-color: var(--theme-line) !important;
+  box-shadow: 0 32px 90px var(--theme-shadow),inset 0 1px rgba(255,255,255,.12) !important;
+}
+:root[data-dw-theme] .modal-title,
+:root[data-dw-theme] .result-header,
+:root[data-dw-theme] .analysis-card h3,
+:root[data-dw-theme] .analysis-card h4 { color: var(--theme-accent-bright) !important; }
+:root[data-dw-theme] .modal-desc,
+:root[data-dw-theme] .result-sub,
+:root[data-dw-theme] .form-label,
+:root[data-dw-theme] .form-group > label { color: var(--theme-text-secondary) !important; }
+:root[data-dw-theme] .form-input,
+:root[data-dw-theme] .form-select,
+:root[data-dw-theme] .form-textarea,
+:root[data-dw-theme] .tool-modal input,
+:root[data-dw-theme] .tool-modal select,
+:root[data-dw-theme] .tool-modal textarea {
+  color: var(--theme-text) !important;
+  background: var(--theme-input) !important;
+  border-color: var(--theme-line) !important;
+}
+:root[data-dw-theme] .tool-modal .analysis-card,
+:root[data-dw-theme] .result-card,
+:root[data-dw-theme] .result-section,
+:root[data-dw-theme] .bazi-result-meta,
+:root[data-dw-theme] .bazi-evidence-summary,
+:root[data-dw-theme] .bazi-pillar-card {
+  color: var(--theme-text) !important;
+  background: linear-gradient(145deg,var(--theme-surface),var(--theme-surface-soft)) !important;
+  border-color: var(--theme-line) !important;
+}
+:root[data-dw-theme] .tool-modal .analysis-card p,
+:root[data-dw-theme] .tool-modal .analysis-card li,
+:root[data-dw-theme] .tool-modal .analysis-card td,
+:root[data-dw-theme] .bazi-result-meta,
+:root[data-dw-theme] .bazi-result-meta p,
+:root[data-dw-theme] .bazi-evidence-columns ol,
+:root[data-dw-theme] .bazi-basis-line,
+:root[data-dw-theme] .bazi-yun-start { color: var(--theme-text) !important; }
+:root[data-dw-theme] .bazi-pillar-card header,
+:root[data-dw-theme] .bazi-pillar-card footer,
+:root[data-dw-theme] .bazi-hidden-list small,
+:root[data-dw-theme] .bazi-method-note { color: var(--theme-text-muted) !important; }
+
+:root[data-dw-theme] .ai-chat-window {
+  color: var(--theme-text) !important;
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-line) !important;
+  box-shadow: 0 28px 80px var(--theme-shadow) !important;
+}
+:root[data-dw-theme] .ai-chat-header,
+:root[data-dw-theme] .ai-chat-input { color: var(--theme-text) !important; background: var(--theme-surface-soft) !important; border-color: var(--theme-line) !important; }
+:root[data-dw-theme] .ai-msg.assistant,
+:root[data-dw-theme] .tool-modal #aiReadingContainer,
+:root[data-dw-theme] .tool-modal #aiReadingContainer p,
+:root[data-dw-theme] .tool-modal #aiReadingContainer li { color: var(--theme-text) !important; background: var(--theme-surface-soft) !important; background: color-mix(in srgb,var(--theme-surface-soft) 76%,transparent) !important; font-weight: 500 !important; }
+:root[data-dw-theme] .tool-modal #aiReadingContainer .analysis-card h4,
+:root[data-dw-theme] .tool-modal .ai-reading-loading-title { color: var(--theme-accent-bright) !important; text-shadow: none !important; font-weight: 900 !important; }
+
+@media (max-width: 760px) {
+  .dao-nav-scroll { flex: 1 1 70px !important; min-width: 42px !important; }
+  .dao-account-actions { flex: 0 0 211px !important; width: 211px; min-width: 0 !important; max-width: 211px; gap: 2px !important; }
+  .dao-balance { width: 27px; min-height: 38px !important; justify-content: center; padding: 0 3px !important; }
+  .dao-redeem { width: 37px; min-height: 38px !important; padding: 0 !important; font-size: .56rem !important; letter-spacing: 0 !important; }
+  .dao-recharge { width: 34px; min-height: 38px !important; padding: 0 !important; font-size: .58rem !important; letter-spacing: 0 !important; }
+  .dw-contact-menu .dw-contact-trigger { width: 35px; min-height: 38px !important; padding: 0 !important; overflow: hidden; font-size: .55rem !important; letter-spacing: 0 !important; }
+  .dw-theme-switcher { gap: 1px; padding: 2px; }
+  .dw-theme-switcher button { width: 20px; height: 32px; }
+  .dw-theme-switcher svg { width: 15px; height: 15px; }
+}
+
+@media (max-width: 430px) {
+  .dw-theme-switcher button { width: 19px; }
+  .dw-theme-switcher { border-radius: 17px; }
+}
+
+@media (max-width: 370px) {
+  .dao-brand > span:last-child { display: none; }
+  .dao-brand { gap: 0 !important; }
+  .dao-nav-scroll { flex-basis: 48px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dw-theme-transition * { transition-duration: 0s !important; }
+}
