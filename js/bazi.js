@@ -43,6 +43,7 @@ var BaziModule = {
   close: function() {
     document.getElementById('baziOverlay').classList.remove('active');
     document.getElementById('baziResult').style.display = 'none';
+    document.getElementById('baziResult').classList.remove('classic-result-active');
   },
 
   // Results live inside the modal's own scroll container. Keep the page fixed
@@ -80,6 +81,7 @@ var BaziModule = {
       document.getElementById('baziDualPanel').style.display = 'block';
     }
     document.getElementById('baziResult').style.display = 'none';
+    document.getElementById('baziResult').classList.remove('classic-result-active');
   },
 
   _initAddressCascades: function() {
@@ -433,7 +435,8 @@ var BaziModule = {
       var b = this._getDualPerson('B');
       if (!a || !b) { alert('请填写两人的完整信息'); return; }
       var compat = this._analyzeDual(a, b);
-      this._renderDual(a, b, compat);
+      this._lastResult = {mode:'dual', a:a, b:b, compat:compat};
+      this._renderDualComplete(a, b, compat);
     }
     } catch(e) {
       alert('排盘出错: ' + e.message + '\n请截图发客服微信: ZZT-2004-12');
@@ -459,6 +462,7 @@ var BaziModule = {
     var ctn = document.getElementById('baziResult');
     if (!ctn) { alert('排盘显示区域未找到，请刷新页面后重试'); return; }
     ctn.style.display = 'block';
+    ctn.classList.add('classic-result-active');
     // 骨架屏占位
     ctn.innerHTML = '<div class=\"skeleton skeleton-title\"></div><div class=\"skeleton skeleton-table\"></div><div class=\"skeleton skeleton-table\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-card\"></div><div class=\"skeleton skeleton-row\"></div>';
 
@@ -527,7 +531,9 @@ var BaziModule = {
     var professionalSummary = r.professional ? BaziProfessional.renderSummary(r.professional) : '';
     var professionalChart = r.professional ? BaziProfessional.renderProfessional(r.professional) : '';
     var resultTabs = '<div class="bazi-result-tabs" role="tablist"><button class="active" type="button" onclick="BaziModule.switchResultView(\'simple\',this)">简明解读</button><button type="button" onclick="BaziModule.switchResultView(\'professional\',this)">专业命盘</button></div>';
-    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
+    resultTabs = '';
+    var referenceChart = (typeof BaziResultView !== 'undefined') ? BaziResultView.render(r, 'bazi-single-sheet') : '';
+    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + referenceChart + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
       '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4><i class=\"dao-inline-mark\">候</i> 《滴天髓》调候总纲（第一优先级）</h4>' +
         '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
@@ -548,8 +554,7 @@ var BaziModule = {
       '<div class=\"analysis-card\"><h4><i class=\"dao-inline-mark\">神</i> 十神（以日主' + r.dayMaster + '为中心）</h4>' +
         '<div class=\"table-wrap\"><table style=\"width:100%;font-size:0.85rem;\"><tr><th>柱</th><th>天干</th><th>十神</th></tr>' + ssHtml + '</table></div></div>' +
       '<div class=\"analysis-card\"><h4><i class="dao-inline-mark">调</i> 《穷通宝鉴》' + r.dayMaster + '调候用神</h4>' +
-        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div></div>' +
-      '<div id="baziProfessionalView" class="bazi-result-view" hidden>' + professionalChart + '</div>';
+        '<p>日主' + tiaoHou.desc + '生于' + tiaoHou.season + '季，用神：<b>' + (tiaoHou.yongShen||'全局配合') + '</b></p></div></div>';
 
     var geju = this._getGeJu(r);
     var patternVisualHtml = this._buildPatternVisuals(geju, pattern);
@@ -620,6 +625,92 @@ var BaziModule = {
   toggleTenGod: function(button) {
     var expanded = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  },
+
+  _renderDualComplete: function(a, b, compat) {
+    var ctn = document.getElementById('baziResult');
+    if (!ctn) return;
+    ctn.style.display = 'block';
+    ctn.classList.add('classic-result-active');
+    var sheng={木:'火',火:'土',土:'金',金:'水',水:'木'}, ke={木:'土',土:'水',水:'火',火:'金',金:'木'};
+    var comp = a.dmElement===b.dmElement ? '两人日主同属'+a.dmElement+'，理解路径接近，也要避免彼此争强。' :
+      sheng[a.dmElement]===b.dmElement ? a.name+'的'+a.dmElement+'生助'+b.name+'的'+b.dmElement+'，甲方较容易主动支持乙方。' :
+      sheng[b.dmElement]===a.dmElement ? b.name+'的'+b.dmElement+'生助'+a.name+'的'+a.dmElement+'，乙方较容易主动支持甲方。' :
+      ke[a.dmElement]===b.dmElement ? a.name+'的日主五行对'+b.name+'形成制约，沟通中要减少单向要求。' :
+      ke[b.dmElement]===a.dmElement ? b.name+'的日主五行对'+a.name+'形成制约，沟通中要减少单向要求。' : '双方日主无直接生克，关系质量更依赖具体十神和地支作用。';
+    var favorableA=(a.professional.useful.favorable||[]), favorableB=(b.professional.useful.favorable||[]);
+    var shared=favorableA.filter(function(x){return favorableB.indexOf(x)>=0;});
+    var dayRel=this._dualBranchRelation(a.dayP.zhi,b.dayP.zhi,'夫妻宫');
+    var stemRel=this._dualStemRelation(a,b);
+    var branchRel=this._dualAllBranchRelations(a,b);
+    var tenGodRel=a.name+'以'+this._getShiShen(a.dayMaster,b.dayMaster)+'感受乙方日主；'+b.name+'以'+this._getShiShen(b.dayMaster,a.dayMaster)+'感受甲方日主。';
+    var timing=this._dualTiming(a,b);
+    var canAI=window.Paywall&&Paywall.hasBalance(4);
+    var aiHtml=canAI ? '<div class="dual-ai-loading"><p class="ai-reading-loading-title">正在生成双人 AI 合盘解读…</p><p>本次自动扣除 4 次，失败会自动退回</p></div>' :
+      '<div class="dual-ai-locked"><span class="dao-title-mark">锁</span><h3>双人 AI 合盘解读</h3><p>需要 4 次解读余额。甲乙命盘与基础合盘仍可完整查看。</p><button class="btn-primary" onclick="Paywall.openShop()">购买解读次数</button><button class="btn-secondary" onclick="Paywall.openRedeem()">兑换码</button></div>';
+    ctn.innerHTML='<div class="result-header"><i class="dao-inline-mark">合</i> '+a.name+' &amp; '+b.name+' 双人合盘</div>'+
+      '<section class="dual-person-block"><h2>甲方完整单人命盘与规则解读</h2>'+BaziResultView.render(a,'bazi-dual-a')+'</section>'+
+      '<section class="dual-person-block"><h2>乙方完整单人命盘与规则解读</h2>'+BaziResultView.render(b,'bazi-dual-b')+'</section>'+
+      '<section class="dual-compat-report"><h2>双方综合合盘解读</h2>'+
+        '<div class="dual-analysis-grid"><article><h3>日主强弱与五行互补</h3><p>'+comp+'</p><p>甲方：'+a.professional.strength.level+'；乙方：'+b.professional.strength.level+'。</p></article>'+
+        '<article><h3>喜忌与用神互补</h3><p>甲方喜用：'+favorableA.join('、')+'；乙方喜用：'+favorableB.join('、')+'。</p><p>'+(shared.length?'共同喜用为'+shared.join('、')+'，生活环境与协作方向较易统一。':'双方喜用方向不同，适合明确分工并尊重各自节奏。')+'</p></article>'+
+        '<article><h3>日支夫妻宫</h3><p>'+dayRel+'</p></article><article><h3>天干合克</h3><p>'+stemRel+'</p></article>'+
+        '<article><h3>地支合冲刑害破</h3><p>'+branchRel+'</p></article><article><h3>十神互动</h3><p>'+tenGodRel+'</p></article>'+
+        '<article><h3>性格与沟通</h3><p>以双方日主、旺衰和十神互动为依据：'+comp+' 建议出现分歧时先说明需求，再讨论解决方式。</p></article>'+
+        '<article><h3>感情相处</h3><p>'+dayRel+' 命盘呈现的是互动倾向，关系仍以现实沟通、边界和共同投入为主。</p></article>'+
+        '<article><h3>事业财运协作</h3><p>'+(shared.length?'共同喜用方向有交集，适合在'+shared.join('、')+'相关能力上形成互补。':'双方资源取向有差异，适合分别负责擅长领域并提前约定财务规则。')+'</p></article>'+
+        '<article><h3>大运与流年同步</h3><p>'+timing+'</p></article></div>'+
+        '<div class="dual-score"><b>'+compat.score+'%</b><span>结构参考值</span><p>'+compat.relation+'</p></div>'+
+      '</section><section id="dualAiReadingContainer" class="dual-ai-section">'+aiHtml+'</section>'+
+      '<p class="classic-disclaimer">以上内容属于传统文化体验，不代替现实中的感情、财务、医疗或法律决策。</p><button class="btn-secondary" onclick="BaziModule.close()"><i class="dao-inline-mark">返</i> 返回</button>';
+    this._focusResult(ctn);
+    if (canAI) this._callDualAI(a,b,compat);
+  },
+
+  _dualBranchRelation: function(a,b,label) {
+    var six={子:'丑',丑:'子',寅:'亥',亥:'寅',卯:'戌',戌:'卯',辰:'酉',酉:'辰',巳:'申',申:'巳',午:'未',未:'午'};
+    var clash={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
+    var harm={子:'未',未:'子',丑:'午',午:'丑',寅:'巳',巳:'寅',卯:'辰',辰:'卯',申:'亥',亥:'申',酉:'戌',戌:'酉'};
+    var broken={子:'酉',酉:'子',丑:'辰',辰:'丑',寅:'亥',亥:'寅',卯:'午',午:'卯',巳:'申',申:'巳',未:'戌',戌:'未'};
+    if(a===b)return label+a+'与'+b+'伏吟，熟悉感强，同时容易放大相似习惯。';
+    if(six[a]===b)return label+a+b+'六合，互动中较容易形成配合。';
+    if(clash[a]===b)return label+a+b+'六冲，吸引与摩擦并存，需要建立稳定沟通机制。';
+    if(harm[a]===b)return label+a+b+'相害，容易出现未说出口的误解，应减少猜测。';
+    if(broken[a]===b)return label+a+b+'相破，计划和节奏可能反复，重要约定宜具体化。';
+    return label+a+'与'+b+'无直接六合六冲刑害破，需结合全局判断。';
+  },
+
+  _dualStemRelation: function(a,b) {
+    var combine={甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
+    var ap=[a.yearP.gan,a.monthP.gan,a.dayP.gan,a.hourP.gan],bp=[b.yearP.gan,b.monthP.gan,b.dayP.gan,b.hourP.gan],out=[];
+    ap.forEach(function(x){bp.forEach(function(y){if(combine[x]===y&&out.indexOf(x+y+'合')<0)out.push(x+y+'合');});});
+    return out.length?'双方天干见'+out.join('、')+'，是否化气仍须结合月令和全局。':'双方天干未见直接五合，主要看五行生克与十神互动。';
+  },
+
+  _dualAllBranchRelations: function(a,b) {
+    var az=[a.yearP.zhi,a.monthP.zhi,a.dayP.zhi,a.hourP.zhi],bz=[b.yearP.zhi,b.monthP.zhi,b.dayP.zhi,b.hourP.zhi],out=[],self=this;
+    az.forEach(function(x){bz.forEach(function(y){var text=self._dualBranchRelation(x,y,'');if(!/无直接/.test(text)&&out.indexOf(text)<0)out.push(text);});});
+    return out.length?out.map(function(text){return text.replace(/。$/,'');}).join('；')+'。':'双方四支之间未见直接六合、六冲、害或破。';
+  },
+
+  _dualTiming: function(a,b) {
+    var year=new Date().getFullYear();
+    function current(r){for(var i=0;i<r.yun.daYun.length;i++)if(year>=r.yun.daYun[i].startYear&&year<=r.yun.daYun[i].endYear)return r.yun.daYun[i];return r.yun.daYun[0];}
+    var da=current(a),db=current(b),rel=this._dualBranchRelation(da.zhi,db.zhi,'当前大运地支');
+    return a.name+'当前行'+da.ganZhi+'运，'+b.name+'当前行'+db.ganZhi+'运；'+rel;
+  },
+
+  _callDualAI: function(a,b,compat) {
+    var payload={a:BaziResultView.chartPayload(a),b:BaziResultView.chartPayload(b),compat:{score:compat.score,relation:compat.relation}};
+    fetch('/api/ai-dual-reading',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(resp){return resp.json().then(function(data){data.httpStatus=resp.status;return data;});})
+      .then(function(data){
+        if(window.Paywall&&data.balance!=null)Paywall._setBalance(Number(data.balance));
+        var c=document.getElementById('dualAiReadingContainer');if(!c)return;
+        if(data.success){var html=String(data.content||'').replace(/## (.*)/g,'<h3>$1</h3>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n\n/g,'</p><p>').replace(/\n- /g,'<br>• ');c.innerHTML='<div class="dual-ai-result"><h2>双人 AI 合盘解读</h2><p>'+html+'</p><small>'+(data.cached?'已恢复此前生成结果，本次未重复扣费':'本次已扣除 4 次')+'</small></div>';}
+        else if(data.code==='INSUFFICIENT'){c.innerHTML='<div class="dual-ai-locked"><span class="dao-title-mark">锁</span><h3>双人 AI 合盘解读</h3><p>余额不足 4 次，其他排盘内容不受影响。</p><button class="btn-primary" onclick="Paywall.openShop()">购买解读次数</button></div>';}
+        else{c.innerHTML='<div class="dual-ai-error"><h3>AI 解读生成失败</h3><p>'+String(data.error||'本次未扣费；如已预扣，系统已自动退回 4 次。')+'</p></div>';if(window.Paywall)Paywall.syncBalance(true).catch(function(){});}
+      }).catch(function(){var c=document.getElementById('dualAiReadingContainer');if(c)c.innerHTML='<div class="dual-ai-error"><h3>AI 服务暂不可用</h3><p>本次不会产生最终扣费；如已预扣，系统会自动退回。</p></div>';if(window.Paywall)Paywall.syncBalance(true).catch(function(){});});
   },
 
   _renderDual: function(a, b, compat) {

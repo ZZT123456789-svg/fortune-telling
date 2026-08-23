@@ -38,6 +38,13 @@ begin
           updated_at = now();
   delete from public.user_data where user_id = p_guest;
 
+  -- 已生成的双人 AI 合盘随身份迁移；账号已有同盘缓存时保留账号版本。
+  insert into public.ai_dual_readings(user_id, chart_hash, content, created_at, updated_at)
+    select p_account, chart_hash, content, created_at, updated_at
+    from public.ai_dual_readings where user_id = p_guest
+    on conflict (user_id, chart_hash) do nothing;
+  delete from public.ai_dual_readings where user_id = p_guest;
+
   -- 3) 流水：改 user_id（request_id 唯一索引按 (user_id, request_id)，游客与账号相同 request_id 的概率极低，跳过冲突）。
   update public.credit_ledger
     set user_id = p_account

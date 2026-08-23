@@ -129,6 +129,7 @@
       dayPillar: pillar(eightChar.getDay()),
       hourPillar: pillar(eightChar.getTime()),
       yearNaYin: eightChar.getYearNaYin(),
+      naYin: [eightChar.getYearNaYin(), eightChar.getMonthNaYin(), eightChar.getDayNaYin(), eightChar.getTimeNaYin()],
       stemTenGods: [eightChar.getYearShiShenGan(), eightChar.getMonthShiShenGan(), '日主', eightChar.getTimeShiShenGan()],
       hiddenStems: hiddenStems,
       diShi: [eightChar.getYearDiShi(), eightChar.getMonthDiShi(), eightChar.getDayDiShi(), eightChar.getTimeDiShi()],
@@ -172,6 +173,35 @@
     if (timeIndex === 0) return 0;
     if (timeIndex === 12) return 23;
     return timeIndex * 2;
+  }
+
+  function jieQiDates(year) {
+    var names = ['立春','惊蛰','清明','立夏','芒种','小暑','立秋','白露','寒露','立冬','大雪','小寒'];
+    var tables = [
+      engine().Solar.fromYmdHms(year, 7, 1, 12, 0, 0).getLunar().getJieQiTable(),
+      engine().Solar.fromYmdHms(year + 1, 1, 15, 12, 0, 0).getLunar().getJieQiTable()
+    ];
+    return names.map(function(name, index) {
+      var expectedYear = index === 11 ? year + 1 : year;
+      var value = null;
+      tables.some(function(table) {
+        var candidate = table[name];
+        if (candidate && candidate.getYear() === expectedYear) {
+          value = candidate;
+          return true;
+        }
+        return false;
+      });
+      if (!value) return null;
+      return {
+        name: name,
+        year: value.getYear(),
+        month: value.getMonth(),
+        day: value.getDay(),
+        hour: value.getHour(),
+        minute: value.getMinute()
+      };
+    }).filter(Boolean);
   }
 
   function solarDetails(year, month, day, timeIndex) {
@@ -224,6 +254,7 @@
     lunarToSolar: lunarToSolar,
     baziDetails: detailsFromSolar,
     baziYun: yunFromSolar,
+    jieQiDates: jieQiDates,
     solarDetails: solarDetails
   };
   root.solarToLunar = solarToLunar;

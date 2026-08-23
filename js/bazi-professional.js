@@ -83,6 +83,11 @@ var BaziProfessional = (function() {
   }
 
   function buildShenSha(dayStem, yearBranch, dayBranch, branches) {
+    if (typeof BaziShenSha !== 'undefined' && BaziShenSha.detect) {
+      var stems = arguments[4] || [];
+      var monthBranch = arguments[5] || branches[1];
+      return BaziShenSha.detect(dayStem, yearBranch, monthBranch, branches.map(function(zhi,index){return {gan:stems[index]||'',zhi:zhi};}));
+    }
     var result = [];
     var noble = {甲:'丑未',戊:'丑未',庚:'丑未',乙:'子申',己:'子申',丙:'亥酉',丁:'亥酉',壬:'卯巳',癸:'卯巳',辛:'午寅'};
     var wenChang = {甲:'巳',乙:'午',丙:'申',丁:'酉',戊:'申',己:'酉',庚:'亥',辛:'子',壬:'寅',癸:'卯'};
@@ -176,7 +181,7 @@ var BaziProfessional = (function() {
       counters: visibleStems.indexOf(monthMain.stem)>=0?['月令本气已透干，格局信号更明确']:['月令本气未透干，格局纯度需要结合中余气及大运']
     };
     var relations = buildRelations(branches, visibleStems);
-    var shenSha = buildShenSha(r.dayMaster, r.yearP.zhi, r.dayP.zhi, branches);
+    var shenSha = buildShenSha(r.dayMaster, r.yearP.zhi, r.dayP.zhi, branches, visibleStems, r.monthP.zhi);
     var pillarsData = pillars.map(function(p,index){return {label:POSITIONS[index],gan:p.gan,zhi:p.zhi,tenGod:details.stemTenGods[index],hidden:hidden[index],diShi:details.diShi[index],xunKong:details.xunKong[index]};});
     return {
       pillars:pillarsData,

@@ -41,7 +41,7 @@ test('Vercel 使用零配置部署静态页面与 API，不生成空输出目录
 test('Vercel Hobby 部署通过单一网关保留全部业务 API', () => {
   const source = fs.readFileSync(path.join(ROOT, 'api', 'router.js'), 'utf8');
   for (const route of [
-    'ai-chat', 'ai-reading', 'alipay', 'alipay-notify', 'auth-login',
+    'ai-chat', 'ai-reading', 'ai-dual-reading', 'alipay', 'alipay-notify', 'auth-login',
     'auth-logout', 'auth-recover', 'auth-signup', 'balance', 'check-order',
     'consume-credit', 'redeem', 'session', 'user-data'
   ]) {

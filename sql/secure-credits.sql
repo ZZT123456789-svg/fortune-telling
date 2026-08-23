@@ -549,3 +549,59 @@ revoke all on function private.admin_adjust_credits(uuid, integer, text) from pu
 -- 示例：确认旧客户真实付款记录后，人工迁移 10 次（不要自动迁移 localStorage）
 -- select private.admin_adjust_credits('00000000-0000-0000-0000-000000000000'::uuid, 10, '旧客户付款记录核对后迁移');
 
+-- 16) 双人 AI 合盘缓存：同一用户、同一组结构化命盘只付费生成一次。
+create table if not exists public.ai_dual_readings (
+  user_id uuid not null,
+  chart_hash text not null check (chart_hash ~ '^[0-9a-f]{64}$'),
+  content text not null check (length(content) between 1 and 20000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, chart_hash)
+);
+alter table public.ai_dual_readings enable row level security;
+revoke all on table public.ai_dual_readings from public, anon, authenticated;
+grant select, insert, update, delete on table public.ai_dual_readings to service_role;
+
+-- 17) 仅允许冲正“失败的双人 AI 合盘”原扣费；按原流水幂等，不能用于任意退款。
+create or replace function public.api_refund_ai_usage(
+  p_user_id uuid,
+  p_debit_request_id text,
+  p_amount integer,
+  p_reason text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_debit public.credit_ledger%rowtype;
+  v_existing public.credit_ledger%rowtype;
+  v_balance integer;
+  v_refund_id text;
+begin
+  if p_user_id is null or p_debit_request_id is null or p_amount <> 4 then
+    return jsonb_build_object('success', false, 'code', 'BAD_REFUND');
+  end if;
+  select * into v_debit from public.credit_ledger
+    where user_id=p_user_id and request_id=p_debit_request_id
+      and reason='ai-dual-reading' and delta=-4
+    for update;
+  if not found then return jsonb_build_object('success', false, 'code', 'DEBIT_NOT_FOUND'); end if;
+
+  v_refund_id := 'refund:' || p_debit_request_id;
+  select * into v_existing from public.credit_ledger
+    where user_id=p_user_id and request_id=v_refund_id limit 1;
+  if found then return jsonb_build_object('success', true, 'code', 'IDEMPOTENT', 'balance', v_existing.balance_after); end if;
+
+  insert into public.user_balances(user_id,balance) values(p_user_id,0) on conflict(user_id) do nothing;
+  select balance into v_balance from public.user_balances where user_id=p_user_id for update;
+  update public.user_balances set balance=balance+4,updated_at=now() where user_id=p_user_id returning balance into v_balance;
+  insert into public.credit_ledger(user_id,delta,balance_after,reason,request_id,ref_type,ref_id)
+    values(p_user_id,4,v_balance,left(coalesce(p_reason,'ai-dual-reading-failed'),80),v_refund_id,'ai_failure',p_debit_request_id);
+  return jsonb_build_object('success', true, 'code', 'OK', 'balance', v_balance);
+end;
+$$;
+revoke all on function public.api_refund_ai_usage(uuid,text,integer,text) from public, anon, authenticated;
+grant execute on function public.api_refund_ai_usage(uuid,text,integer,text) to service_role;
+
