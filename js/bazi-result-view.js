@@ -45,10 +45,12 @@ var BaziResultView = (function() {
   }
   function god(r,p,isDay){return isDay?'元'+(r.gender==='男'?'男':'女'):(p&&p.gan?BaziModule._getShiShen(r.dayMaster,p.gan):'—');}
   function stars(r,p,label){if(typeof BaziShenSha==='undefined')return [];return BaziShenSha.transit(r,p,label).map(function(x){return x.name;});}
-  function starCell(names){return names.length?names.map(function(x){return '<span>'+esc(x)+'</span>';}).join(''):'<span>—</span>';}
+  function ref(type,term,label){return typeof BaziClassicLink!=='undefined'?BaziClassicLink.trigger(type,term,label):esc(label||term);}
+  function starCell(names){return names.length?names.map(function(x){return '<span>'+ref('shensha',x)+'</span>';}).join(''):'<span>—</span>';}
   function column(r,p,label,opt){
     opt=opt||{};var hs=hidden(r,p.zhi),ss=opt.stars||stars(r,p,label);
-    return '<div class="classic-col"><div class="classic-col-title">'+esc(label)+'</div><div class="classic-god">'+esc(god(r,p,opt.dayMaster))+'</div><div class="classic-gan '+cls(p.gan)+'">'+esc(p.gan||'—')+'</div><div class="classic-zhi '+cls(p.zhi)+'">'+esc(p.zhi||'—')+'</div><div class="classic-hidden">'+(hs.length?hs.map(function(h){return '<span class="'+cls(h.gan)+'">'+h.gan+'<small>'+esc(h.god)+'</small></span>';}).join(''):'—')+'</div><div class="classic-minor">'+esc(opt.diShi||stage(r.dayMaster,p.zhi))+'</div><div class="classic-minor">'+esc(opt.selfSit||stage(p.gan,p.zhi))+'</div><div class="classic-minor">'+esc(opt.xunKong||'—')+'</div><div class="classic-minor">'+esc(opt.naYin||nayin(p))+'</div><div class="classic-stars">'+starCell(ss)+'</div></div>';
+    var mainGod=god(r,p,opt.dayMaster);
+    return '<div class="classic-col"><div class="classic-col-title">'+esc(label)+'</div><div class="classic-god">'+(opt.dayMaster?esc(mainGod):ref('ten-god',mainGod))+'</div><div class="classic-gan '+cls(p.gan)+'">'+esc(p.gan||'—')+'</div><div class="classic-zhi '+cls(p.zhi)+'">'+esc(p.zhi||'—')+'</div><div class="classic-hidden">'+(hs.length?hs.map(function(h){return '<span class="'+cls(h.gan)+'">'+h.gan+'<small>'+ref('ten-god',h.god)+'</small></span>';}).join(''):'—')+'</div><div class="classic-minor">'+esc(opt.diShi||stage(r.dayMaster,p.zhi))+'</div><div class="classic-minor">'+esc(opt.selfSit||stage(p.gan,p.zhi))+'</div><div class="classic-minor">'+esc(opt.xunKong||'—')+'</div><div class="classic-minor">'+esc(opt.naYin||nayin(p))+'</div><div class="classic-stars">'+starCell(ss)+'</div></div>';
   }
   function interaction(r,prefix,p){
     if(!p||!p.gan)return '无';var stems=[r.yearP.gan,r.monthP.gan,r.dayP.gan,r.hourP.gan],branches=[r.yearP.zhi,r.monthP.zhi,r.dayP.zhi,r.hourP.zhi],out=[];
@@ -88,6 +90,7 @@ var BaziResultView = (function() {
       '<section class="classic-section classic-interactions"><h3>岁运与原局作用</h3><p><b>岁运天干：</b>'+esc(interaction(r,'岁运',ly))+'</p><p><b>大运作用：</b>'+esc(interaction(r,'大运',dy))+'</p><p><b>原局关系：</b>'+esc((p.relations||[]).map(function(x){return x.value;}).join('｜')||'无明显合冲刑害')+'</p></section>'+
       '<section class="classic-section"><h3>四柱神煞</h3>'+originalRows+'</section>'+starSection('大运神煞',dy,dyStars)+starSection('流年神煞',ly,yearStars)+
       '<section class="classic-section classic-structure"><h3>旺衰 · 格局 · 调候 · 喜用</h3>'+BaziProfessional.renderSummary(p)+'</section>'+
+      (typeof BaziClassicLink!=='undefined'?BaziClassicLink.panel():'')+
     '</article>';
   }
   function render(r,scope){var state=init(r,scope);return sheet(state);}

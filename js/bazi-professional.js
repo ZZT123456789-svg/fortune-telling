@@ -205,7 +205,7 @@ var BaziProfessional = (function() {
     return '<section class="bazi-evidence-summary">'+
       '<div class="bazi-conclusion"><span>结论</span><strong>'+data.strength.level+'</strong></div>'+
       '<div class="bazi-evidence-columns"><div><h4>支持依据</h4>'+list(data.strength.evidence)+'</div><div><h4>反向条件</h4>'+list(data.strength.counterEvidence)+'</div></div>'+
-      '<p class="bazi-basis-line"><b>格局：</b>'+escapeHtml(data.pattern.name)+'；'+escapeHtml(data.pattern.basis)+'</p>'+
+      '<p class="bazi-basis-line"><b>格局：</b>'+(typeof BaziClassicLink!=='undefined'?BaziClassicLink.trigger('pattern',data.pattern.name):escapeHtml(data.pattern.name))+'；'+escapeHtml(data.pattern.basis)+'</p>'+
       '<p class="bazi-basis-line"><b>喜用方向：</b>'+data.useful.favorable.join('、')+'；<b>慎用：</b>'+(data.useful.unfavorable.join('、')||'结合岁运')+'。'+escapeHtml(data.useful.basis)+'</p>'+
     '</section>';
   }
