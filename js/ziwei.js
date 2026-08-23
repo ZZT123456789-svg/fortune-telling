@@ -42,7 +42,7 @@ var ZiweiModule = {
     var calType = calEl ? calEl.value : 'solar';
     var isLeap = !!(document.getElementById('ziweiLeapMonth') && document.getElementById('ziweiLeapMonth').checked);
 
-    var validation = this._validateInput(y, m, d, h, minute, calType);
+    var validation = this._validateInput(y, m, d, h, minute, calType, gender);
     if (validation) {
       this._showStatus(validation, 'error');
       return;
@@ -68,10 +68,7 @@ var ZiweiModule = {
       this._assertCalendarMatch(chart, {
         year:y, month:m, day:d, calType:calType, isLeapMonth:isLeap
       });
-
-      if (!chart || !Array.isArray(chart.palaces) || chart.palaces.length !== 12) {
-        throw new Error('排盘结果不完整，请检查出生日期');
-      }
+      this._assertChartIntegrity(chart);
 
       var input = {
         year: y,
@@ -158,6 +155,8 @@ var ZiweiModule = {
     var dateText = options.dateText;
     var timeIndex = options.timeIndex;
     var gender = options.gender;
+    if (!Number.isInteger(timeIndex) || timeIndex < 0 || timeIndex > 12) throw new Error('紫微时辰索引超出范围');
+    if (gender !== '男' && gender !== '女') throw new Error('性别参数只支持男或女');
     var fixLeap = true;
     var language = 'zh-CN';
 
@@ -183,13 +182,15 @@ var ZiweiModule = {
     );
   },
 
-  _validateInput: function(y, m, d, h, minute, calType) {
+  _validateInput: function(y, m, d, h, minute, calType, gender) {
     if ([y, m, d, h].some(function(v) { return isNaN(v); })) return '请填写完整的出生年月日和小时';
     if (y < 1900 || y > 2100) return '出生年份请填写 1900～2100';
     if (m < 1 || m > 12) return '月份应为 1～12';
     if (d < 1 || d > 31) return '日期填写有误';
     if (h < 0 || h > 23) return '出生小时应为 0～23';
     if (minute < 0 || minute > 59) return '分钟应为 0～59';
+    if (gender !== undefined && gender !== '男' && gender !== '女') return '性别参数填写有误';
+    if (calType !== 'solar' && calType !== 'lunar') return '日历类型填写有误';
     if (calType === 'solar') {
       var dt = new Date(Date.UTC(y, m - 1, d));
       if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== m || dt.getUTCDate() !== d) return '公历日期不存在，请检查年月日';
@@ -223,6 +224,9 @@ var ZiweiModule = {
       if (key) palacesByGrid[key] = p;
     });
 
+    var current = null;
+    try { current = this._getHoroscope(chart, new Date()); } catch (e) { console.warn('[ZiweiModule] 运限计算失败', e); }
+
     var html = '<div class="zw-shell">';
     html += this._renderHeader(chart, input);
     html += '<div class="zw-board">';
@@ -233,12 +237,12 @@ var ZiweiModule = {
       var slot = slots[i];
       if (slot === 'center') {
         if (!usedCenter) {
-          html += this._renderCenter(chart, input);
+          html += this._renderCenter(chart, input, current);
           usedCenter = true;
         }
         continue;
       }
-      html += this._renderPalace(palacesByGrid[slot], slot);
+      html += this._renderPalace(palacesByGrid[slot], slot, current);
     }
 
     html += this._renderSanFangLines(chart);
@@ -273,22 +277,88 @@ var ZiweiModule = {
     return true;
   },
 
+  _assertChartIntegrity: function(chart) {
+    if (!chart || !Array.isArray(chart.palaces) || chart.palaces.length !== 12) {
+      throw new Error('排盘结果不完整：十二宫数量异常');
+    }
+    var expectedBranches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+    var branches = chart.palaces.map(function(p) { return p && p.earthlyBranch; });
+    if (new Set(branches).size !== 12 || expectedBranches.some(function(x) { return branches.indexOf(x) < 0; })) {
+      throw new Error('排盘结果不完整：十二地支宫位重复或缺失');
+    }
+    var palaceNames = chart.palaces.map(function(p) { return p && p.name; });
+    if (new Set(palaceNames).size !== 12 || palaceNames.indexOf('命宫') < 0) {
+      throw new Error('排盘结果不完整：十二宫名称重复或命宫缺失');
+    }
+    var majors = [];
+    var mutagens = [];
+    chart.palaces.forEach(function(p) {
+      ['majorStars','minorStars','adjectiveStars'].forEach(function(key) {
+        (p[key] || []).forEach(function(star) {
+          if (!star || !star.name) return;
+          if (key === 'majorStars') majors.push(star.name);
+          var values = Array.isArray(star.mutagen) ? star.mutagen : (star.mutagen ? [star.mutagen] : []);
+          mutagens = mutagens.concat(values);
+        });
+      });
+    });
+    var expectedMajors = ['紫微','天机','太阳','武曲','天同','廉贞','天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
+    if (majors.length !== 14 || new Set(majors).size !== 14 || expectedMajors.some(function(x) { return majors.indexOf(x) < 0; })) {
+      throw new Error('排盘结果不完整：十四主星重复或缺失');
+    }
+    if (['禄','权','科','忌'].some(function(x) { return mutagens.indexOf(x) < 0; })) {
+      throw new Error('排盘结果不完整：生年四化缺失');
+    }
+    var soulPalace = chart.palaces.find(function(p) { return p.name === '命宫'; });
+    var bodyPalaces = chart.palaces.filter(function(p) { return p.isBodyPalace; });
+    if (!soulPalace || soulPalace.earthlyBranch !== chart.earthlyBranchOfSoulPalace) {
+      throw new Error('排盘结果不一致：命宫地支校验失败');
+    }
+    if (bodyPalaces.length !== 1 || bodyPalaces[0].earthlyBranch !== chart.earthlyBranchOfBodyPalace) {
+      throw new Error('排盘结果不一致：身宫地支校验失败');
+    }
+    return true;
+  },
+
+  _dateText: function(value) {
+    if (typeof value === 'string') return value;
+    var date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) throw new Error('运限日期无效');
+    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+  },
+
+  _getHoroscope: function(chart, date) {
+    if (!chart || typeof chart.horoscope !== 'function') throw new Error('运限接口不可用');
+    var result = chart.horoscope(this._dateText(date));
+    if (!result || !result.decadal || !result.yearly || !result.monthly) throw new Error('运限结果不完整');
+    ['decadal','yearly','monthly'].forEach(function(key) {
+      var item = result[key];
+      if (!Number.isInteger(item.index) || item.index < 0 || item.index > 11) throw new Error(key + '宫位索引异常');
+      if (!item.heavenlyStem || !item.earthlyBranch) throw new Error(key + '干支缺失');
+    });
+    return result;
+  },
+
   _getSanFangBranches: function(originBranch) {
+    return this._getSanFangRelations(originBranch).map(function(item) { return item.branch; });
+  },
+
+  _getSanFangRelations: function(originBranch) {
     var branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
     var originIndex = branches.indexOf(originBranch);
     if (originIndex < 0) return [];
-    return [4, 8, 6].map(function(offset) {
-      return branches[(originIndex + offset) % 12];
+    return [{offset:4,type:'三合'},{offset:8,type:'三合'},{offset:6,type:'对宫'}].map(function(item) {
+      return {branch:branches[(originIndex + item.offset) % 12], type:item.type};
     });
   },
 
   _renderSanFangLines: function(chart) {
     var origin = chart && chart.earthlyBranchOfSoulPalace;
-    var targets = this._getSanFangBranches(origin);
+    var targets = this._getSanFangRelations(origin);
     if (!origin || targets.length !== 3) return '';
     return '<svg class="zw-sanfang-lines" aria-hidden="true" data-origin-branch="' + this._escape(origin) + '">' +
-      targets.map(function(branch) {
-        return '<line data-target-branch="' + ZiweiModule._escape(branch) + '" x1="0" y1="0" x2="0" y2="0"></line>';
+      targets.map(function(item) {
+        return '<line data-target-branch="' + ZiweiModule._escape(item.branch) + '" data-relation="' + ZiweiModule._escape(item.type) + '" x1="0" y1="0" x2="0" y2="0"></line>';
       }).join('') +
       '<circle class="zw-sanfang-origin" cx="0" cy="0" r="4"></circle>' +
       '</svg>';
@@ -347,31 +417,37 @@ var ZiweiModule = {
       '</div>';
   },
 
-  _renderCenter: function(chart, input) {
-    var current = null;
-    try { if (typeof chart.horoscope === 'function') current = chart.horoscope(new Date()); } catch (e) {}
+  _renderCenter: function(chart, input, current) {
     var yearly = current && current.yearly ? (current.yearly.heavenlyStem || '') + (current.yearly.earthlyBranch || '') : '—';
+    var decadal = current && current.decadal ? (current.decadal.heavenlyStem || '') + (current.decadal.earthlyBranch || '') : '—';
+    var monthly = current && current.monthly ? (current.monthly.heavenlyStem || '') + (current.monthly.earthlyBranch || '') : '—';
+    var age = current && current.age != null ? current.age + '岁 · ' : '';
     return '<div class="zw-center">' +
       '<div class="zw-taiji">☯</div>' +
       '<div class="zw-center-name">' + this._escape(input.name || '道问命盘') + '</div>' +
       '<div class="zw-center-line">生肖 ' + this._escape(chart.zodiac || '—') + ' · ' + this._escape(chart.sign || '—') + '</div>' +
       '<div class="zw-center-line">' + this._escape(chart.time || '—') + ' · ' + this._escape(chart.timeRange || '—') + '</div>' +
       '<div class="zw-center-line">命宫 ' + this._escape(chart.earthlyBranchOfSoulPalace || '—') + ' · 身宫 ' + this._escape(chart.earthlyBranchOfBodyPalace || '—') + '</div>' +
-      '<div class="zw-center-line zw-yearly">当前流年 ' + this._escape(yearly) + '</div>' +
+      '<div class="zw-center-line zw-yearly">当前 ' + this._escape(age) + '大限 ' + this._escape(decadal) + ' · 流年 ' + this._escape(yearly) + ' · 流月 ' + this._escape(monthly) + '</div>' +
       '<div class="zw-center-note">排盘采用标准历法数据；“当地钟表时间”不等同于真太阳时。</div>' +
       '</div>';
   },
 
-  _renderPalace: function(p, gridClass) {
+  _renderPalace: function(p, gridClass, current) {
     if (!p) return '<section class="zw-palace ' + gridClass + '"></section>';
-    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + '" data-branch="' + this._escape(p.earthlyBranch || '') + '">';
+    var isDecadal = !!(current && current.decadal && current.decadal.index === p.index);
+    var isYearly = !!(current && current.yearly && current.yearly.index === p.index);
+    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + (isDecadal ? ' is-current-decadal' : '') + (isYearly ? ' is-current-yearly' : '') + '" data-branch="' + this._escape(p.earthlyBranch || '') + '">';
     html += '<div class="zw-palace-head"><span class="zw-palace-name">' + this._escape(p.name) + '</span>' +
       (p.isBodyPalace ? '<span class="zw-body-badge">身宫</span>' : '') +
+      (isDecadal ? '<span class="zw-flow-badge">大限</span>' : '') +
+      (isYearly ? '<span class="zw-flow-badge yearly">流年</span>' : '') +
       '<span class="zw-palace-gz">' + this._escape((p.heavenlyStem || '') + (p.earthlyBranch || '')) + '</span></div>';
 
-    if (p.stage && p.stage.range) {
-      html += '<div class="zw-stage">大限 ' + this._escape(p.stage.range[0]) + '～' + this._escape(p.stage.range[1]) + ' 岁</div>';
+    if (p.decadal && p.decadal.range) {
+      html += '<div class="zw-stage">大限 ' + this._escape(p.decadal.range[0]) + '～' + this._escape(p.decadal.range[1]) + ' 岁 · ' + this._escape((p.decadal.heavenlyStem || '') + (p.decadal.earthlyBranch || '')) + '</div>';
     }
+    if (Array.isArray(p.ages) && p.ages.length) html += '<div class="zw-ages">小限 ' + p.ages.map(this._escape).join(' · ') + '</div>';
 
     var majors = (p.majorStars || []).filter(function(s) { return s && s.name; });
     if (majors.length) {
@@ -394,7 +470,7 @@ var ZiweiModule = {
       html += '<div class="zw-adjective">' + adjectives.map(function(s) { return ZiweiModule._escape(s.name); }).join(' · ') + '</div>';
     }
 
-    var gods = [p.changsheng12, p.boshi12].filter(Boolean);
+    var gods = [p.changsheng12, p.boshi12, p.jiangqian12, p.suiqian12].filter(Boolean);
     if (gods.length) html += '<div class="zw-gods">' + gods.map(this._escape).join(' · ') + '</div>';
     html += '</section>';
     return html;
@@ -551,7 +627,9 @@ var ZiweiModule = {
       .zw-palace-name{font-family:KaiTi,STKaiti,serif;font-size:1.05rem;font-weight:700;color:#3a3025}
       .zw-palace-gz{margin-left:auto;font-size:.72rem;color:#a37e43}
       .zw-body-badge{font-size:.64rem;background:#8d3427;color:#fff;border-radius:4px;padding:.08rem .28rem}
+      .zw-flow-badge{font-size:.62rem;background:#8b6f31;color:#fff;border-radius:4px;padding:.08rem .28rem}.zw-flow-badge.yearly{background:#b54031}
       .zw-stage{font-size:.67rem;color:#96866e;margin-bottom:.34rem}
+      .zw-ages{font-size:.6rem;color:#9b8c76;margin:-.12rem 0 .36rem;line-height:1.45}
       .zw-major-list,.zw-minor-list{display:flex;flex-wrap:wrap;gap:.26rem .36rem}
       .zw-minor-list{margin-top:.34rem;padding-top:.32rem;border-top:1px dashed rgba(110,91,62,.13)}
       .zw-star{display:inline-flex;align-items:center;gap:.18rem;white-space:nowrap}
@@ -562,6 +640,7 @@ var ZiweiModule = {
       .zw-empty{font-size:.76rem;color:#aaa096;font-style:italic}
       .zw-adjective{margin-top:.35rem;font-size:.65rem;line-height:1.45;color:#8c8273}
       .zw-gods{margin-top:.26rem;font-size:.62rem;color:#a39178}
+      .zw-palace.is-current-decadal{box-shadow:inset 0 0 0 2px rgba(139,111,49,.65)}.zw-palace.is-current-yearly{background:linear-gradient(145deg,#fff8ee,#f7e6d5)}
       .zw-center{grid-column:2/4;grid-row:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem;background:radial-gradient(circle at 50% 45%,rgba(255,253,244,.98),rgba(235,226,205,.96));position:relative;overflow:hidden}
       .zw-center::before{content:'乾　坎　艮　震　巽　离　坤　兑';position:absolute;inset:auto 0 .6rem;text-align:center;font-size:.62rem;letter-spacing:.25em;color:rgba(70,60,45,.18)}
       .zw-taiji{font-size:3rem;line-height:1;color:#39362f;filter:drop-shadow(0 5px 10px rgba(50,45,35,.12))}

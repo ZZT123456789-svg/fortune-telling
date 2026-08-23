@@ -39,6 +39,17 @@ test('紫微时辰映射保留早子时与晚子时', () => {
   assert.equal(ZiweiModule._hourToTimeIndex(23), 12);
 });
 
+test('拒绝越界时辰索引、未知性别和未知日历类型', () => {
+  const engine = { astro: { bySolar() { return {}; }, byLunar() { return {}; } } };
+  assert.throws(() => ZiweiModule._createChart(engine, {
+    dateText:'2000-1-1', timeIndex:13, gender:'男', calType:'solar'
+  }), /时辰索引/);
+  assert.throws(() => ZiweiModule._createChart(engine, {
+    dateText:'2000-1-1', timeIndex:1, gender:'未知', calType:'solar'
+  }), /性别参数/);
+  assert.equal(ZiweiModule._validateInput(2000,1,1,12,0,'other','男'), '日历类型填写有误');
+});
+
 test('三方四正按命宫连接两个三合宫和对宫', () => {
   assert.deepEqual(
     Array.from(ZiweiModule._getSanFangBranches('子')),
@@ -47,5 +58,9 @@ test('三方四正按命宫连接两个三合宫和对宫', () => {
   assert.deepEqual(
     Array.from(ZiweiModule._getSanFangBranches('亥')),
     ['卯', '未', '巳']
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(ZiweiModule._getSanFangRelations('亥'))),
+    [{branch:'卯',type:'三合'},{branch:'未',type:'三合'},{branch:'巳',type:'对宫'}]
   );
 });

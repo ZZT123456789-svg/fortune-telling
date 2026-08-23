@@ -72,6 +72,83 @@ test('网站展示层完整显示全部杂曜并输出三方四正连线', () =>
   assert.equal((lines.match(/<line /g) || []).length, 3);
   assert.match(lines, /data-origin-branch="亥"/);
   for (const branch of ['卯', '未', '巳']) assert.match(lines, new RegExp('data-target-branch="' + branch + '"'));
+  assert.equal((lines.match(/data-relation="三合"/g) || []).length, 2);
+  assert.equal((lines.match(/data-relation="对宫"/g) || []).length, 1);
+});
+
+test('命盘完整性校验覆盖十二宫、十四主星、生年四化与命身宫', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const chart = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
+  assert.equal(module._assertChartIntegrity(chart), true);
+
+  const broken = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
+  const palaceWithMajor = broken.palaces.find(p => p.majorStars.length);
+  palaceWithMajor.majorStars.pop();
+  assert.throws(() => module._assertChartIntegrity(broken), /十四主星/);
+});
+
+test('当前大限、流年、流月使用 iztro 要求的日期字符串并完整返回', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const chart = iztro.astro.bySolar('2023-03-06', 4, '女', true, 'zh-CN');
+  const flow = module._getHoroscope(chart, '2026-8-24');
+  assert.equal(flow.decadal.heavenlyStem + flow.decadal.earthlyBranch, '癸亥');
+  assert.equal(flow.yearly.heavenlyStem + flow.yearly.earthlyBranch, '丙午');
+  assert.equal(flow.monthly.heavenlyStem + flow.monthly.earthlyBranch, '丙申');
+  const center = module._renderCenter(chart, { name:'测试', hour:8, minute:0 }, flow);
+  assert.match(center, /大限 癸亥 · 流年 丙午 · 流月 丙申/);
+});
+
+test('宫位使用真实 decadal 字段并显示小限与四套十二神', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const chart = iztro.astro.bySolar('2023-03-06', 4, '女', true, 'zh-CN');
+  const flow = module._getHoroscope(chart, '2026-8-24');
+  const palace = chart.palaces[flow.yearly.index];
+  const html = module._renderPalace(palace, 'test', flow);
+  assert.match(html, new RegExp('大限 ' + palace.decadal.range[0] + '～' + palace.decadal.range[1] + ' 岁'));
+  assert.match(html, /小限/);
+  for (const god of [palace.changsheng12, palace.boshi12, palace.jiangqian12, palace.suiqian12]) {
+    assert.match(html, new RegExp(god));
+  }
+  assert.match(html, /流年/);
+});
+
+test('阳历与对应农历入口生成完全一致的核心命盘', () => {
+  for (const solar of ['2000-08-16', '2023-03-06', '2023-03-22']) {
+    const fromSolar = iztro.astro.bySolar(solar, 4, '女', true, 'zh-CN');
+    const lunar = fromSolar.rawDates.lunarDate;
+    const lunarText = lunar.lunarYear + '-' + lunar.lunarMonth + '-' + lunar.lunarDay;
+    const fromLunar = iztro.astro.byLunar(lunarText, 4, '女', lunar.isLeap, true, 'zh-CN');
+    const signature = chart => ({
+      soul: chart.earthlyBranchOfSoulPalace,
+      body: chart.earthlyBranchOfBodyPalace,
+      five: chart.fiveElementsClass,
+      palaces: chart.palaces.map(p => [p.name, p.earthlyBranch, p.majorStars.map(s => s.name + (s.mutagen || ''))])
+    });
+    assert.deepEqual(JSON.parse(JSON.stringify(signature(fromLunar))), JSON.parse(JSON.stringify(signature(fromSolar))));
+  }
+});
+
+test('跨年代、性别与早晚子时命盘均满足完整性约束', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const samples = [
+    ['1901-02-19',0,'男'], ['1950-06-01',12,'女'], ['2000-08-16',2,'女'],
+    ['2023-03-22',4,'男'], ['2099-12-30',11,'女']
+  ];
+  for (const [date,time,gender] of samples) {
+    assert.equal(module._assertChartIntegrity(iztro.astro.bySolar(date,time,gender,true,'zh-CN')), true);
+  }
 });
 
 test('紫微引擎固定文件与许可证随网站部署', () => {
