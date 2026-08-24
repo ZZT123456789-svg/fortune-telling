@@ -129,6 +129,35 @@ test('完整大限列表连续且与当前大限、流年交叉一致', () => {
   assert.throws(() => module._assertCycleIntegrity(chart, flow, new Date(2026, 7, 24)), /大限区间不连续/);
 });
 
+test('专业命盘输出大限、流年、流月、流日、流时五层表格', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const chart = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
+  const flow = module._getHoroscope(chart, '2026-8-24', 4);
+  const html = module._renderFlowTables(chart, flow, new Date(2026, 7, 24, 8));
+  for (const label of ['大限','流年','流月','流日','流时']) assert.match(html, new RegExp('>' + label + '<'));
+  assert.match(html, /23～32/);
+  assert.match(html, /2026年/);
+  assert.match(html, /辰时/);
+  assert.ok((html.match(/is-active/g) || []).length >= 4);
+});
+
+test('十四主星使用五行色，四化使用禄权科忌独立色块', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  assert.match(module._renderStar({name:'天机',brightness:'庙',mutagen:'科'}, true), /element-wood/);
+  assert.match(module._renderStar({name:'太阳',brightness:'旺',mutagen:'禄'}, true), /element-fire/);
+  assert.match(module._renderStar({name:'武曲',mutagen:'权'}, true), /element-metal/);
+  assert.match(module._renderStar({name:'破军',mutagen:'忌'}, true), /element-water/);
+  for (const cls of ['is-lu','is-quan','is-ke','is-ji']) {
+    assert.match(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), new RegExp('zw-mutagen\\.' + cls));
+  }
+});
+
 test('宫位使用真实 decadal 字段并显示小限与四套十二神', () => {
   const context = { console, setTimeout, clearTimeout };
   vm.createContext(context);
@@ -181,4 +210,11 @@ test('紫微引擎固定文件与许可证随网站部署', () => {
   assert.match(ziweiSource, /ENGINE_URL:\s*'\/js\/vendor\/iztro-2\.6\.0\.min\.js'/);
   assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'iztro-2.6.0.min.js')).size > 700000);
   assert.ok(fs.statSync(path.join(ROOT, 'js', 'vendor', 'iztro-LICENSE.txt')).size > 500);
+});
+
+test('紫微基础命盘不被付费遮罩覆盖，付费仅由 AI 解读入口处理', () => {
+  const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
+  assert.doesNotMatch(ziweiSource, /Paywall\.blockAll\(['"]ziweiResult['"]\)/);
+  assert.match(ziweiSource, /AIChat\.openWithContext/);
+  assert.match(ziweiSource, /ziweiResult/);
 });

@@ -97,7 +97,7 @@ var ZiweiModule = {
       this._showStatus('', 'info');
 
       // 保留现有付费墙行为；排盘数据本身已经在这里准确生成。
-      if (typeof Paywall !== 'undefined' && Paywall.blockAll) Paywall.blockAll('ziweiResult');
+      // 基础命盘保持可见；付费校验只在“问 AI 解读”入口执行。
     } catch (e) {
       console.error('[ZiweiModule]', e);
       var msg = e && e.message ? e.message : '排盘失败';
@@ -279,6 +279,7 @@ var ZiweiModule = {
 
     html += this._renderSanFangLines(chart);
     html += '</div>';
+    html += this._renderFlowTables(chart, current, currentDate || new Date());
     html += '<div class="zw-actions">' +
       '<button class="btn-secondary" type="button" onclick="ZiweiModule.close()">返回</button>' +
       '<button class="btn-primary" type="button" onclick="AIChat.openWithContext(\'ziweiResult\')">问 AI 解读</button>' +
@@ -501,7 +502,7 @@ var ZiweiModule = {
     var hourly = current && current.hourly ? (current.hourly.heavenlyStem || '') + (current.hourly.earthlyBranch || '') : '—';
     var age = current && current.age && Number.isInteger(current.age.nominalAge) ? '虚岁' + current.age.nominalAge + ' · ' : '';
     return '<div class="zw-center">' +
-      '<div class="zw-taiji">☯</div>' +
+      '<div class="zw-center-seal">紫微斗数</div>' +
       '<div class="zw-center-name">' + this._escape(input.name || '道问命盘') + '</div>' +
       '<div class="zw-center-line">生肖 ' + this._escape(chart.zodiac || '—') + ' · ' + this._escape(chart.sign || '—') + '</div>' +
       '<div class="zw-center-line">' + this._escape(chart.time || '—') + ' · ' + this._escape(chart.timeRange || '—') + '</div>' +
@@ -510,6 +511,55 @@ var ZiweiModule = {
       '<div class="zw-center-line zw-daily">流日 ' + this._escape(daily) + ' · 流时 ' + this._escape(hourly) + '</div>' +
       '<div class="zw-center-note">排盘采用标准历法数据；“当地钟表时间”不等同于真太阳时。</div>' +
       '</div>';
+  },
+
+  _renderFlowTables: function(chart, current, date) {
+    if (!chart || !current || typeof chart.decadalList !== 'function') return '';
+    var decadal = chart.decadalList();
+    var nominalAge = current.age && current.age.nominalAge;
+    var active = decadal.find(function(item) {
+      return Number.isInteger(nominalAge) && nominalAge >= item.ageRange[0] && nominalAge <= item.ageRange[1];
+    });
+    var yearly = active && typeof chart.yearlyList === 'function' ? chart.yearlyList(active.index) : [];
+    var targetDate = date instanceof Date ? date : new Date(date);
+    var year = targetDate.getFullYear();
+    var monthly = typeof chart.monthlyList === 'function' ? chart.monthlyList(year, true) : [];
+    var earthly = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+
+    return '<section class="zw-flow-panel" aria-label="紫微运限表">' +
+      '<div class="zw-flow-panel-title">运限推演</div>' +
+      this._renderFlowRow('大限', decadal, function(item) {
+        return '<b>' + item.ageRange[0] + '～' + item.ageRange[1] + '</b><span>' + item.heavenlyStem + item.earthlyBranch + '限</span>';
+      }, function(item) { return active && item.index === active.index; }) +
+      this._renderFlowRow('流年', yearly, function(item) {
+        return '<b>' + item.year + '年</b><span>' + item.heavenlyStem + item.earthlyBranch + ' · ' + item.age + '岁</span>';
+      }, function(item) { return item.year === year; }) +
+      this._renderFlowRow('流月', monthly, function(item) {
+        var leap = item.isLeapMonth ? '闰' : '';
+        var part = item.part === 'first' ? '上' : (item.part === 'second' ? '下' : '');
+        return '<b>' + leap + item.month + '月' + part + '</b><span>' + item.heavenlyStem + item.earthlyBranch + '</span>';
+      }, function(item) { return item.index === current.monthly.index && item.heavenlyStem === current.monthly.heavenlyStem; }) +
+      this._renderFlowRow('流日', Array.from({length:30}, function(_, i) { return i + 1; }), function(day) {
+        return '<b>' + ZiweiModule._lunarDayLabel(day) + '</b>';
+      }) +
+      this._renderFlowRow('流时', earthly, function(branch) {
+        return '<b>' + branch + '时</b>';
+      }, function(branch) { return branch === current.hourly.earthlyBranch; }) +
+      '</section>';
+  },
+
+  _renderFlowRow: function(title, items, renderItem, isActive) {
+    if (!Array.isArray(items) || !items.length) return '';
+    return '<div class="zw-flow-row"><div class="zw-flow-label">' + this._escape(title) + '</div><div class="zw-flow-grid">' +
+      items.map(function(item) {
+        var active = isActive && isActive(item) ? ' is-active' : '';
+        return '<div class="zw-flow-cell' + active + '">' + renderItem(item) + '</div>';
+      }).join('') + '</div></div>';
+  },
+
+  _lunarDayLabel: function(day) {
+    var labels = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+    return labels[day - 1] || String(day);
   },
 
   _renderPalace: function(p, gridClass, current) {
@@ -559,11 +609,24 @@ var ZiweiModule = {
     var mutagen = '';
     if (Array.isArray(star.mutagen)) mutagen = star.mutagen.join('');
     else if (star.mutagen) mutagen = String(star.mutagen);
-    var cls = major ? 'zw-star major' : 'zw-star minor';
+    var cls = (major ? 'zw-star major ' : 'zw-star minor ') + this._starElementClass(star.name);
     var extra = '';
     if (star.brightness) extra += '<span class="zw-bright">' + this._escape(star.brightness) + '</span>';
-    if (mutagen) extra += '<span class="zw-mutagen">' + this._escape(mutagen) + '</span>';
+    if (mutagen) extra += '<span class="zw-mutagen ' + this._mutagenClass(mutagen) + '">' + this._escape(mutagen) + '</span>';
     return '<span class="' + cls + '"><b>' + this._escape(star.name) + '</b>' + extra + '</span>';
+  },
+
+  _starElementClass: function(name) {
+    var groups = {
+      wood:['天机','贪狼'], fire:['太阳','廉贞'], earth:['紫微','天府','天梁'],
+      metal:['武曲','七杀'], water:['天同','太阴','巨门','天相','破军']
+    };
+    var found = Object.keys(groups).find(function(key) { return groups[key].indexOf(name) >= 0; });
+    return found ? 'element-' + found : 'element-neutral';
+  },
+
+  _mutagenClass: function(value) {
+    return value.indexOf('禄') >= 0 ? 'is-lu' : value.indexOf('权') >= 0 ? 'is-quan' : value.indexOf('科') >= 0 ? 'is-ke' : value.indexOf('忌') >= 0 ? 'is-ji' : '';
   },
 
   _chip: function(label, value) {
@@ -698,35 +761,41 @@ var ZiweiModule = {
       .zw-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.42rem}
       .zw-chip{display:inline-flex;align-items:center;gap:.36rem;padding:.34rem .55rem;border:1px solid rgba(125,100,59,.18);border-radius:999px;background:rgba(255,255,255,.58);font-size:.74rem}
       .zw-chip small{color:#907f67}.zw-chip b{font-weight:600;color:#3b342b}
-      .zw-board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(160px,auto));gap:1px;background:rgba(105,83,48,.34);border:1px solid rgba(105,83,48,.34);border-radius:12px;overflow:hidden;box-shadow:0 14px 38px rgba(45,37,25,.09)}
-      .zw-palace{position:relative;min-width:0;padding:.58rem .62rem;background:rgba(253,250,240,.98);overflow:hidden}
-      .zw-palace::after{content:'☰';position:absolute;right:.35rem;bottom:-.35rem;font-size:2.3rem;color:rgba(70,60,45,.035);pointer-events:none}
-      .zw-palace.is-soul{background:linear-gradient(145deg,#fffaf0,#f6ead5)}
-      .zw-palace-head{display:flex;align-items:center;gap:.35rem;border-bottom:1px solid rgba(108,86,52,.14);padding-bottom:.35rem;margin-bottom:.35rem}
-      .zw-palace-name{font-family:KaiTi,STKaiti,serif;font-size:1.05rem;font-weight:700;color:#3a3025}
-      .zw-palace-gz{margin-left:auto;font-size:.72rem;color:#a37e43}
+      .zw-board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(188px,auto));gap:1px;background:#777;border:1px solid #777;border-radius:4px;overflow:hidden;box-shadow:0 14px 38px rgba(45,37,25,.12)}
+      .zw-palace{position:relative;min-width:0;padding:.58rem 2.35rem .58rem .58rem;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+      .zw-palace.is-soul{background:#fffdf7}
+      .zw-palace-head{position:absolute;right:.28rem;bottom:.35rem;display:flex;flex-direction:column-reverse;align-items:center;gap:.2rem;margin:0;border:0;padding:0;z-index:1}
+      .zw-palace-name{font-family:KaiTi,STKaiti,serif;font-size:1.02rem;font-weight:800;color:#2d2822;writing-mode:vertical-rl;letter-spacing:.08em}
+      .zw-palace-gz{margin:0;font-family:KaiTi,STKaiti,serif;font-size:1.12rem;font-weight:800;color:#151515;writing-mode:vertical-rl}
       .zw-body-badge{font-size:.64rem;background:#8d3427;color:#fff;border-radius:4px;padding:.08rem .28rem}
       .zw-flow-badge{font-size:.62rem;background:#8b6f31;color:#fff;border-radius:4px;padding:.08rem .28rem}.zw-flow-badge.yearly{background:#b54031}
-      .zw-stage{font-size:.67rem;color:#96866e;margin-bottom:.34rem}
-      .zw-ages{font-size:.6rem;color:#9b8c76;margin:-.12rem 0 .36rem;line-height:1.45}
-      .zw-major-list,.zw-minor-list{display:flex;flex-wrap:wrap;gap:.26rem .36rem}
+      .zw-stage{order:4;margin-top:auto;font-family:KaiTi,STKaiti,serif;font-size:.78rem;color:#4d443a;text-align:center}
+      .zw-ages{order:3;font-size:.65rem;color:#5f584f;margin:.28rem 0;line-height:1.45}
+      .zw-major-list,.zw-minor-list{display:flex;flex-wrap:wrap;gap:.28rem .4rem}
       .zw-minor-list{margin-top:.34rem;padding-top:.32rem;border-top:1px dashed rgba(110,91,62,.13)}
-      .zw-star{display:inline-flex;align-items:center;gap:.18rem;white-space:nowrap}
-      .zw-star.major{color:#9b3428;font-family:KaiTi,STKaiti,serif;font-size:.92rem}
+      .zw-star{display:inline-flex;align-items:center;gap:.15rem;white-space:nowrap}
+      .zw-star.major{font-family:KaiTi,STKaiti,serif;font-size:1.12rem;font-weight:800}
       .zw-star.minor{color:#5e5548;font-size:.72rem}
+      .zw-star.element-wood{color:#268d6b}.zw-star.element-fire{color:#b9342d}.zw-star.element-earth{color:#8a5d26}.zw-star.element-metal{color:#7150a0}.zw-star.element-water{color:#237b9a}.zw-star.element-neutral{color:#403b35}
       .zw-bright{font-family:system-ui,sans-serif;font-size:.58rem;color:#927c59;border:1px solid rgba(146,124,89,.22);border-radius:3px;padding:0 .14rem}
-      .zw-mutagen{font-family:system-ui,sans-serif;font-size:.58rem;background:#9d3b2e;color:#fff;border-radius:3px;padding:0 .16rem}
+      .zw-mutagen{font-family:system-ui,sans-serif;font-size:.66rem;color:#fff;border-radius:3px;padding:.02rem .2rem}.zw-mutagen.is-lu{background:#28965f}.zw-mutagen.is-quan{background:#7448a0}.zw-mutagen.is-ke{background:#2786aa}.zw-mutagen.is-ji{background:#c13a32}
       .zw-empty{font-size:.76rem;color:#aaa096;font-style:italic}
-      .zw-adjective{margin-top:.35rem;font-size:.65rem;line-height:1.45;color:#8c8273}
-      .zw-gods{margin-top:.26rem;font-size:.62rem;color:#a39178}
+      .zw-adjective{margin-top:.35rem;font-size:.68rem;line-height:1.45;color:#48433d}
+      .zw-gods{order:5;margin-top:.3rem;font-size:.66rem;color:#26917f}
       .zw-palace.is-current-decadal{box-shadow:inset 0 0 0 2px rgba(139,111,49,.65)}.zw-palace.is-current-yearly{background:linear-gradient(145deg,#fff8ee,#f7e6d5)}
-      .zw-center{grid-column:2/4;grid-row:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem;background:radial-gradient(circle at 50% 45%,rgba(255,253,244,.98),rgba(235,226,205,.96));position:relative;overflow:hidden}
-      .zw-center::before{content:'乾　坎　艮　震　巽　离　坤　兑';position:absolute;inset:auto 0 .6rem;text-align:center;font-size:.62rem;letter-spacing:.25em;color:rgba(70,60,45,.18)}
-      .zw-taiji{font-size:3rem;line-height:1;color:#39362f;filter:drop-shadow(0 5px 10px rgba(50,45,35,.12))}
-      .zw-center-name{font-family:KaiTi,STKaiti,serif;font-size:1.2rem;font-weight:700;margin:.55rem 0 .35rem;color:#3b3228}
-      .zw-center-line{font-size:.76rem;line-height:1.65;color:#746956}
+      .zw-center{grid-column:2/4;grid-row:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem;background:#fff;position:relative;overflow:hidden}
+      .zw-center-seal{font-family:KaiTi,STKaiti,serif;font-size:1.8rem;font-weight:800;letter-spacing:.16em;color:#292520}
+      .zw-center-name{font-family:KaiTi,STKaiti,serif;font-size:1.25rem;font-weight:700;margin:.7rem 0 .4rem;color:#3b3228}
+      .zw-center-line{font-size:.78rem;line-height:1.7;color:#554e44}
       .zw-center-line.zw-yearly{color:#9a412e;font-weight:600}
       .zw-center-note{max-width:80%;margin-top:.45rem;font-size:.65rem;line-height:1.5;color:#9a907f}
+      .zw-flow-panel{margin-top:.8rem;border:1px solid #aaa;background:#fff;color:#302e29;border-radius:4px;overflow:hidden}
+      .zw-flow-panel-title{padding:.58rem .8rem;font-family:KaiTi,STKaiti,serif;font-size:1.1rem;font-weight:800;border-bottom:1px solid #aaa;background:#f7f7f7}
+      .zw-flow-row{display:grid;grid-template-columns:64px minmax(0,1fr);border-bottom:1px solid #c9c9c9}.zw-flow-row:last-child{border-bottom:0}
+      .zw-flow-label{display:flex;align-items:center;justify-content:center;padding:.5rem .25rem;border-right:1px solid #c9c9c9;font-family:KaiTi,STKaiti,serif;font-size:1rem;font-weight:800;background:#fafafa}
+      .zw-flow-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr))}
+      .zw-flow-cell{min-height:48px;padding:.4rem .26rem;border-right:1px solid #e0e0e0;border-bottom:1px solid #e8e8e8;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem}
+      .zw-flow-cell b{font-family:KaiTi,STKaiti,serif;font-size:.8rem}.zw-flow-cell span{font-size:.66rem;color:#6b6258}.zw-flow-cell.is-active{background:#efe1bb;box-shadow:inset 0 0 0 2px #b68a38}.zw-flow-cell.is-active b{color:#8c2d25}
       #ziweiResult .zw-sanfang-lines{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;z-index:2;pointer-events:none;overflow:visible;filter:none;background:transparent;border-radius:0;box-shadow:none}
       .zw-sanfang-lines line{stroke:#bf2f27;stroke-width:1.35;stroke-linecap:round;opacity:.56;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 1px rgba(255,255,255,.55))}
       .zw-sanfang-origin{fill:#bf2f27;stroke:rgba(255,250,238,.9);stroke-width:1.4;opacity:.8;vector-effect:non-scaling-stroke}
@@ -739,8 +808,10 @@ var ZiweiModule = {
         .zw-board{display:flex;flex-direction:column;background:transparent;border:0;gap:.55rem;box-shadow:none;border-radius:0}
         #ziweiResult .zw-sanfang-lines{display:none}
         .zw-center{order:-1;min-height:210px;border:1px solid rgba(105,83,48,.24);border-radius:12px}
-        .zw-palace{min-height:0;border:1px solid rgba(105,83,48,.18);border-radius:10px;padding:.7rem}
+        .zw-palace{min-height:0;border:1px solid rgba(105,83,48,.18);border-radius:10px;padding:.7rem;display:block}
+        .zw-palace-head{position:static;display:flex;flex-direction:row;align-items:center;border-bottom:1px solid rgba(108,86,52,.14);padding-bottom:.35rem;margin-bottom:.35rem}.zw-palace-name,.zw-palace-gz{writing-mode:horizontal-tb}.zw-palace-gz{margin-left:auto}
         .zw-summary{padding:.8rem}.zw-summary-title{font-size:1.2rem}.zw-chip{font-size:.69rem}
+        .zw-flow-row{grid-template-columns:52px minmax(0,1fr)}.zw-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.zw-flow-label{font-size:.88rem}.zw-flow-cell{min-height:45px}
         .zw-actions{position:sticky;bottom:.3rem;z-index:3;padding:.45rem;background:rgba(248,244,232,.9);backdrop-filter:blur(8px);border-radius:10px}
       }
     `;
