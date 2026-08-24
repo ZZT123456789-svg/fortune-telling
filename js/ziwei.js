@@ -10,6 +10,13 @@
  */
 var ZiweiModule = {
   ENGINE_URL: '/js/vendor/iztro-2.6.0.min.js',
+  STANDARD_CONFIG: {
+    yearDivide: 'normal',
+    horoscopeDivide: 'normal',
+    ageDivide: 'normal',
+    dayDivide: 'forward',
+    algorithm: 'default'
+  },
   _enginePromise: null,
   _lastChart: null,
   _lastInput: null,
@@ -54,6 +61,7 @@ var ZiweiModule = {
     try {
       var engine = await this._ensureEngine();
       if (!engine || !engine.astro) throw new Error('紫微排盘引擎未正确加载');
+      this._configureEngine(engine);
 
       var timeIndex = this._hourToTimeIndex(h);
       var dateText = y + '-' + m + '-' + d;
@@ -146,6 +154,26 @@ var ZiweiModule = {
   },
 
   /**
+   * 固定为 iztro 官方“通行派”默认口径，避免全局配置被其他脚本静默改变。
+   * 年界以农历正月初一、晚子时归次日；流派切换必须以后作为显式产品选项提供。
+   */
+  _configureEngine: function(engine) {
+    if (!engine || !engine.astro || typeof engine.astro.config !== 'function' || typeof engine.astro.getConfig !== 'function') {
+      throw new Error('紫微排盘引擎缺少配置接口');
+    }
+    engine.astro.config(this.STANDARD_CONFIG);
+    var actual = engine.astro.getConfig();
+    var expected = this.STANDARD_CONFIG;
+    Object.keys(expected).forEach(function(key) {
+      if (actual[key] !== expected[key]) throw new Error('紫微排盘口径配置失败：' + key);
+    });
+    if (Object.keys(actual.mutagens || {}).length || Object.keys(actual.brightness || {}).length) {
+      throw new Error('紫微排盘引擎存在未声明的四化或星曜亮度覆盖');
+    }
+    return actual;
+  },
+
+  /**
    * iztro 2.6.0 官方参数适配层。
    * bySolar(date, timeIndex, gender, fixLeap, language)
    * byLunar(date, timeIndex, gender, isLeapMonth, fixLeap, language)
@@ -225,7 +253,11 @@ var ZiweiModule = {
     });
 
     var current = null;
-    try { current = this._getHoroscope(chart, new Date()); } catch (e) { console.warn('[ZiweiModule] 运限计算失败', e); }
+    try {
+      var currentDate = new Date();
+      current = this._getHoroscope(chart, currentDate, this._hourToTimeIndex(currentDate.getHours()));
+      this._assertCycleIntegrity(chart, current, currentDate);
+    } catch (e) { console.warn('[ZiweiModule] 运限计算失败', e); }
 
     var html = '<div class="zw-shell">';
     html += this._renderHeader(chart, input);
@@ -327,16 +359,60 @@ var ZiweiModule = {
     return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
   },
 
-  _getHoroscope: function(chart, date) {
+  _getHoroscope: function(chart, date, timeIndex) {
     if (!chart || typeof chart.horoscope !== 'function') throw new Error('运限接口不可用');
-    var result = chart.horoscope(this._dateText(date));
-    if (!result || !result.decadal || !result.yearly || !result.monthly) throw new Error('运限结果不完整');
-    ['decadal','yearly','monthly'].forEach(function(key) {
+    if (timeIndex !== undefined && (!Number.isInteger(timeIndex) || timeIndex < 0 || timeIndex > 12)) {
+      throw new Error('流时时辰索引超出范围');
+    }
+    var result = chart.horoscope(this._dateText(date), timeIndex === undefined ? 0 : timeIndex);
+    if (!result || !result.age || !result.decadal || !result.yearly || !result.monthly || !result.daily || !result.hourly) {
+      throw new Error('运限结果不完整');
+    }
+    if (!Number.isInteger(result.age.nominalAge)) throw new Error('小限虚岁缺失');
+    ['age','decadal','yearly','monthly','daily','hourly'].forEach(function(key) {
       var item = result[key];
       if (!Number.isInteger(item.index) || item.index < 0 || item.index > 11) throw new Error(key + '宫位索引异常');
       if (!item.heavenlyStem || !item.earthlyBranch) throw new Error(key + '干支缺失');
     });
     return result;
+  },
+
+  _assertCycleIntegrity: function(chart, current, date) {
+    if (!chart || typeof chart.decadalList !== 'function') throw new Error('大限列表接口不可用');
+    var list = chart.decadalList();
+    if (!Array.isArray(list) || list.length !== 12) throw new Error('大限列表不完整');
+    var seen = new Set();
+    list.forEach(function(item, i) {
+      if (!item || !Number.isInteger(item.index) || seen.has(item.index)) throw new Error('大限宫位索引重复或缺失');
+      seen.add(item.index);
+      if (!Array.isArray(item.ageRange) || item.ageRange.length !== 2 || item.ageRange[1] - item.ageRange[0] !== 9) {
+        throw new Error('大限虚岁区间异常');
+      }
+      if (!Array.isArray(item.yearRange) || item.yearRange.length !== 2 || item.yearRange[1] - item.yearRange[0] !== 9) {
+        throw new Error('大限年份区间异常');
+      }
+      if (i > 0 && (item.ageRange[0] !== list[i - 1].ageRange[1] + 1 || item.yearRange[0] !== list[i - 1].yearRange[1] + 1)) {
+        throw new Error('大限区间不连续');
+      }
+    });
+
+    var nominalAge = current.age.nominalAge;
+    var active = list.find(function(item) { return nominalAge >= item.ageRange[0] && nominalAge <= item.ageRange[1]; });
+    if (!active) return true;
+    if (active.index !== current.decadal.index || active.heavenlyStem !== current.decadal.heavenlyStem || active.earthlyBranch !== current.decadal.earthlyBranch) {
+      throw new Error('当前大限与完整大限列表不一致');
+    }
+
+    if (typeof chart.yearlyList === 'function') {
+      var yearlyList = chart.yearlyList(active.index);
+      var currentDate = date instanceof Date ? date : new Date(date);
+      var year = currentDate.getFullYear();
+      var activeYear = yearlyList.find(function(item) { return item.year === year; });
+      if (activeYear && (activeYear.index !== current.yearly.index || activeYear.heavenlyStem !== current.yearly.heavenlyStem || activeYear.earthlyBranch !== current.yearly.earthlyBranch)) {
+        throw new Error('当前流年与大限流年列表不一致');
+      }
+    }
+    return true;
   },
 
   _getSanFangBranches: function(originBranch) {
@@ -421,7 +497,9 @@ var ZiweiModule = {
     var yearly = current && current.yearly ? (current.yearly.heavenlyStem || '') + (current.yearly.earthlyBranch || '') : '—';
     var decadal = current && current.decadal ? (current.decadal.heavenlyStem || '') + (current.decadal.earthlyBranch || '') : '—';
     var monthly = current && current.monthly ? (current.monthly.heavenlyStem || '') + (current.monthly.earthlyBranch || '') : '—';
-    var age = current && current.age != null ? current.age + '岁 · ' : '';
+    var daily = current && current.daily ? (current.daily.heavenlyStem || '') + (current.daily.earthlyBranch || '') : '—';
+    var hourly = current && current.hourly ? (current.hourly.heavenlyStem || '') + (current.hourly.earthlyBranch || '') : '—';
+    var age = current && current.age && Number.isInteger(current.age.nominalAge) ? '虚岁' + current.age.nominalAge + ' · ' : '';
     return '<div class="zw-center">' +
       '<div class="zw-taiji">☯</div>' +
       '<div class="zw-center-name">' + this._escape(input.name || '道问命盘') + '</div>' +
@@ -429,6 +507,7 @@ var ZiweiModule = {
       '<div class="zw-center-line">' + this._escape(chart.time || '—') + ' · ' + this._escape(chart.timeRange || '—') + '</div>' +
       '<div class="zw-center-line">命宫 ' + this._escape(chart.earthlyBranchOfSoulPalace || '—') + ' · 身宫 ' + this._escape(chart.earthlyBranchOfBodyPalace || '—') + '</div>' +
       '<div class="zw-center-line zw-yearly">当前 ' + this._escape(age) + '大限 ' + this._escape(decadal) + ' · 流年 ' + this._escape(yearly) + ' · 流月 ' + this._escape(monthly) + '</div>' +
+      '<div class="zw-center-line zw-daily">流日 ' + this._escape(daily) + ' · 流时 ' + this._escape(hourly) + '</div>' +
       '<div class="zw-center-note">排盘采用标准历法数据；“当地钟表时间”不等同于真太阳时。</div>' +
       '</div>';
   },

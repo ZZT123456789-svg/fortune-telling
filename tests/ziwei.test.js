@@ -39,6 +39,33 @@ test('紫微时辰映射保留早子时与晚子时', () => {
   assert.equal(ZiweiModule._hourToTimeIndex(23), 12);
 });
 
+test('紫微引擎固定使用通行派官方默认口径', () => {
+  let active = {
+    mutagens:{}, brightness:{}, yearDivide:'exact', horoscopeDivide:'exact',
+    ageDivide:'birthday', dayDivide:'current', algorithm:'zhongzhou'
+  };
+  const engine = { astro: {
+    config(options) { active = { ...active, ...options }; },
+    getConfig() { return active; }
+  } };
+  const result = ZiweiModule._configureEngine(engine);
+  assert.equal(result.yearDivide, 'normal');
+  assert.equal(result.horoscopeDivide, 'normal');
+  assert.equal(result.ageDivide, 'normal');
+  assert.equal(result.dayDivide, 'forward');
+  assert.equal(result.algorithm, 'default');
+});
+
+test('紫微引擎拒绝未声明的四化覆盖，防止流派配置静默污染', () => {
+  const engine = { astro: {
+    config() {},
+    getConfig() {
+      return { ...ZiweiModule.STANDARD_CONFIG, mutagens:{ gengHeavenly:['taiyangMaj'] }, brightness:{} };
+    }
+  } };
+  assert.throws(() => ZiweiModule._configureEngine(engine), /未声明的四化/);
+});
+
 test('拒绝越界时辰索引、未知性别和未知日历类型', () => {
   const engine = { astro: { bySolar() { return {}; }, byLunar() { return {}; } } };
   assert.throws(() => ZiweiModule._createChart(engine, {

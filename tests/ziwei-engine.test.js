@@ -90,7 +90,7 @@ test('命盘完整性校验覆盖十二宫、十四主星、生年四化与命�
   assert.throws(() => module._assertChartIntegrity(broken), /十四主星/);
 });
 
-test('当前大限、流年、流月使用 iztro 要求的日期字符串并完整返回', () => {
+test('当前小限、大限、流年、流月、流日、流时完整返回', () => {
   const context = { console, setTimeout, clearTimeout };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
@@ -100,8 +100,33 @@ test('当前大限、流年、流月使用 iztro 要求的日期字符串并完�
   assert.equal(flow.decadal.heavenlyStem + flow.decadal.earthlyBranch, '癸亥');
   assert.equal(flow.yearly.heavenlyStem + flow.yearly.earthlyBranch, '丙午');
   assert.equal(flow.monthly.heavenlyStem + flow.monthly.earthlyBranch, '丙申');
+  assert.equal(flow.daily.heavenlyStem + flow.daily.earthlyBranch, '庚午');
+  assert.equal(flow.hourly.heavenlyStem + flow.hourly.earthlyBranch, '丙子');
+  assert.equal(flow.age.nominalAge, 4);
+  const chenFlow = module._getHoroscope(chart, '2026-8-24', 4);
+  assert.equal(chenFlow.hourly.heavenlyStem + chenFlow.hourly.earthlyBranch, '庚辰');
+  assert.equal(chenFlow.hourly.index, 4);
   const center = module._renderCenter(chart, { name:'测试', hour:8, minute:0 }, flow);
+  assert.match(center, /虚岁4/);
   assert.match(center, /大限 癸亥 · 流年 丙午 · 流月 丙申/);
+  assert.match(center, /流日 庚午 · 流时 丙子/);
+  assert.doesNotMatch(center, /\[object Object\]/);
+});
+
+test('完整大限列表连续且与当前大限、流年交叉一致', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  const chart = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
+  const flow = module._getHoroscope(chart, '2026-8-24');
+  assert.equal(module._assertCycleIntegrity(chart, flow, new Date(2026, 7, 24)), true);
+
+  const original = chart.decadalList;
+  chart.decadalList = () => original.call(chart).map((item, index) => index === 1
+    ? { ...item, ageRange:[item.ageRange[0] + 1, item.ageRange[1] + 1] }
+    : item);
+  assert.throws(() => module._assertCycleIntegrity(chart, flow, new Date(2026, 7, 24)), /大限区间不连续/);
 });
 
 test('宫位使用真实 decadal 字段并显示小限与四套十二神', () => {
