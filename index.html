@@ -75,6 +75,10 @@
           <button onclick="DreamModule.open()">梦境</button>
           <button onclick="XiaoLiuRenModule.open()">小六壬</button>
           <button onclick="ZhugeModule.open()">诸葛神数</button>
+          <button onclick="QimenModule.open()">奇门遁甲</button>
+          <button onclick="FengshuiModule.open()">玄空风水</button>
+          <button onclick="AstroChartModule.open()">独立星盘</button>
+          <button onclick="TaiyiModule.open()">太乙神数</button>
           <button onclick="window.location.href='library.html'">命理书库</button>
         </div>
       </div>
@@ -178,6 +182,30 @@
       <div class="tc-name">塔罗牌占卜</div>
       <div class="tc-desc">完整78张牌，三张牌阵揭示过去、现在与未来。</div>
       <div class="tc-tag">78张牌</div>
+    </div>
+    <div class="tool-card" onclick="QimenModule.open()">
+      <div class="tc-icon">奇</div>
+      <div class="tc-name">奇门遁甲</div>
+      <div class="tc-desc">自选日期时间起局，查看阴阳遁、九宫、八门、九星、八神及值符值使。</div>
+      <div class="tc-tag">时间起局 · 1次</div>
+    </div>
+    <div class="tool-card" onclick="FengshuiModule.open()">
+      <div class="tc-icon">宅</div>
+      <div class="tc-name">玄空风水</div>
+      <div class="tc-desc">按建造年份与房屋朝向生成二十四山、运盘、山盘、向盘和流年飞星。</div>
+      <div class="tc-tag">玄空下卦 · 1次</div>
+    </div>
+    <div class="tool-card" onclick="AstroChartModule.open()">
+      <div class="tc-icon">辰</div>
+      <div class="tc-name">独立出生星盘</div>
+      <div class="tc-desc">高精度星历、十大星体、四轴、十二宫、逆行与主要相位一屏查看。</div>
+      <div class="tc-tag">Placidus · 1次</div>
+    </div>
+    <div class="tool-card" onclick="TaiyiModule.open()">
+      <div class="tc-icon">太</div>
+      <div class="tc-name">太乙神数</div>
+      <div class="tc-desc">支持年、月、日、时四计七十二局，展示主客定算及十六神。</div>
+      <div class="tc-tag">太乙四计 · 1次</div>
     </div>
   </div>
 
@@ -890,6 +918,7 @@
   <script src="js/dream.js"></script>
   <script src="js/name-analysis.js"></script>
   <script src="js/personality.js"></script>
+  <script src="js/advanced-divination.js?v=20260827-2"></script>
   <script src="js/contact-menu.js?v=20260821-1"></script>
   <script src="js/ui-polish.js?v=20260823-1"></script>
   <script src="js/theme-switcher.js?v=20260823-1"></script>

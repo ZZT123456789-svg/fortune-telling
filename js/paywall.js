@@ -121,6 +121,31 @@ var Paywall = {
     return true;
   },
 
+  /**
+   * 需要服务端确认后才能继续的付费工具使用此入口。
+   * 与旧 deduct() 不同：本方法在数据库事务成功前不会开放结果。
+   */
+  consumeCredit: async function(amount, reason, requestId) {
+    amount = Math.max(1, Math.min(20, Math.floor(Number(amount || 1))));
+    reason = String(reason || 'premium-tool');
+    requestId = String(requestId || ('tool:' + Date.now() + ':' + Math.random().toString(36).slice(2, 12)));
+    try {
+      if (window.DaoWenIdentity && DaoWenIdentity.ready) await DaoWenIdentity.ready();
+      var resp = await fetch('/api/consume-credit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amount, reason: reason, requestId: requestId })
+      });
+      var data = await this._json(resp);
+      this._setBalance(data.balance);
+      return data;
+    } catch (err) {
+      if (err && err.data && err.data.balance != null) this._setBalance(Number(err.data.balance));
+      else this.syncBalance(true).catch(function() {});
+      throw err;
+    }
+  },
+
   /** 已废弃：前端不得自行增加余额。 */
   addBalance: function() {
     console.warn('[Paywall] addBalance 已禁用：余额只能由服务端支付/兑换/管理员事务增加。');

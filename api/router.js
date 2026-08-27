@@ -11,6 +11,7 @@ const handlers = Object.freeze({
   'balance': require('./balance'),
   'check-order': require('./check-order'),
   'consume-credit': require('./consume-credit'),
+  'divination-chart': require('./divination-chart'),
   'redeem': require('./redeem'),
   'session': require('./session'),
   'user-data': require('./user-data')
