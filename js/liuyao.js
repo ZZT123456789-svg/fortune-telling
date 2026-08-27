@@ -54,6 +54,8 @@ var LiuyaoModule = {
 
   _showResult:function(){
     document.getElementById('liuyaoShaking').style.display='none';
+    var resultEl=document.getElementById('liuyaoResult');
+    resultEl.style.display='block';
     var tg=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],dz=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
     // 构建本卦key(6位二进制从上到下)
     var key='';for(var k=5;k>=0;k--){var l=this.yaoLines[k];key+=(l.type==='young_yang'||l.type==='old_yang')?'1':'0';}
@@ -71,7 +73,7 @@ var LiuyaoModule = {
 
     var najia=LiuYaoDB.getNaJia(key,dGZ.gan,monthZhi,dGZ.zhi);
     var najiaB=LiuYaoDB.getNaJia(bKey,dGZ.gan,monthZhi,dGZ.zhi);
-    if(!najia){document.getElementById('liuyaoResult').innerHTML='<p>卦数据缺失</p>';return;}
+    if(!najia){resultEl.innerHTML='<div class="analysis-card"><p>当前卦象数据异常，请重新起卦。</p></div>';return;}
 
     // 用神
     var q=document.getElementById('liuyaoQuestion').value||'';
@@ -126,6 +128,9 @@ var LiuyaoModule = {
     h+='<p style="font-size:0.72rem;color:var(--text-muted);text-align:center;">六爻纳甲排盘·仅供娱乐参考</p>';
     h+='<button class="btn-secondary" onclick="LiuyaoModule.start()">重新摇卦</button>';
     h+='<button class="btn-secondary" onclick="LiuyaoModule.close()">🔙 返回</button>';
-    document.getElementById('liuyaoResult').innerHTML=h;
+    resultEl.innerHTML=h;
+    requestAnimationFrame(function(){
+      resultEl.scrollIntoView({behavior:'smooth',block:'start'});
+    });
   }
 };
