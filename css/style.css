@@ -3850,6 +3850,73 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   background: #020303;
   box-shadow: 0 0 42px 16px rgba(0,0,0,.72);
 }
+.dao-mystic-wheel,
+.dao-app-bagua {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  width: min(64vw,820px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(225,190,116,.3);
+  border-radius: 50%;
+  opacity: .58;
+  filter: drop-shadow(0 0 12px rgba(218,173,82,.24));
+  animation: daoMysticWheel 24s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+.dao-mystic-wheel::before,
+.dao-mystic-wheel::after,
+.dao-app-bagua::before,
+.dao-app-bagua::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.dao-mystic-wheel::before,
+.dao-app-bagua::before {
+  inset: 8%;
+  border: 1px dashed rgba(222,190,121,.34);
+  box-shadow:inset 0 0 35px rgba(219,181,104,.08),0 0 28px rgba(223,189,119,.08);
+}
+.dao-mystic-wheel::after,
+.dao-app-bagua::after {
+  inset: 19%;
+  border: 1px solid rgba(194,210,210,.18);
+  background: repeating-conic-gradient(from 0deg,rgba(223,188,112,.14) 0 1deg,transparent 1deg 44deg);
+  -webkit-mask: radial-gradient(circle,transparent 0 72%,#000 73% 77%,transparent 78%);
+  mask: radial-gradient(circle,transparent 0 72%,#000 73% 77%,transparent 78%);
+}
+.dao-mystic-wheel > span,
+.dao-app-bagua > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #f1cf82;
+  border: 1px solid rgba(232,199,128,.42);
+  border-radius: 50%;
+  background: rgba(5,7,7,.62);
+  box-shadow:0 0 15px rgba(223,178,84,.2),inset 0 0 9px rgba(230,195,125,.08);
+  font:700 1rem/1 var(--font-display);
+  transform: translate(-50%,-50%) rotate(var(--dao-angle)) translateY(calc(0px - min(32vw,410px))) rotate(calc(0deg - var(--dao-angle)));
+}
+.dao-mystic-script {
+  position: absolute;
+  top: 22%;
+  color: rgba(232,202,142,.5);
+  font:600 clamp(.68rem,1.05vw,.9rem)/2 var(--font-display);
+  letter-spacing: .24em;
+  writing-mode: vertical-rl;
+  text-shadow:0 0 10px rgba(220,173,80,.25),0 2px 8px #000;
+  animation: daoMysticScript 5s ease-in-out infinite alternate;
+}
+.dao-mystic-script-left { left:5.8%; }
+.dao-mystic-script-right { right:5.8%; animation-delay:-2.5s; }
 .dao-mist {
   position: absolute;
   width: 72vw;
@@ -3938,6 +4005,15 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   animation: daoAppFog 8s ease-in-out infinite alternate;
   will-change: transform,opacity;
 }
+.dao-app-bagua {
+  top: 6vh;
+  width: min(78vw,920px);
+  opacity: .22;
+  animation-duration:32s;
+}
+.dao-app-bagua > span {
+  transform:translate(-50%,-50%) rotate(var(--dao-angle)) translateY(calc(0px - min(39vw,460px))) rotate(calc(0deg - var(--dao-angle)));
+}
 .dao-app-home > :not(.dao-app-motion) {
   position: relative;
   z-index: 1;
@@ -3971,6 +4047,14 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   62% { opacity:.24; }
   76%,100% { transform:translate3d(660%,0,0) skewX(-16deg); opacity:0; }
 }
+@keyframes daoMysticWheel {
+  from { transform:translateX(-50%) rotate(0deg); }
+  to { transform:translateX(-50%) rotate(360deg); }
+}
+@keyframes daoMysticScript {
+  from { opacity:.28; transform:translateY(9px); }
+  to { opacity:.7; transform:translateY(-9px); }
+}
 @keyframes daoTitleBreath { 50% { text-shadow:0 0 22px rgba(255,244,210,.52),0 0 58px rgba(216,177,99,.17),0 8px 34px rgba(0,0,0,.85); } }
 @keyframes daoMoonOrbit { 50% { transform: translateY(-4px) rotate(10deg); filter:drop-shadow(0 0 9px rgba(222,186,105,.46)); } }
 @keyframes daoAppMistDrift { to { transform:translate3d(0,-28px,0) scale(1.035); opacity:.15; } }
@@ -3989,16 +4073,23 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   .dao-mist { opacity:.52; filter:blur(34px); }
   .dao-gold-dust { inset:14% 7%; opacity:.46; }
   .dao-motion-scene::after { animation-duration:9s; }
+  .dao-mystic-wheel { top:11%; width:108vw; opacity:.38; animation-duration:34s; }
+  .dao-mystic-wheel > span { width:29px;height:29px;font-size:.8rem;transform:translate(-50%,-50%) rotate(var(--dao-angle)) translateY(-54vw) rotate(calc(0deg - var(--dao-angle))); }
+  .dao-mystic-script { top:28%;font-size:.6rem;letter-spacing:.16em;opacity:.38; }
+  .dao-mystic-script-left { left:2%; }
+  .dao-mystic-script-right { right:2%; }
   .dao-app-motion { animation-duration:7s; }
   .dao-app-motion::before { top:-18vh; width:135vw; opacity:.3; animation-duration:27s; }
   .dao-app-motion::after { opacity:.32; animation-duration:12s; }
+  .dao-app-bagua { top:16vh;width:122vw;opacity:.16;animation-duration:46s; }
+  .dao-app-bagua > span { width:27px;height:27px;font-size:.72rem;transform:translate(-50%,-50%) rotate(var(--dao-angle)) translateY(-61vw) rotate(calc(0deg - var(--dao-angle))); }
   .dw-app-page .tool-card .tc-icon { animation-duration:8s; }
   .tool-overlay.active > .tool-modal { animation-name:daoModalMobileArrive; animation-duration:.3s; transform-origin:50% 100%; }
 }
 @keyframes daoModalMobileArrive { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .dao-scene-bg,.dao-vortex,.dao-mist,.dao-gold-dust,.dao-hero h1,.dao-moon,
+  .dao-scene-bg,.dao-vortex,.dao-mist,.dao-gold-dust,.dao-hero h1,.dao-moon,.dao-mystic-wheel,.dao-mystic-script,.dao-app-bagua,
   .dw-app-page .dao-app-home::before,.dw-app-page .tool-card .tc-icon,
   .tool-overlay.active,.tool-overlay.active > .tool-modal { animation:none !important; }
   .dao-scene-bg { transform:scale(1.04) !important; }

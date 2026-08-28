@@ -42,7 +42,7 @@ test('首页动态场景、入局揭幕和弹窗转场均提供减少动态降�
   const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
   const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
 
-  for (const layer of ['dao-motion-scene', 'dao-scene-bg', 'dao-vortex-outer', 'dao-mist-left', 'dao-gold-dust', 'dao-app-motion']) {
+  for (const layer of ['dao-motion-scene', 'dao-scene-bg', 'dao-vortex-outer', 'dao-mystic-wheel', 'dao-mystic-script', 'dao-mist-left', 'dao-gold-dust', 'dao-app-motion', 'dao-app-bagua']) {
     assert.match(html, new RegExp(layer));
   }
   assert.match(app, /function initHeroMotion\(\)/);
@@ -52,5 +52,6 @@ test('首页动态场景、入局揭幕和弹窗转场均提供减少动态降�
   assert.match(css, /@keyframes daoAppOrbit/);
   assert.match(css, /@keyframes daoAppFog/);
   assert.match(css, /@keyframes daoEnergySweep/);
+  assert.match(css, /@keyframes daoMysticWheel/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*dao-scene-bg/);
 });
