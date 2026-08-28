@@ -36,3 +36,18 @@ test('八字核心界面使用黑金字印，不显示彩色系统 Emoji', () =>
   assert.match(html, /dao-inline-mark/);
   assert.doesNotMatch(html, /🧑|👫|🌞/);
 });
+
+test('首页动态场景、入局揭幕和弹窗转场均提供减少动态降级', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8');
+  const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+
+  for (const layer of ['dao-motion-scene', 'dao-scene-bg', 'dao-vortex-outer', 'dao-mist-left', 'dao-gold-dust']) {
+    assert.match(html, new RegExp(layer));
+  }
+  assert.match(app, /function initHeroMotion\(\)/);
+  assert.match(app, /appHome\.classList\.add\('dao-arriving'\)/);
+  assert.match(css, /@keyframes daoSceneBreathe/);
+  assert.match(css, /@keyframes daoModalArrive/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*dao-scene-bg/);
+});

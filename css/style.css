@@ -3772,6 +3772,163 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dao-hero.dao-entering { animation: none; } }
 
+/* ============================================================
+   道问 · 沉浸动态场景 2026-08
+   纯网页环境层，不遮挡真实导航、按钮、表单及支付交互。
+   ============================================================ */
+.dao-hero {
+  --dao-pointer-x: 0px;
+  --dao-pointer-y: 0px;
+}
+.dao-motion-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dao-scene-bg {
+  position: absolute;
+  inset: -5%;
+  background: #070808 url('../assets/daowen-hero-bg.png') center / cover no-repeat;
+  transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055);
+  animation: daoSceneBreathe 18s ease-in-out infinite alternate;
+  transition: transform .9s cubic-bezier(.2,.7,.2,1);
+  will-change: transform,filter;
+}
+.dao-vortex {
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: .24;
+  mix-blend-mode: screen;
+  transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0);
+  will-change: transform;
+}
+.dao-vortex::before,
+.dao-vortex::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+}
+.dao-vortex-outer {
+  width: min(47vw,680px);
+  background: conic-gradient(from 30deg,transparent 0 16%,rgba(239,218,172,.2) 20%,transparent 27% 53%,rgba(174,188,192,.13) 58%,transparent 66% 100%);
+  filter: blur(8px) drop-shadow(0 0 25px rgba(229,215,183,.16));
+  animation: daoVortexOuter 54s linear infinite;
+}
+.dao-vortex-outer::before {
+  inset: 12%;
+  border: 1px solid rgba(231,217,181,.17);
+  box-shadow: 0 0 35px rgba(235,224,198,.1),inset 0 0 45px rgba(221,211,185,.08);
+}
+.dao-vortex-inner {
+  top: 13%;
+  width: min(34vw,490px);
+  background: radial-gradient(circle,rgba(0,0,0,.88) 0 15%,rgba(8,9,9,.35) 30%,transparent 59%),conic-gradient(from 140deg,transparent,rgba(244,228,190,.13),transparent 28%,rgba(195,209,211,.1),transparent 68%);
+  filter: blur(3px);
+  animation: daoVortexInner 38s linear infinite reverse;
+}
+.dao-vortex-inner::after {
+  inset: 28%;
+  background: #020303;
+  box-shadow: 0 0 42px 16px rgba(0,0,0,.72);
+}
+.dao-mist {
+  position: absolute;
+  width: 72vw;
+  height: 28vh;
+  min-height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse,rgba(221,219,207,.18),rgba(149,158,156,.07) 37%,transparent 70%);
+  filter: blur(28px);
+  opacity: .38;
+  will-change: transform,opacity;
+}
+.dao-mist-left {
+  left: -26vw;
+  top: 32%;
+  animation: daoMistLeft 20s ease-in-out infinite alternate;
+}
+.dao-mist-right {
+  right: -30vw;
+  top: 52%;
+  animation: daoMistRight 25s ease-in-out infinite alternate;
+}
+.dao-gold-dust {
+  position: absolute;
+  inset: 12% 15%;
+  opacity: .32;
+  background-image:
+    radial-gradient(circle at 9% 27%,rgba(244,208,128,.85) 0 1px,transparent 1.7px),
+    radial-gradient(circle at 79% 18%,rgba(237,219,174,.72) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 67% 68%,rgba(229,190,108,.68) 0 1px,transparent 1.8px),
+    radial-gradient(circle at 31% 76%,rgba(239,225,190,.62) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 92% 55%,rgba(226,190,116,.56) 0 1px,transparent 1.6px);
+  filter: drop-shadow(0 0 4px rgba(232,194,114,.5));
+  animation: daoDustFloat 13s ease-in-out infinite alternate;
+}
+.dao-hero h1 {
+  animation: daoTitleBreath 5.8s ease-in-out infinite;
+}
+.dao-moon {
+  animation: daoMoonOrbit 6s ease-in-out infinite;
+}
+.dw-app-page .dao-app-home::before {
+  animation: daoAppMistDrift 22s ease-in-out infinite alternate;
+  will-change: transform,opacity;
+}
+.tool-card.dao-reveal {
+  transition-delay: calc(var(--dao-reveal-order,0) * 45ms) !important;
+}
+.dw-app-page .tool-card .tc-icon {
+  animation: daoSealPulse 6.5s ease-in-out infinite;
+  animation-delay: calc(var(--dao-reveal-order,0) * -370ms);
+}
+.tool-overlay.active {
+  animation: daoOverlayArrive .24s ease-out both !important;
+}
+.tool-overlay.active > .tool-modal {
+  animation: daoModalArrive .38s cubic-bezier(.18,.76,.22,1) both;
+  transform-origin: 50% 28%;
+}
+@keyframes daoSceneBreathe {
+  0% { transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055); filter: brightness(.91) contrast(1.03); }
+  100% { transform: translate3d(var(--dao-pointer-x),calc(var(--dao-pointer-y) - 7px),0) scale(1.085); filter: brightness(1.02) contrast(1.07); }
+}
+@keyframes daoVortexOuter { to { transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0) rotate(360deg); } }
+@keyframes daoVortexInner { to { transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0) rotate(360deg); } }
+@keyframes daoMistLeft { to { transform: translate3d(25vw,-5vh,0) scale(1.16); opacity: .2; } }
+@keyframes daoMistRight { to { transform: translate3d(-27vw,4vh,0) scale(1.12); opacity: .24; } }
+@keyframes daoDustFloat { to { transform: translate3d(0,-18px,0) scale(1.02); opacity: .5; } }
+@keyframes daoTitleBreath { 50% { text-shadow:0 0 22px rgba(255,244,210,.52),0 0 58px rgba(216,177,99,.17),0 8px 34px rgba(0,0,0,.85); } }
+@keyframes daoMoonOrbit { 50% { transform: translateY(-4px) rotate(10deg); filter:drop-shadow(0 0 9px rgba(222,186,105,.46)); } }
+@keyframes daoAppMistDrift { to { transform:translate3d(0,-28px,0) scale(1.035); opacity:.15; } }
+@keyframes daoSealPulse { 50% { box-shadow:0 0 0 4px rgba(209,166,80,.045),0 0 22px rgba(205,158,65,.11); } }
+@keyframes daoOverlayArrive { from { opacity:0; } to { opacity:1; } }
+@keyframes daoModalArrive { from { opacity:0; transform:translateY(18px) scale(.985); filter:blur(4px); } to { opacity:1; transform:none; filter:none; } }
+
+@media (max-width: 640px) {
+  .dao-scene-bg { animation-duration: 24s; }
+  .dao-vortex { opacity: .16; }
+  .dao-vortex-outer { width: 86vw; top: 10%; filter:blur(9px); }
+  .dao-vortex-inner { width: 62vw; top: 16%; }
+  .dao-mist { opacity:.25; filter:blur(34px); }
+  .dao-gold-dust { inset:14% 7%; opacity:.22; }
+  .dw-app-page .tool-card .tc-icon { animation-duration:8s; }
+  .tool-overlay.active > .tool-modal { animation-name:daoModalMobileArrive; animation-duration:.3s; transform-origin:50% 100%; }
+}
+@keyframes daoModalMobileArrive { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dao-scene-bg,.dao-vortex,.dao-mist,.dao-gold-dust,.dao-hero h1,.dao-moon,
+  .dw-app-page .dao-app-home::before,.dw-app-page .tool-card .tc-icon,
+  .tool-overlay.active,.tool-overlay.active > .tool-modal { animation:none !important; }
+  .dao-scene-bg { transform:scale(1.04) !important; }
+}
+
 /* 独立支付页 */
 .dw-payment-body { min-height: 100dvh; overflow-x: hidden; background: #070808 url('../assets/daowen-hero-bg.png') center / cover fixed no-repeat !important; }
 .dw-payment-body::before { content:""; position:fixed; inset:0; background:rgba(3,4,4,.76); backdrop-filter:blur(5px); pointer-events:none; }

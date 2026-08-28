@@ -538,6 +538,11 @@ function makeToolCardsAccessible() {
 function addRevealMotion() {
   const targets = document.querySelectorAll('.section-header, .tool-card, .disclaimer-box');
   if (!targets.length) return;
+  document.querySelectorAll('.tools-grid').forEach(grid => {
+    [...grid.querySelectorAll(':scope > .tool-card')].forEach((card, index) => {
+      card.style.setProperty('--dao-reveal-order', String(index));
+    });
+  });
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduceMotion || !('IntersectionObserver' in window)) {
     targets.forEach(el => el.classList.add('dao-reveal-visible'));
@@ -554,11 +559,44 @@ function addRevealMotion() {
   targets.forEach(el => io.observe(el));
 }
 
+function initHeroMotion() {
+  const hero = document.getElementById('daoHero');
+  const appHome = document.getElementById('appHome');
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (appHome && document.body.classList.contains('dw-app-page')) {
+    appHome.classList.add('dao-arriving');
+    window.setTimeout(() => appHome.classList.remove('dao-arriving'), reduceMotion ? 0 : 1500);
+  }
+  if (!hero || reduceMotion || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  let frame = 0;
+  let nextX = 0;
+  let nextY = 0;
+  const paint = () => {
+    frame = 0;
+    hero.style.setProperty('--dao-pointer-x', (nextX * -10).toFixed(2) + 'px');
+    hero.style.setProperty('--dao-pointer-y', (nextY * -8).toFixed(2) + 'px');
+  };
+  hero.addEventListener('pointermove', event => {
+    const rect = hero.getBoundingClientRect();
+    nextX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+    nextY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+    if (!frame) frame = requestAnimationFrame(paint);
+  }, { passive: true });
+  hero.addEventListener('pointerleave', () => {
+    nextX = 0;
+    nextY = 0;
+    if (!frame) frame = requestAnimationFrame(paint);
+  }, { passive: true });
+}
+
 function initDaoUI() {
   installDaoDismissSplash();
   enhanceDaoSplash();
   makeToolCardsAccessible();
   addRevealMotion();
+  initHeroMotion();
   document.documentElement.classList.add('dao-ink-theme-ready');
 }
 
