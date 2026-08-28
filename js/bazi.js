@@ -533,7 +533,9 @@ var BaziModule = {
     var resultTabs = '<div class="bazi-result-tabs" role="tablist"><button class="active" type="button" onclick="BaziModule.switchResultView(\'simple\',this)">简明解读</button><button type="button" onclick="BaziModule.switchResultView(\'professional\',this)">专业命盘</button></div>';
     resultTabs = '';
     var referenceChart = (typeof BaziResultView !== 'undefined') ? BaziResultView.render(r, 'bazi-single-sheet') : '';
-    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字命理全盘</div>' + infoHtml + referenceChart + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
+    var basicChart = (typeof BaziResultView !== 'undefined' && BaziResultView.renderBasic) ? BaziResultView.renderBasic(r, 'bazi-single-basic') : '';
+    var freeHtml = '<div class=\"result-header\"><i class="dao-inline-mark">命</i> ' + r.name + ' 八字基础命盘</div>' + infoHtml + basicChart;
+    var interpretationHtml = referenceChart + resultTabs + '<div id="baziSimpleView" class="bazi-result-view active">' + professionalSummary +
       '<div class=\"analysis-card\" style=\"border-left:3px solid #e80;\"><h4><i class=\"dao-inline-mark\">候</i> 《滴天髓》调候总纲（第一优先级）</h4>' +
         '<p style=\"line-height:1.8;\">' + diTianHou + '</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-secondary);\">《滴天髓》云："天道有寒暖，发育万物。地道有燥湿，生成品汇。" 寒暖燥湿为生死线，调候先于格局。</p></div>' +
@@ -563,7 +565,7 @@ var BaziModule = {
     var paidHtml = '';
     if (Paywall.hasBalance()) {
       // AI解读占位(异步加载)
-      paidHtml = patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
+      paidHtml = interpretationHtml + patternVisualHtml + '<div id=\"aiReadingContainer\" style=\"text-align:center;padding:2rem;\">' +
         '<p><span class=\"dao-title-mark\">问</span></p>' +
         '<p class=\"ai-reading-loading-title\">正在生成 AI 深度解读…</p>' +
         '<p style=\"font-size:0.85rem;color:var(--text-muted);\">基于《滴天髓》《穷通宝鉴》《子平真诠》综合分析</p>' +
@@ -572,7 +574,7 @@ var BaziModule = {
         '</div></div>';
     } else {
       // 规则解读(降级)
-      paidHtml = patternVisualHtml + self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
+      paidHtml = interpretationHtml + patternVisualHtml + self._buildDeepAnalysis(r, bodyStrength, tiaoHou, pattern, ssHtml, daYunHtml, detailedDaYun, careerAnalysis, bestDir, industries, healthAnalysis, cautions, lifeTraj, nameAnalysis, geju);
     }
 
 
@@ -598,8 +600,8 @@ var BaziModule = {
       ctn.innerHTML = freeHtml +
         '<div class="bazi-paywall-prompt">'+
           '<div><div><span class="dao-title-mark">锁</span></div>'+
-          '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">付费解读内容</p>'+
-          '<p style="color:#aaa;font-size:0.85rem;">购买次数后解锁完整内容</p>'+
+          '<p style="color:#fff;font-weight:bold;font-size:1.1rem;">解锁八字完整解读</p>'+
+          '<p style="color:#aaa;font-size:0.85rem;">格局、旺衰、喜用神、大运流年及 AI 深度解读</p>'+
           '<button class="btn-primary" onclick="Paywall.openShop()" style="margin-top:0.5rem;padding:0.6rem 2rem;">购买解读次数</button>'+
           '<p style="color:#999;font-size:0.76rem;margin-top:0.4rem;">已有兑换码？<a href="javascript:Paywall.openRedeem()" style="color:var(--gold);">点此兑换</a></p>'+
           '</div></div>';
@@ -648,7 +650,7 @@ var BaziModule = {
     var canAI=window.Paywall&&Paywall.hasBalance(4);
     var aiHtml=canAI ? '<div class="dual-ai-loading"><p class="ai-reading-loading-title">正在生成双人 AI 合盘解读…</p><p>本次自动扣除 4 次，失败会自动退回</p></div>' :
       '<div class="dual-ai-locked"><span class="dao-title-mark">锁</span><h3>双人 AI 合盘解读</h3><p>需要 4 次解读余额。甲乙命盘与基础合盘仍可完整查看。</p><button class="btn-primary" onclick="Paywall.openShop()">购买解读次数</button><button class="btn-secondary" onclick="Paywall.openRedeem()">兑换码</button></div>';
-    ctn.innerHTML='<div class="result-header"><i class="dao-inline-mark">合</i> '+a.name+' &amp; '+b.name+' 双人合盘</div>'+
+    var unlockedHtml='<div class="result-header"><i class="dao-inline-mark">合</i> '+a.name+' &amp; '+b.name+' 双人合盘</div>'+
       '<section class="dual-person-block"><h2>甲方完整单人命盘与规则解读</h2>'+BaziResultView.render(a,'bazi-dual-a')+'</section>'+
       '<section class="dual-person-block"><h2>乙方完整单人命盘与规则解读</h2>'+BaziResultView.render(b,'bazi-dual-b')+'</section>'+
       '<section class="dual-compat-report"><h2>双方综合合盘解读</h2>'+
@@ -663,6 +665,12 @@ var BaziModule = {
         '<div class="dual-score"><b>'+compat.score+'%</b><span>结构参考值</span><p>'+compat.relation+'</p></div>'+
       '</section><section id="dualAiReadingContainer" class="dual-ai-section">'+aiHtml+'</section>'+
       '<p class="classic-disclaimer">以上内容属于传统文化体验，不代替现实中的感情、财务、医疗或法律决策。</p><button class="btn-secondary" onclick="BaziModule.close()"><i class="dao-inline-mark">返</i> 返回</button>';
+    var lockedHtml='<div class="result-header"><i class="dao-inline-mark">合</i> '+a.name+' &amp; '+b.name+' 双人基础合盘</div>'+
+      '<section class="dual-person-block"><h2>甲方基础八字</h2>'+BaziResultView.renderBasic(a,'bazi-dual-basic-a')+'</section>'+
+      '<section class="dual-person-block"><h2>乙方基础八字</h2>'+BaziResultView.renderBasic(b,'bazi-dual-basic-b')+'</section>'+
+      '<section class="dual-ai-section"><div class="dual-ai-locked"><span class="dao-title-mark">锁</span><h3>解锁双人完整合盘</h3><p>需要 4 次解读余额。解锁甲方完整解读、乙方完整解读、双方综合合盘及双人 AI 深度解读。</p><button class="btn-primary" onclick="Paywall.openShop()">购买解读次数</button><button class="btn-secondary" onclick="Paywall.openRedeem()">兑换码</button></div></section>'+
+      '<p class="classic-disclaimer">基础四柱免费展示，完整分析属于付费解读内容。</p><button class="btn-secondary" onclick="BaziModule.close()"><i class="dao-inline-mark">返</i> 返回</button>';
+    ctn.innerHTML=canAI?unlockedHtml:lockedHtml;
     this._focusResult(ctn);
     if (canAI) this._callDualAI(a,b,compat);
   },

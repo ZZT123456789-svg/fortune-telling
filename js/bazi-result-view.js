@@ -62,6 +62,27 @@ var BaziResultView = (function() {
   function starSection(title,p,items){return '<section class="classic-section"><h3>'+title+'</h3><div class="classic-star-line"><b>'+esc(gz(p))+'</b>'+starCell(items)+'</div></section>';}
   function timeline(scope,type,items,selected,renderer){return '<div class="classic-timeline '+type+'">'+items.map(function(item,i){return '<button type="button" class="'+(i===selected?'selected':'')+'" onclick="BaziResultView.select(\''+scope+'\',\''+type+'\','+i+')">'+renderer(item,i)+'</button>';}).join('')+'</div>';}
 
+  function basicSheet(r,scope){
+    var pillars=[
+      {label:'年柱',value:r.yearP},
+      {label:'月柱',value:r.monthP},
+      {label:'日柱',value:r.dayP,dayMaster:true},
+      {label:'时柱',value:r.hourP}
+    ];
+    return '<article class="bazi-basic-sheet" id="'+esc(scope)+'">'+
+      '<header class="bazi-basic-head"><div><h2>'+esc(r.name)+' · 基础八字</h2><p>'+esc(r.gender)+'　公历 '+r.solarDate.year+'-'+r.solarDate.month+'-'+r.solarDate.day+'　'+String(r.solarDate.hour).padStart(2,'0')+':'+String(r.solarDate.minute).padStart(2,'0')+'</p></div><span>基础排盘免费</span></header>'+
+      '<div class="bazi-basic-pillars">'+pillars.map(function(item){
+        return '<section class="bazi-basic-pillar '+(item.dayMaster?'is-day-master':'')+'">'+
+          '<h3>'+item.label+'</h3>'+
+          '<strong class="'+cls(item.value.gan)+'">'+esc(item.value.gan)+'</strong>'+
+          '<strong class="'+cls(item.value.zhi)+'">'+esc(item.value.zhi)+'</strong>'+
+          (item.dayMaster?'<small>日主</small>':'')+
+        '</section>';
+      }).join('')+'</div>'+
+      '<p class="bazi-basic-note">基础命盘已生成。格局、旺衰、喜用神、大运流年及 AI 深度解读属于解锁内容。</p>'+
+    '</article>';
+  }
+
   function sheet(state){
     var r=state.r,f=flow(state),p=r.professional,base=[r.yearP,r.monthP,r.dayP,r.hourP],today=f.today,ly=pillar(f.ly.ganZhi),dy=pillar(f.dy.ganZhi);
     var originalStars=(typeof BaziShenSha!=='undefined'?BaziShenSha.detect(r.dayMaster,r.yearP.zhi,r.monthP.zhi,base):[]);
@@ -94,7 +115,8 @@ var BaziResultView = (function() {
     '</article>';
   }
   function render(r,scope){var state=init(r,scope);return sheet(state);}
+  function renderBasic(r,scope){return basicSheet(r,scope);}
   function select(scope,type,index){var state=states[scope];if(!state)return;if(type==='dayun'){state.dayunIndex=index;state.yearIndex=0;}else if(type==='year')state.yearIndex=index;else state.monthIndex=index;var node=document.getElementById(scope);if(node)node.outerHTML=sheet(state);}
   function chartPayload(r){return {name:r.name,gender:r.gender,year:gz(r.yearP),month:gz(r.monthP),day:gz(r.dayP),hour:gz(r.hourP),dayMaster:r.dayMaster,element:r.dmElement,professional:r.professional,solarDate:r.solarDate};}
-  return {render:render,select:select,chartPayload:chartPayload,_states:states};
+  return {render:render,renderBasic:renderBasic,select:select,chartPayload:chartPayload,_states:states};
 })();
