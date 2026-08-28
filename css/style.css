@@ -3787,12 +3787,26 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   overflow: hidden;
   pointer-events: none;
 }
+.dao-motion-scene::after {
+  content: "";
+  position: absolute;
+  top: -28%;
+  bottom: -28%;
+  left: -32%;
+  width: 24%;
+  opacity: 0;
+  background: linear-gradient(90deg,transparent,rgba(245,220,161,.16),rgba(224,234,232,.2),transparent);
+  filter: blur(24px);
+  transform: skewX(-16deg);
+  animation: daoEnergySweep 7s ease-in-out infinite;
+  will-change: transform,opacity;
+}
 .dao-scene-bg {
   position: absolute;
   inset: -5%;
   background: #070808 url('../assets/daowen-hero-bg.png') center / cover no-repeat;
   transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055);
-  animation: daoSceneBreathe 10s ease-in-out infinite alternate;
+  animation: daoSceneBreathe 6.5s ease-in-out infinite alternate;
   transition: transform .9s cubic-bezier(.2,.7,.2,1);
   will-change: transform,filter;
 }
@@ -3802,7 +3816,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   top: 7%;
   aspect-ratio: 1;
   border-radius: 50%;
-  opacity: .42;
+  opacity: .58;
   mix-blend-mode: screen;
   transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0);
   will-change: transform;
@@ -3817,7 +3831,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   width: min(47vw,680px);
   background: conic-gradient(from 30deg,transparent 0 16%,rgba(239,218,172,.2) 20%,transparent 27% 53%,rgba(174,188,192,.13) 58%,transparent 66% 100%);
   filter: blur(6px) drop-shadow(0 0 32px rgba(229,215,183,.25));
-  animation: daoVortexOuter 26s linear infinite;
+  animation: daoVortexOuter 15s linear infinite;
 }
 .dao-vortex-outer::before {
   inset: 12%;
@@ -3829,7 +3843,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   width: min(34vw,490px);
   background: radial-gradient(circle,rgba(0,0,0,.88) 0 15%,rgba(8,9,9,.35) 30%,transparent 59%),conic-gradient(from 140deg,transparent,rgba(244,228,190,.13),transparent 28%,rgba(195,209,211,.1),transparent 68%);
   filter: blur(3px);
-  animation: daoVortexInner 18s linear infinite reverse;
+  animation: daoVortexInner 9s linear infinite reverse;
 }
 .dao-vortex-inner::after {
   inset: 28%;
@@ -3844,18 +3858,18 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   border-radius: 50%;
   background: radial-gradient(ellipse,rgba(221,219,207,.18),rgba(149,158,156,.07) 37%,transparent 70%);
   filter: blur(28px);
-  opacity: .55;
+  opacity: .7;
   will-change: transform,opacity;
 }
 .dao-mist-left {
   left: -26vw;
   top: 32%;
-  animation: daoMistLeft 11s ease-in-out infinite alternate;
+  animation: daoMistLeft 7s ease-in-out infinite alternate;
 }
 .dao-mist-right {
   right: -30vw;
   top: 52%;
-  animation: daoMistRight 14s ease-in-out infinite alternate;
+  animation: daoMistRight 9s ease-in-out infinite alternate;
 }
 .dao-gold-dust {
   position: absolute;
@@ -3868,7 +3882,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
     radial-gradient(circle at 31% 76%,rgba(239,225,190,.62) 0 1px,transparent 1.5px),
     radial-gradient(circle at 92% 55%,rgba(226,190,116,.56) 0 1px,transparent 1.6px);
   filter: drop-shadow(0 0 4px rgba(232,194,114,.5));
-  animation: daoDustFloat 7.5s ease-in-out infinite alternate;
+  animation: daoDustFloat 4.8s ease-in-out infinite alternate;
 }
 .dao-hero h1 {
   animation: daoTitleBreath 5.8s ease-in-out infinite;
@@ -3891,7 +3905,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
     radial-gradient(circle at 50% 15%,rgba(221,181,96,.13),transparent 31%),
     radial-gradient(circle at 13% 62%,rgba(151,164,162,.08),transparent 34%),
     radial-gradient(circle at 88% 78%,rgba(199,157,78,.08),transparent 31%);
-  animation: daoAppAura 8s ease-in-out infinite alternate;
+  animation: daoAppAura 5s ease-in-out infinite alternate;
 }
 .dao-app-motion::before {
   content: "";
@@ -3901,12 +3915,12 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   width: min(92vw,1050px);
   aspect-ratio: 1;
   border-radius: 50%;
-  opacity: .28;
+  opacity: .42;
   background:
     radial-gradient(circle,transparent 0 25%,rgba(226,197,135,.08) 26% 26.5%,transparent 27% 41%,rgba(181,195,196,.08) 42% 42.5%,transparent 43%),
     conic-gradient(from 0deg,transparent 0 9%,rgba(228,191,112,.16) 12%,transparent 18% 47%,rgba(173,190,193,.12) 51%,transparent 58% 100%);
   filter: blur(2px) drop-shadow(0 0 25px rgba(218,176,89,.13));
-  animation: daoAppOrbit 34s linear infinite;
+  animation: daoAppOrbit 18s linear infinite;
   will-change: transform;
 }
 .dao-app-motion::after {
@@ -3917,11 +3931,11 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   width: 160vw;
   height: 34vh;
   min-height: 210px;
-  opacity: .28;
+  opacity: .4;
   border-radius: 50%;
   background: radial-gradient(ellipse,rgba(210,211,203,.15),rgba(138,150,149,.05) 42%,transparent 70%);
   filter: blur(35px);
-  animation: daoAppFog 15s ease-in-out infinite alternate;
+  animation: daoAppFog 8s ease-in-out infinite alternate;
   will-change: transform,opacity;
 }
 .dao-app-home > :not(.dao-app-motion) {
@@ -3943,34 +3957,41 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   transform-origin: 50% 28%;
 }
 @keyframes daoSceneBreathe {
-  0% { transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055); filter: brightness(.91) contrast(1.03); }
-  100% { transform: translate3d(var(--dao-pointer-x),calc(var(--dao-pointer-y) - 7px),0) scale(1.085); filter: brightness(1.02) contrast(1.07); }
+  0% { transform: translate3d(calc(var(--dao-pointer-x) - 7px),calc(var(--dao-pointer-y) + 5px),0) scale(1.045); filter:brightness(.84) contrast(1.03); }
+  100% { transform: translate3d(calc(var(--dao-pointer-x) + 9px),calc(var(--dao-pointer-y) - 13px),0) scale(1.13); filter:brightness(1.1) contrast(1.1); }
 }
 @keyframes daoVortexOuter { to { transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0) rotate(360deg); } }
 @keyframes daoVortexInner { to { transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0) rotate(360deg); } }
-@keyframes daoMistLeft { to { transform: translate3d(25vw,-5vh,0) scale(1.16); opacity: .2; } }
-@keyframes daoMistRight { to { transform: translate3d(-27vw,4vh,0) scale(1.12); opacity: .24; } }
+@keyframes daoMistLeft { to { transform:translate3d(44vw,-7vh,0) scale(1.24); opacity:.28; } }
+@keyframes daoMistRight { to { transform:translate3d(-48vw,5vh,0) scale(1.2); opacity:.32; } }
 @keyframes daoDustFloat { to { transform: translate3d(0,-18px,0) scale(1.02); opacity: .5; } }
+@keyframes daoEnergySweep {
+  0%,12% { transform:translate3d(0,0,0) skewX(-16deg); opacity:0; }
+  28% { opacity:.75; }
+  62% { opacity:.24; }
+  76%,100% { transform:translate3d(660%,0,0) skewX(-16deg); opacity:0; }
+}
 @keyframes daoTitleBreath { 50% { text-shadow:0 0 22px rgba(255,244,210,.52),0 0 58px rgba(216,177,99,.17),0 8px 34px rgba(0,0,0,.85); } }
 @keyframes daoMoonOrbit { 50% { transform: translateY(-4px) rotate(10deg); filter:drop-shadow(0 0 9px rgba(222,186,105,.46)); } }
 @keyframes daoAppMistDrift { to { transform:translate3d(0,-28px,0) scale(1.035); opacity:.15; } }
-@keyframes daoAppAura { to { filter:brightness(1.24); background-position:0 0,18px -12px,-14px 9px; } }
+@keyframes daoAppAura { to { filter:brightness(1.38); background-position:0 0,34px -22px,-28px 18px; } }
 @keyframes daoAppOrbit { from { transform:translateX(-50%) rotate(0deg) scale(.96); } to { transform:translateX(-50%) rotate(360deg) scale(1.04); } }
-@keyframes daoAppFog { to { transform:translate3d(14vw,-8vh,0) scale(1.12); opacity:.42; } }
+@keyframes daoAppFog { to { transform:translate3d(34vw,-10vh,0) scale(1.18); opacity:.58; } }
 @keyframes daoSealPulse { 50% { box-shadow:0 0 0 4px rgba(209,166,80,.045),0 0 22px rgba(205,158,65,.11); } }
 @keyframes daoOverlayArrive { from { opacity:0; } to { opacity:1; } }
 @keyframes daoModalArrive { from { opacity:0; transform:translateY(18px) scale(.985); filter:blur(4px); } to { opacity:1; transform:none; filter:none; } }
 
 @media (max-width: 640px) {
-  .dao-scene-bg { animation-duration: 15s; }
-  .dao-vortex { opacity: .28; }
+  .dao-scene-bg { animation-duration: 9s; }
+  .dao-vortex { opacity: .42; }
   .dao-vortex-outer { width: 86vw; top: 10%; filter:blur(9px); }
   .dao-vortex-inner { width: 62vw; top: 16%; }
-  .dao-mist { opacity:.38; filter:blur(34px); }
-  .dao-gold-dust { inset:14% 7%; opacity:.35; }
-  .dao-app-motion { animation-duration:11s; }
-  .dao-app-motion::before { top:-18vh; width:135vw; opacity:.2; animation-duration:45s; }
-  .dao-app-motion::after { opacity:.22; animation-duration:20s; }
+  .dao-mist { opacity:.52; filter:blur(34px); }
+  .dao-gold-dust { inset:14% 7%; opacity:.46; }
+  .dao-motion-scene::after { animation-duration:9s; }
+  .dao-app-motion { animation-duration:7s; }
+  .dao-app-motion::before { top:-18vh; width:135vw; opacity:.3; animation-duration:27s; }
+  .dao-app-motion::after { opacity:.32; animation-duration:12s; }
   .dw-app-page .tool-card .tc-icon { animation-duration:8s; }
   .tool-overlay.active > .tool-modal { animation-name:daoModalMobileArrive; animation-duration:.3s; transform-origin:50% 100%; }
 }

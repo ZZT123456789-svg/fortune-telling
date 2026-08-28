@@ -51,5 +51,6 @@ test('首页动态场景、入局揭幕和弹窗转场均提供减少动态降�
   assert.match(css, /@keyframes daoModalArrive/);
   assert.match(css, /@keyframes daoAppOrbit/);
   assert.match(css, /@keyframes daoAppFog/);
+  assert.match(css, /@keyframes daoEnergySweep/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*dao-scene-bg/);
 });
