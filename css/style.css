@@ -3792,7 +3792,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   inset: -5%;
   background: #070808 url('../assets/daowen-hero-bg.png') center / cover no-repeat;
   transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055);
-  animation: daoSceneBreathe 18s ease-in-out infinite alternate;
+  animation: daoSceneBreathe 10s ease-in-out infinite alternate;
   transition: transform .9s cubic-bezier(.2,.7,.2,1);
   will-change: transform,filter;
 }
@@ -3802,7 +3802,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   top: 7%;
   aspect-ratio: 1;
   border-radius: 50%;
-  opacity: .24;
+  opacity: .42;
   mix-blend-mode: screen;
   transform: translate3d(calc(-50% + var(--dao-pointer-x)),var(--dao-pointer-y),0);
   will-change: transform;
@@ -3816,8 +3816,8 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .dao-vortex-outer {
   width: min(47vw,680px);
   background: conic-gradient(from 30deg,transparent 0 16%,rgba(239,218,172,.2) 20%,transparent 27% 53%,rgba(174,188,192,.13) 58%,transparent 66% 100%);
-  filter: blur(8px) drop-shadow(0 0 25px rgba(229,215,183,.16));
-  animation: daoVortexOuter 54s linear infinite;
+  filter: blur(6px) drop-shadow(0 0 32px rgba(229,215,183,.25));
+  animation: daoVortexOuter 26s linear infinite;
 }
 .dao-vortex-outer::before {
   inset: 12%;
@@ -3829,7 +3829,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   width: min(34vw,490px);
   background: radial-gradient(circle,rgba(0,0,0,.88) 0 15%,rgba(8,9,9,.35) 30%,transparent 59%),conic-gradient(from 140deg,transparent,rgba(244,228,190,.13),transparent 28%,rgba(195,209,211,.1),transparent 68%);
   filter: blur(3px);
-  animation: daoVortexInner 38s linear infinite reverse;
+  animation: daoVortexInner 18s linear infinite reverse;
 }
 .dao-vortex-inner::after {
   inset: 28%;
@@ -3844,23 +3844,23 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   border-radius: 50%;
   background: radial-gradient(ellipse,rgba(221,219,207,.18),rgba(149,158,156,.07) 37%,transparent 70%);
   filter: blur(28px);
-  opacity: .38;
+  opacity: .55;
   will-change: transform,opacity;
 }
 .dao-mist-left {
   left: -26vw;
   top: 32%;
-  animation: daoMistLeft 20s ease-in-out infinite alternate;
+  animation: daoMistLeft 11s ease-in-out infinite alternate;
 }
 .dao-mist-right {
   right: -30vw;
   top: 52%;
-  animation: daoMistRight 25s ease-in-out infinite alternate;
+  animation: daoMistRight 14s ease-in-out infinite alternate;
 }
 .dao-gold-dust {
   position: absolute;
   inset: 12% 15%;
-  opacity: .32;
+  opacity: .48;
   background-image:
     radial-gradient(circle at 9% 27%,rgba(244,208,128,.85) 0 1px,transparent 1.7px),
     radial-gradient(circle at 79% 18%,rgba(237,219,174,.72) 0 1px,transparent 1.6px),
@@ -3868,7 +3868,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
     radial-gradient(circle at 31% 76%,rgba(239,225,190,.62) 0 1px,transparent 1.5px),
     radial-gradient(circle at 92% 55%,rgba(226,190,116,.56) 0 1px,transparent 1.6px);
   filter: drop-shadow(0 0 4px rgba(232,194,114,.5));
-  animation: daoDustFloat 13s ease-in-out infinite alternate;
+  animation: daoDustFloat 7.5s ease-in-out infinite alternate;
 }
 .dao-hero h1 {
   animation: daoTitleBreath 5.8s ease-in-out infinite;
@@ -3877,8 +3877,56 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   animation: daoMoonOrbit 6s ease-in-out infinite;
 }
 .dw-app-page .dao-app-home::before {
-  animation: daoAppMistDrift 22s ease-in-out infinite alternate;
+  opacity: .2;
+  animation: daoAppMistDrift 13s ease-in-out infinite alternate;
   will-change: transform,opacity;
+}
+.dao-app-motion {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 15%,rgba(221,181,96,.13),transparent 31%),
+    radial-gradient(circle at 13% 62%,rgba(151,164,162,.08),transparent 34%),
+    radial-gradient(circle at 88% 78%,rgba(199,157,78,.08),transparent 31%);
+  animation: daoAppAura 8s ease-in-out infinite alternate;
+}
+.dao-app-motion::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -28vw;
+  width: min(92vw,1050px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: .28;
+  background:
+    radial-gradient(circle,transparent 0 25%,rgba(226,197,135,.08) 26% 26.5%,transparent 27% 41%,rgba(181,195,196,.08) 42% 42.5%,transparent 43%),
+    conic-gradient(from 0deg,transparent 0 9%,rgba(228,191,112,.16) 12%,transparent 18% 47%,rgba(173,190,193,.12) 51%,transparent 58% 100%);
+  filter: blur(2px) drop-shadow(0 0 25px rgba(218,176,89,.13));
+  animation: daoAppOrbit 34s linear infinite;
+  will-change: transform;
+}
+.dao-app-motion::after {
+  content: "";
+  position: absolute;
+  left: -30vw;
+  top: 31%;
+  width: 160vw;
+  height: 34vh;
+  min-height: 210px;
+  opacity: .28;
+  border-radius: 50%;
+  background: radial-gradient(ellipse,rgba(210,211,203,.15),rgba(138,150,149,.05) 42%,transparent 70%);
+  filter: blur(35px);
+  animation: daoAppFog 15s ease-in-out infinite alternate;
+  will-change: transform,opacity;
+}
+.dao-app-home > :not(.dao-app-motion) {
+  position: relative;
+  z-index: 1;
 }
 .tool-card.dao-reveal {
   transition-delay: calc(var(--dao-reveal-order,0) * 45ms) !important;
@@ -3906,17 +3954,23 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 @keyframes daoTitleBreath { 50% { text-shadow:0 0 22px rgba(255,244,210,.52),0 0 58px rgba(216,177,99,.17),0 8px 34px rgba(0,0,0,.85); } }
 @keyframes daoMoonOrbit { 50% { transform: translateY(-4px) rotate(10deg); filter:drop-shadow(0 0 9px rgba(222,186,105,.46)); } }
 @keyframes daoAppMistDrift { to { transform:translate3d(0,-28px,0) scale(1.035); opacity:.15; } }
+@keyframes daoAppAura { to { filter:brightness(1.24); background-position:0 0,18px -12px,-14px 9px; } }
+@keyframes daoAppOrbit { from { transform:translateX(-50%) rotate(0deg) scale(.96); } to { transform:translateX(-50%) rotate(360deg) scale(1.04); } }
+@keyframes daoAppFog { to { transform:translate3d(14vw,-8vh,0) scale(1.12); opacity:.42; } }
 @keyframes daoSealPulse { 50% { box-shadow:0 0 0 4px rgba(209,166,80,.045),0 0 22px rgba(205,158,65,.11); } }
 @keyframes daoOverlayArrive { from { opacity:0; } to { opacity:1; } }
 @keyframes daoModalArrive { from { opacity:0; transform:translateY(18px) scale(.985); filter:blur(4px); } to { opacity:1; transform:none; filter:none; } }
 
 @media (max-width: 640px) {
-  .dao-scene-bg { animation-duration: 24s; }
-  .dao-vortex { opacity: .16; }
+  .dao-scene-bg { animation-duration: 15s; }
+  .dao-vortex { opacity: .28; }
   .dao-vortex-outer { width: 86vw; top: 10%; filter:blur(9px); }
   .dao-vortex-inner { width: 62vw; top: 16%; }
-  .dao-mist { opacity:.25; filter:blur(34px); }
-  .dao-gold-dust { inset:14% 7%; opacity:.22; }
+  .dao-mist { opacity:.38; filter:blur(34px); }
+  .dao-gold-dust { inset:14% 7%; opacity:.35; }
+  .dao-app-motion { animation-duration:11s; }
+  .dao-app-motion::before { top:-18vh; width:135vw; opacity:.2; animation-duration:45s; }
+  .dao-app-motion::after { opacity:.22; animation-duration:20s; }
   .dw-app-page .tool-card .tc-icon { animation-duration:8s; }
   .tool-overlay.active > .tool-modal { animation-name:daoModalMobileArrive; animation-duration:.3s; transform-origin:50% 100%; }
 }
@@ -3927,7 +3981,10 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
   .dw-app-page .dao-app-home::before,.dw-app-page .tool-card .tc-icon,
   .tool-overlay.active,.tool-overlay.active > .tool-modal { animation:none !important; }
   .dao-scene-bg { transform:scale(1.04) !important; }
+  .dao-app-motion { animation:daoReducedAura 6s ease-in-out infinite alternate !important; }
+  .dao-app-motion::before,.dao-app-motion::after { animation:none !important; }
 }
+@keyframes daoReducedAura { to { filter:brightness(1.16); opacity:.82; } }
 
 /* 独立支付页 */
 .dw-payment-body { min-height: 100dvh; overflow-x: hidden; background: #070808 url('../assets/daowen-hero-bg.png') center / cover fixed no-repeat !important; }
