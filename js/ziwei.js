@@ -21,6 +21,7 @@ var ZiweiModule = {
   _lastChart: null,
   _lastInput: null,
   _uiEnhanced: false,
+  _resizeBound: false,
 
   open: function() {
     this._enhanceUI();
@@ -288,6 +289,7 @@ var ZiweiModule = {
 
     ctn.innerHTML = html;
     setTimeout(function() {
+      ZiweiModule._bindPalaceInteractions();
       ZiweiModule._positionSanFangLines();
       ctn.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
@@ -477,6 +479,62 @@ var ZiweiModule = {
     }
   },
 
+  _bindPalaceInteractions: function() {
+    var board = document.querySelector('#ziweiResult .zw-board');
+    if (!board || board.getAttribute('data-palace-interactions') === 'ready') return;
+    board.setAttribute('data-palace-interactions', 'ready');
+
+    var activate = function(palace) {
+      if (!palace) return;
+      ZiweiModule._activatePalace(palace.getAttribute('data-branch'));
+    };
+    board.querySelectorAll('.zw-palace[data-branch]').forEach(function(palace) {
+      palace.addEventListener('click', function() { activate(palace); });
+      palace.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          activate(palace);
+        }
+      });
+    });
+
+    var svg = board.querySelector('.zw-sanfang-lines');
+    this._activatePalace(svg && svg.getAttribute('data-origin-branch'));
+    if (!this._resizeBound) {
+      this._resizeBound = true;
+      window.addEventListener('resize', function() { ZiweiModule._positionSanFangLines(); }, { passive: true });
+    }
+  },
+
+  _activatePalace: function(originBranch) {
+    var board = document.querySelector('#ziweiResult .zw-board');
+    var svg = board && board.querySelector('.zw-sanfang-lines');
+    if (!board || !svg || !originBranch) return;
+    var relations = this._getSanFangRelations(originBranch);
+    if (relations.length !== 3) return;
+
+    svg.setAttribute('data-origin-branch', originBranch);
+    svg.innerHTML = relations.map(function(item) {
+      return '<line data-target-branch="' + ZiweiModule._escape(item.branch) + '" data-relation="' + ZiweiModule._escape(item.type) + '" x1="0" y1="0" x2="0" y2="0"></line>';
+    }).join('') + '<circle class="zw-sanfang-origin" cx="0" cy="0" r="4"></circle>';
+
+    var related = relations.map(function(item) { return item.branch; });
+    board.querySelectorAll('.zw-palace[data-branch]').forEach(function(palace) {
+      var branch = palace.getAttribute('data-branch');
+      palace.classList.toggle('is-selected', branch === originBranch);
+      palace.classList.toggle('is-related', related.indexOf(branch) >= 0);
+      palace.setAttribute('aria-pressed', branch === originBranch ? 'true' : 'false');
+    });
+
+    var selected = board.querySelector('.zw-palace[data-branch="' + originBranch + '"]');
+    var label = board.querySelector('.zw-link-hint');
+    if (label && selected) {
+      var name = selected.getAttribute('data-palace-name') || originBranch + '宫';
+      label.textContent = '当前：' + name + ' · 三方四正';
+    }
+    requestAnimationFrame(function() { ZiweiModule._positionSanFangLines(); });
+  },
+
   _renderHeader: function(chart, input) {
     var timeText = String(input.hour).padStart(2, '0') + ':' + String(input.minute).padStart(2, '0');
     var calText = input.calType === 'lunar' ? '农历' + (input.isLeap ? '·闰月' : '') : '公历';
@@ -503,6 +561,7 @@ var ZiweiModule = {
     var age = current && current.age && Number.isInteger(current.age.nominalAge) ? '虚岁' + current.age.nominalAge + ' · ' : '';
     return '<div class="zw-center">' +
       '<div class="zw-center-seal">紫微斗数</div>' +
+      '<div class="zw-link-hint">点击任意宫位查看三方四正</div>' +
       '<div class="zw-center-name">' + this._escape(input.name || '道问命盘') + '</div>' +
       '<div class="zw-center-line">生肖 ' + this._escape(chart.zodiac || '—') + ' · ' + this._escape(chart.sign || '—') + '</div>' +
       '<div class="zw-center-line">' + this._escape(chart.time || '—') + ' · ' + this._escape(chart.timeRange || '—') + '</div>' +
@@ -566,7 +625,7 @@ var ZiweiModule = {
     if (!p) return '<section class="zw-palace ' + gridClass + '"></section>';
     var isDecadal = !!(current && current.decadal && current.decadal.index === p.index);
     var isYearly = !!(current && current.yearly && current.yearly.index === p.index);
-    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + (isDecadal ? ' is-current-decadal' : '') + (isYearly ? ' is-current-yearly' : '') + '" data-branch="' + this._escape(p.earthlyBranch || '') + '">';
+    var html = '<section class="zw-palace ' + gridClass + (p.name === '命宫' ? ' is-soul' : '') + (isDecadal ? ' is-current-decadal' : '') + (isYearly ? ' is-current-yearly' : '') + '" data-branch="' + this._escape(p.earthlyBranch || '') + '" data-palace-name="' + this._escape(p.name || '') + '" role="button" tabindex="0" aria-label="查看' + this._escape(p.name || '') + '三方四正" aria-pressed="false">';
     html += '<div class="zw-palace-head"><span class="zw-palace-name">' + this._escape(p.name) + '</span>' +
       (p.isBodyPalace ? '<span class="zw-body-badge">身宫</span>' : '') +
       (isDecadal ? '<span class="zw-flow-badge">大限</span>' : '') +
@@ -762,8 +821,11 @@ var ZiweiModule = {
       .zw-chip{display:inline-flex;align-items:center;gap:.36rem;padding:.34rem .55rem;border:1px solid rgba(125,100,59,.18);border-radius:999px;background:rgba(255,255,255,.58);font-size:.74rem}
       .zw-chip small{color:#907f67}.zw-chip b{font-weight:600;color:#3b342b}
       .zw-board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(188px,auto));gap:1px;background:#777;border:1px solid #777;border-radius:4px;overflow:hidden;box-shadow:0 14px 38px rgba(45,37,25,.12)}
-      .zw-palace{position:relative;min-width:0;padding:.58rem 2.35rem .58rem .58rem;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+      .zw-palace{position:relative;min-width:0;padding:.58rem 2.35rem .58rem .58rem;background:#fff;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:background-color .18s ease,box-shadow .18s ease,filter .18s ease}
+      .zw-palace:hover{background:#fffaf0}.zw-palace:focus-visible{outline:2px solid #b68a38;outline-offset:-3px;z-index:4}
       .zw-palace.is-soul{background:#fffdf7}
+      .zw-palace.is-selected{background:linear-gradient(145deg,#fff4d7,#f3dfaa);box-shadow:inset 0 0 0 3px #a87925;z-index:3}
+      .zw-palace.is-related{background:linear-gradient(145deg,#fffdfa,#f9eee4);box-shadow:inset 0 0 0 2px rgba(191,47,39,.38)}
       .zw-palace-head{position:absolute;right:.28rem;bottom:.35rem;display:flex;flex-direction:column-reverse;align-items:center;gap:.2rem;margin:0;border:0;padding:0;z-index:1}
       .zw-palace-name{font-family:KaiTi,STKaiti,serif;font-size:1.02rem;font-weight:800;color:#2d2822;writing-mode:vertical-rl;letter-spacing:.08em}
       .zw-palace-gz{margin:0;font-family:KaiTi,STKaiti,serif;font-size:1.12rem;font-weight:800;color:#151515;writing-mode:vertical-rl}
@@ -785,6 +847,7 @@ var ZiweiModule = {
       .zw-palace.is-current-decadal{box-shadow:inset 0 0 0 2px rgba(139,111,49,.65)}.zw-palace.is-current-yearly{background:linear-gradient(145deg,#fff8ee,#f7e6d5)}
       .zw-center{grid-column:2/4;grid-row:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem;background:#fff;position:relative;overflow:hidden}
       .zw-center-seal{font-family:KaiTi,STKaiti,serif;font-size:1.8rem;font-weight:800;letter-spacing:.16em;color:#292520}
+      .zw-link-hint{margin-top:.45rem;padding:.28rem .6rem;border:1px solid rgba(182,138,56,.45);border-radius:999px;background:#fffaf0;color:#8c6021;font-size:.7rem;font-weight:700}
       .zw-center-name{font-family:KaiTi,STKaiti,serif;font-size:1.25rem;font-weight:700;margin:.7rem 0 .4rem;color:#3b3228}
       .zw-center-line{font-size:.78rem;line-height:1.7;color:#554e44}
       .zw-center-line.zw-yearly{color:#9a412e;font-weight:600}
@@ -797,19 +860,22 @@ var ZiweiModule = {
       .zw-flow-cell{min-height:48px;padding:.4rem .26rem;border-right:1px solid #e0e0e0;border-bottom:1px solid #e8e8e8;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem}
       .zw-flow-cell b{font-family:KaiTi,STKaiti,serif;font-size:.8rem}.zw-flow-cell span{font-size:.66rem;color:#6b6258}.zw-flow-cell.is-active{background:#efe1bb;box-shadow:inset 0 0 0 2px #b68a38}.zw-flow-cell.is-active b{color:#8c2d25}
       #ziweiResult .zw-sanfang-lines{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;z-index:2;pointer-events:none;overflow:visible;filter:none;background:transparent;border-radius:0;box-shadow:none}
-      .zw-sanfang-lines line{stroke:#bf2f27;stroke-width:1.35;stroke-linecap:round;opacity:.56;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 1px rgba(255,255,255,.55))}
+      .zw-sanfang-lines line{stroke:#bf2f27;stroke-width:1.8;stroke-linecap:round;opacity:.72;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(255,255,255,.8));stroke-dasharray:7 4;animation:zwLineFlow 1.1s linear infinite}
       .zw-sanfang-origin{fill:#bf2f27;stroke:rgba(255,250,238,.9);stroke-width:1.4;opacity:.8;vector-effect:non-scaling-stroke}
+      @keyframes zwLineFlow{to{stroke-dashoffset:-22}}
       .g1{grid-column:1;grid-row:1}.g2{grid-column:2;grid-row:1}.g3{grid-column:3;grid-row:1}.g4{grid-column:4;grid-row:1}
       .g5{grid-column:1;grid-row:2}.g8{grid-column:4;grid-row:2}.g9{grid-column:1;grid-row:3}.g12{grid-column:4;grid-row:3}
       .g13{grid-column:1;grid-row:4}.g14{grid-column:2;grid-row:4}.g15{grid-column:3;grid-row:4}.g16{grid-column:4;grid-row:4}
       .zw-actions{display:flex;justify-content:center;gap:.65rem;margin:1rem 0 .2rem}.zw-actions button{width:auto}
       @media(max-width:760px){
         #ziweiOverlay .ziwei-modal{width:98vw;padding-left:.65rem;padding-right:.65rem}
-        .zw-board{display:flex;flex-direction:column;background:transparent;border:0;gap:.55rem;box-shadow:none;border-radius:0}
-        #ziweiResult .zw-sanfang-lines{display:none}
-        .zw-center{order:-1;min-height:210px;border:1px solid rgba(105,83,48,.24);border-radius:12px}
-        .zw-palace{min-height:0;border:1px solid rgba(105,83,48,.18);border-radius:10px;padding:.7rem;display:block}
-        .zw-palace-head{position:static;display:flex;flex-direction:row;align-items:center;border-bottom:1px solid rgba(108,86,52,.14);padding-bottom:.35rem;margin-bottom:.35rem}.zw-palace-name,.zw-palace-gz{writing-mode:horizontal-tb}.zw-palace-gz{margin-left:auto}
+        .zw-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(116px,auto));background:#777;border:1px solid #777;gap:1px;box-shadow:none;border-radius:3px}
+        #ziweiResult .zw-sanfang-lines{display:block}
+        .zw-center{min-height:0;border:0;border-radius:0;padding:.42rem}
+        .zw-center-seal{font-size:1.05rem;letter-spacing:.08em}.zw-center-name{font-size:.82rem;margin:.28rem 0}.zw-center-line{font-size:.56rem;line-height:1.45}.zw-center-note{display:none}.zw-link-hint{font-size:.52rem;margin-top:.24rem;padding:.16rem .3rem}
+        .zw-palace{min-height:0;border:0;border-radius:0;padding:.3rem 1.4rem .3rem .28rem;display:flex}
+        .zw-palace-head{right:.12rem;bottom:.18rem;gap:.08rem}.zw-palace-name{font-size:.72rem}.zw-palace-gz{font-size:.76rem}
+        .zw-major-list,.zw-minor-list{gap:.12rem .2rem}.zw-star.major{font-size:.78rem}.zw-star.minor{font-size:.5rem}.zw-bright{display:none}.zw-mutagen{font-size:.48rem}.zw-minor-list{margin-top:.15rem;padding-top:.15rem}.zw-adjective,.zw-gods,.zw-ages{font-size:.48rem;line-height:1.25}.zw-stage{font-size:.5rem}.zw-body-badge,.zw-flow-badge{font-size:.44rem;padding:.02rem .12rem}
         .zw-summary{padding:.8rem}.zw-summary-title{font-size:1.2rem}.zw-chip{font-size:.69rem}
         .zw-flow-row{grid-template-columns:52px minmax(0,1fr)}.zw-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.zw-flow-label{font-size:.88rem}.zw-flow-cell{min-height:45px}
         .zw-actions{position:sticky;bottom:.3rem;z-index:3;padding:.45rem;background:rgba(248,244,232,.9);backdrop-filter:blur(8px);border-radius:10px}

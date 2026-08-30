@@ -91,3 +91,18 @@ test('三方四正按命宫连接两个三合宫和对宫', () => {
     [{branch:'卯',type:'三合'},{branch:'未',type:'三合'},{branch:'巳',type:'对宫'}]
   );
 });
+
+test('十二宫支持点击切换三方四正并兼容键盘操作', () => {
+  const palaceHtml = ZiweiModule._renderPalace({
+    index:0, name:'财帛宫', earthlyBranch:'辰', heavenlyStem:'甲',
+    majorStars:[], minorStars:[], adjectiveStars:[], ages:[]
+  }, 'g5', null);
+  assert.match(palaceHtml, /role="button"/);
+  assert.match(palaceHtml, /tabindex="0"/);
+  assert.match(palaceHtml, /data-palace-name="财帛宫"/);
+  assert.match(source, /_bindPalaceInteractions/);
+  assert.match(source, /_activatePalace/);
+  assert.match(source, /event\.key === 'Enter'/);
+  assert.match(source, /classList\.toggle\('is-selected'/);
+  assert.doesNotMatch(source, /#ziweiResult \.zw-sanfang-lines\{display:none\}/);
+});
