@@ -20,7 +20,7 @@
     { overlay: 'meihuaOverlay', result: 'meihuaResult', type: 'meihua', label: '梅花', nameIds: [], dateIds: ['meihuaNum1', 'meihuaNum2', 'meihuaNum3'], min: 35 },
     { overlay: 'liuyaoOverlay', result: 'liuyaoResult', type: 'liuyao', label: '六爻', nameIds: ['liuyaoQuestion'], dateIds: [], min: 50, uniqueResult: true },
     { overlay: 'zhugeOverlay', result: 'zhugeResult', type: 'zhuge', label: '诸葛神数', nameIds: ['zhugeWord1', 'zhugeWord2', 'zhugeWord3'], dateIds: ['zhugeNumber'], min: 30 },
-    { overlay: 'tarotOverlay', result: 'tarotReading', type: 'tarot', label: '塔罗', nameIds: [], dateIds: [], min: 40, uniqueResult: true },
+    { overlay: 'tarotOverlay', result: 'tarotReading', type: 'tarot', label: '塔罗', nameIds: ['tarotQuestion'], dateIds: [], min: 40, uniqueResult: true },
     { overlay: 'qimenOverlay', result: 'qimenResult', type: 'qimen', label: '奇门', nameIds: ['qimenQuestion'], dateIds: ['qimenDate', 'qimenTime'], min: 60 },
     { overlay: 'astroOverlay', result: 'astroResult', type: 'astro', label: '星盘', nameIds: [], dateIds: ['astroDate', 'astroTime'], min: 60 }
   ];

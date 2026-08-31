@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/bazi-result-sheet.css?v=20260824-1">
   <link rel="stylesheet" href="css/theme-switcher.css?v=20260823-1">
   <link rel="stylesheet" href="css/chart-archive.css?v=20260827-1">
+  <link rel="stylesheet" href="css/tarot.css?v=20260831-1">
 </head>
 <body>
   <script>
@@ -870,29 +871,43 @@
 
   <!-- 塔罗牌 模块 -->
   <div class="tool-overlay" id="tarotOverlay">
-    <div class="tool-modal">
+    <div class="tool-modal tarot-modal">
       <button class="modal-close" onclick="TarotModule.closeReading()">✕</button>
       <h2 class="modal-title"><span class="dao-title-mark">塔</span>塔罗牌占卜</h2>
-      <p class="modal-desc">心中默念你的问题，选择三张牌，揭示过去、现在与未来</p>
+      <p class="modal-desc">从完整 78 张韦特塔罗中亲手选牌，基础牌义免费查看</p>
       <div class="tarot-steps" id="tarotSteps">
         <div class="tarot-step" id="tarotStep1">
-          <p class="step-hint">请闭上眼睛，心中默念你想问的问题……</p>
-          <p class="step-sub">准备好了就点击下方按钮开始抽牌</p>
-          <button class="btn-primary btn-glow" onclick="TarotModule.shuffle()">开始洗牌</button>
+          <div class="tarot-section-heading">
+            <span>01</span><div><h3>选择牌阵</h3><p>不同牌阵对应不同问题深度</p></div>
+          </div>
+          <div class="tarot-spread-picker" id="tarotSpreadPicker"></div>
+          <label class="tarot-question-field" for="tarotQuestion">
+            <span id="tarotQuestionLabel">你的问题</span>
+            <textarea id="tarotQuestion" rows="3" maxlength="240" placeholder="请具体描述你希望获得指引的问题"></textarea>
+            <small id="tarotQuestionHelp">问题越具体，牌阵和 AI 解读越有针对性。</small>
+          </label>
+          <label class="tarot-switch-row">
+            <span><strong>启用逆位</strong><small>每张牌独立以 50% 概率出现逆位</small></span>
+            <input type="checkbox" id="tarotReversalToggle" checked>
+            <i aria-hidden="true"></i>
+          </label>
+          <button class="btn-primary btn-glow tarot-start-button" id="tarotStartButton" onclick="TarotModule.startReading()">洗牌并开始选牌</button>
         </div>
         <div class="tarot-step" id="tarotStep2" style="display:none;">
-          <p class="step-hint">请凭直觉选择 3 张牌</p>
-          <p class="step-sub">分别代表你的 <span class="text-gold">过去</span>、<span class="text-gold">现在</span> 和 <span class="text-gold">未来</span></p>
-          <div class="card-deck" id="cardDeck"></div>
-          <div class="card-slots">
-            <div class="card-slot" data-slot="0"><div class="slot-label">过去</div><div class="slot-card empty" id="slot0">?</div></div>
-            <div class="card-slot" data-slot="1"><div class="slot-label">现在</div><div class="slot-card empty" id="slot1">?</div></div>
-            <div class="card-slot" data-slot="2"><div class="slot-label">未来</div><div class="slot-card empty" id="slot2">?</div></div>
+          <div class="tarot-draw-heading">
+            <button type="button" class="tarot-back-button" onclick="TarotModule.returnToSetup()">返回设置</button>
+            <div><strong id="tarotDrawTitle">凭直觉选牌</strong><span id="cardSelectHint">已选 0 / 3</span></div>
+          </div>
+          <div class="tarot-slots" id="tarotSlots"></div>
+          <p class="tarot-undo-hint">选满前可点击已选牌撤回；选满后将锁定并统一翻牌。</p>
+          <div class="tarot-carousel-shell">
+            <div class="tarot-carousel-glow" aria-hidden="true"></div>
+            <div class="card-deck tarot-carousel" id="cardDeck" aria-label="滑动选择塔罗牌"></div>
           </div>
         </div>
         <div class="tarot-step" id="tarotStep3" style="display:none;">
           <div class="tarot-reading" id="tarotReading"></div>
-          <button class="btn-secondary" onclick="TarotModule.reset()">🔄 重新占卜</button>
+          <button class="btn-secondary tarot-restart-button" onclick="TarotModule.reset()">重新占卜</button>
         </div>
       </div>
     </div>
@@ -932,7 +947,7 @@
   <script src="js/bazi.js"></script>
   <script src="js/app.js?v=20260828-mystic1"></script>
   <script src="js/daily-fortune.js"></script>
-  <script src="js/tarot.js"></script>
+  <script src="js/tarot.js?v=20260831-1"></script>
   <script src="js/mbti-zodiac.js"></script>
   <script src="js/ziwei.js"></script>
   <script src="js/meihua-yishu.js"></script>
