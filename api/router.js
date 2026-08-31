@@ -1,6 +1,7 @@
 const handlers = Object.freeze({
   'ai-chat': require('./ai-chat'),
   'ai-reading': require('./ai-reading'),
+  'ai-ziwei-reading': require('./ai-ziwei-reading'),
   'ai-dual-reading': require('./ai-dual-reading'),
   'alipay': require('./alipay'),
   'alipay-notify': require('./alipay-notify'),

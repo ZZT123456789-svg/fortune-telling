@@ -22,6 +22,14 @@ function loadEngine() {
 
 const iztro = loadEngine();
 
+function loadCalendar(context) {
+  context.window = context;
+  context.self = context;
+  context.globalThis = context;
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'vendor', 'lunar-javascript-1.7.7.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'lunar.js'), 'utf8'), context);
+}
+
 test('本地紫微引擎完整生成十四主星及癸年四化', () => {
   const chart = iztro.astro.bySolar('2023-03-06', 4, '女', true, 'zh-CN');
   const actual = JSON.parse(JSON.stringify(chart.palaces.map(p => p.majorStars.map(s => s.name + (s.mutagen || '')))));
@@ -132,6 +140,7 @@ test('完整大限列表连续且与当前大限、流年交叉一致', () => {
 test('专业命盘输出大限、流年、流月、流日、流时五层表格', () => {
   const context = { console, setTimeout, clearTimeout };
   vm.createContext(context);
+  loadCalendar(context);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
   const module = context.ZiweiModule;
   const chart = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
@@ -215,6 +224,143 @@ test('紫微引擎固定文件与许可证随网站部署', () => {
 test('紫微基础命盘不被付费遮罩覆盖，付费仅由 AI 解读入口处理', () => {
   const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
   assert.doesNotMatch(ziweiSource, /Paywall\.blockAll\(['"]ziweiResult['"]\)/);
-  assert.match(ziweiSource, /AIChat\.openWithContext/);
+  assert.match(ziweiSource, /\/api\/ai-ziwei-reading/);
+  assert.match(ziweiSource, /生成解读（1次）/);
+  assert.match(ziweiSource, /宫位详情 · 免费/);
   assert.match(ziweiSource, /ziweiResult/);
+});
+
+test('紫微支持通行派与中州派，默认选择中州派', () => {
+  const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
+  assert.match(ziweiSource, /algorithm:\s*school === 'zhongzhou' \? 'zhongzhou' : 'default'/);
+  assert.match(ziweiSource, /中州派（推荐）/);
+  assert.match(ziweiSource, /daowen_ziwei_school/);
+});
+
+test('紫微专业盘提供飞星三合四化、宫位详情和五层运限选择', () => {
+  const ziweiSource = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
+  ['飞星','三合','四化','星曜解释','四化飞入飞出','当前运限说明'].forEach(text => assert.match(ziweiSource, new RegExp(text)));
+  ['decadal','yearly','monthly','daily','hourly'].forEach(level => assert.match(ziweiSource, new RegExp("data-flow-level|" + level)));
+});
+
+test('手动选择流年、流月、流日和流时会重新调用官方运限并保持层级一致', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  loadCalendar(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  module._configureEngine(iztro, 'zhongzhou');
+  module._engineRef = iztro;
+  const chart = iztro.astro.bySolar('2000-08-16', 2, '女', true, 'zh-CN');
+  module._lastChart = chart;
+  module._flowDateCache = {};
+  module._selectedFlowDate = new Date(2026, 7, 31);
+  module._selectedFlowTimeIndex = 4;
+  module._currentHoroscope = module._getHoroscope(chart, module._selectedFlowDate, 4);
+
+  const decadalList = chart.decadalList();
+  const activeDecadal = decadalList.find(item => item.index === module._currentHoroscope.decadal.index && item.heavenlyStem === module._currentHoroscope.decadal.heavenlyStem && item.earthlyBranch === module._currentHoroscope.decadal.earthlyBranch);
+  assert.ok(activeDecadal);
+  const targetYear = chart.yearlyList(decadalList.indexOf(activeDecadal)).find(item => item.year === 2028);
+  assert.ok(targetYear);
+  const yearTarget = module._resolveFlowTarget('yearly', targetYear);
+  let flow = module._getHoroscope(chart, yearTarget.date, yearTarget.timeIndex);
+  assert.equal(flow.yearly.heavenlyStem, targetYear.heavenlyStem);
+  assert.equal(flow.yearly.earthlyBranch, targetYear.earthlyBranch);
+
+  module._selectedFlowDate = yearTarget.date;
+  module._selectedFlowTimeIndex = yearTarget.timeIndex;
+  module._currentHoroscope = flow;
+  const targetMonth = chart.monthlyList(2028, true)[1];
+  const monthTarget = module._resolveFlowTarget('monthly', targetMonth);
+  flow = module._getHoroscope(chart, monthTarget.date, monthTarget.timeIndex);
+  assert.equal(flow.yearly.heavenlyStem, targetYear.heavenlyStem);
+  assert.equal(flow.yearly.earthlyBranch, targetYear.earthlyBranch);
+  assert.equal(flow.monthly.heavenlyStem, targetMonth.heavenlyStem);
+  assert.equal(flow.monthly.earthlyBranch, targetMonth.earthlyBranch);
+
+  module._selectedFlowDate = monthTarget.date;
+  module._currentHoroscope = flow;
+  const days = module._dailyListForFlow(chart, 2028, flow, monthTarget.date);
+  assert.ok(days.length >= 15);
+  const targetDay = days[Math.min(9, days.length - 1)];
+  const dayTarget = module._resolveFlowTarget('daily', targetDay);
+  flow = module._getHoroscope(chart, dayTarget.date, dayTarget.timeIndex);
+  assert.equal(flow.daily.heavenlyStem, targetDay.heavenlyStem);
+  assert.equal(flow.daily.earthlyBranch, targetDay.earthlyBranch);
+  assert.equal(module._dateText(dayTarget.date), targetDay.dateText);
+
+  module._selectedFlowDate = dayTarget.date;
+  module._currentHoroscope = flow;
+  const hourTarget = module._resolveFlowTarget('hourly', { timeIndex:12, branch:'子', label:'晚子' });
+  flow = module._getHoroscope(chart, hourTarget.date, hourTarget.timeIndex);
+  assert.equal(hourTarget.timeIndex, 12);
+  assert.equal(flow.hourly.earthlyBranch, '子');
+  module._selectedFlowTimeIndex = 12;
+  const lateRatDays = module._dailyListForFlow(chart, 2028, flow, hourTarget.date);
+  const lateRatDay = lateRatDays.find(item => item.dateText === module._dateText(hourTarget.date));
+  assert.equal(lateRatDay.heavenlyStem, flow.daily.heavenlyStem);
+  assert.equal(lateRatDay.earthlyBranch, flow.daily.earthlyBranch);
+  for (const level of ['decadal','yearly','monthly','daily','hourly']) {
+    assert.ok(flow[level].heavenlyStem && flow[level].earthlyBranch);
+  }
+});
+
+test('初始运限表按大限列表位置生成当前十年流年，避免宫位索引错位', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  loadCalendar(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  module._configureEngine(iztro, 'zhongzhou');
+  module._engineRef = iztro;
+  const chart = iztro.astro.bySolar('1990-1-1', 6, '男', true, 'zh-CN');
+  const selectedDate = new Date(2026, 7, 31);
+  const flow = module._getHoroscope(chart, selectedDate, 6);
+  module._selectedFlowTimeIndex = 6;
+  module._dailyListForFlow = () => [];
+  module._renderFlowTables(chart, flow, selectedDate);
+  assert.equal(module._flowLists.yearly.length, 10);
+  assert.ok(module._flowLists.yearly.some(item => item.year === 2026));
+  assert.equal(module._flowLists.yearly[0].year, 2023);
+  assert.equal(module._flowLists.yearly[9].year, 2032);
+});
+
+test('闰月上下半月只激活真实日期所属流月并生成对应流日', () => {
+  const context = { console, setTimeout, clearTimeout };
+  vm.createContext(context);
+  loadCalendar(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8'), context, { filename: 'js/ziwei.js' });
+  const module = context.ZiweiModule;
+  module._configureEngine(iztro, 'zhongzhou');
+  module._engineRef = iztro;
+  const chart = iztro.astro.bySolar('1990-1-1', 6, '男', true, 'zh-CN');
+  const selectedDate = new Date(2028, 6, 1);
+  const flow = module._getHoroscope(chart, selectedDate, 0);
+  module._selectedFlowTimeIndex = 0;
+  const html = module._renderFlowTables(chart, flow, selectedDate);
+  const activeMonths = [...html.matchAll(/class="zw-flow-cell is-active"[^>]*data-flow-level="monthly"[^>]*>([\s\S]*?)<\/button>/g)];
+  assert.equal(activeMonths.length, 1);
+  const selectedMonth = module._monthlyItemForFlow(chart, 2028, flow, selectedDate);
+  const lunar = context.DaoCalendar.solarDetails(2028, 7, 1, 0).lunar;
+  assert.equal(selectedMonth.month, lunar.month);
+  assert.equal(!!selectedMonth.isLeapMonth, !!lunar.isLeap);
+  assert.ok(lunar.day >= selectedMonth.dayRange[0] && lunar.day <= selectedMonth.dayRange[1]);
+  assert.ok(module._flowLists.daily.some(item => item.dateText === '2028-7-1'));
+});
+
+test('运限选择不再复制当前标签冒充流日流时结果', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'js', 'ziwei.js'), 'utf8');
+  assert.doesNotMatch(source, /Object\.assign\(\{\}, this\._currentHoroscope/);
+  assert.match(source, /_refreshSelectedFlow[\s\S]+_getHoroscope\(chart, date, this\._selectedFlowTimeIndex\)/);
+  assert.match(source, /timeIndex:12, branch:'子', label:'晚子'/);
+});
+
+test('紫微 AI 独立接口成功后扣 1 次并由总路由发布', () => {
+  const apiSource = fs.readFileSync(path.join(ROOT, 'api', 'ai-ziwei-reading.js'), 'utf8');
+  const routerSource = fs.readFileSync(path.join(ROOT, 'api', 'router.js'), 'utf8');
+  assert.match(apiSource, /const COST = 1/);
+  assert.match(apiSource, /callDeepSeek[\s\S]+api_consume_credits/);
+  assert.match(apiSource, /charged: false/);
+  assert.match(routerSource, /'ai-ziwei-reading': require\('\.\/ai-ziwei-reading'\)/);
 });
