@@ -3657,7 +3657,7 @@ body {
 .dao-recharge:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
 /* 首屏 */
-.dao-hero { position: relative; z-index: 2; height: 100svh; min-height: 690px; overflow: hidden; display: grid; place-items: center; isolation: isolate; background: #070808 url('../assets/daowen-hero-bg.png') center center / cover no-repeat; }
+.dao-hero { position: relative; z-index: 2; height: 100svh; min-height: 690px; overflow: hidden; display: grid; place-items: center; isolation: isolate; background-color: #070808; background-image: url('../assets/daowen-hero-bg.webp'); background-image: image-set(url('../assets/daowen-hero-bg.webp') type('image/webp'), url('../assets/daowen-hero-bg.png') type('image/png')); background-position: center center; background-size: cover; background-repeat: no-repeat; }
 .dao-hero::before { content:""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(circle at 50% 35%,transparent 0 17%,rgba(3,4,4,.08) 45%,rgba(3,4,4,.54) 100%); }
 .dao-hero::after { content:""; position: absolute; inset: auto 0 0; height: 30%; z-index: -1; background: linear-gradient(transparent,#080909); }
 .dao-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg,rgba(3,4,4,.28),transparent 29% 70%,rgba(3,4,4,.35)), radial-gradient(ellipse at 50% 61%,rgba(0,0,0,.26),transparent 55%); pointer-events: none; }
@@ -3686,7 +3686,7 @@ body:not(.dw-app-page) .dao-app-home { display: none; }
 .dw-app-page { padding-top: 0 !important; }
 .dw-app-page .dao-app-home { display: block; min-height: 100dvh; padding-top: 92px; }
 .dw-landing-page .ai-chat-fab,.dw-landing-page .ai-chat-window { display: none !important; }
-.dao-app-home::before { content:""; position:absolute; inset:0; z-index:-1; opacity:.1; background: url('../assets/daowen-hero-bg.png') center top / 1600px auto no-repeat; filter: blur(2px); }
+.dao-app-home::before { content:""; position:absolute; inset:0; z-index:-1; opacity:.1; background-image: url('../assets/daowen-hero-bg.webp'); background-image: image-set(url('../assets/daowen-hero-bg.webp') type('image/webp'), url('../assets/daowen-hero-bg.png') type('image/png')); background-position: center top; background-size: 1600px auto; background-repeat: no-repeat; filter: blur(2px); }
 .dao-app-home::after { content:""; position:absolute; z-index:8; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at 50% 12%,rgba(220,217,204,.23),transparent 48%),linear-gradient(90deg,transparent,rgba(205,205,194,.08),transparent); transform:translateY(22%); }
 .dao-app-home.dao-arriving::after { animation:dwMistReveal 1.35s ease-out both; }
 @keyframes dwMistReveal { 0%{opacity:.92;transform:translateY(22%);filter:blur(20px)} 58%{opacity:.48} 100%{opacity:0;transform:translateY(-15%);filter:blur(30px)} }
@@ -3806,7 +3806,12 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 .dao-scene-bg {
   position: absolute;
   inset: -5%;
-  background: #070808 url('../assets/daowen-hero-bg.png') center / cover no-repeat;
+  background-color: #070808;
+  background-image: url('../assets/daowen-hero-bg.webp');
+  background-image: image-set(url('../assets/daowen-hero-bg.webp') type('image/webp'), url('../assets/daowen-hero-bg.png') type('image/png'));
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   transform: translate3d(var(--dao-pointer-x),var(--dao-pointer-y),0) scale(1.055);
   animation: daoSceneBreathe 6.5s ease-in-out infinite alternate;
   transition: transform .9s cubic-bezier(.2,.7,.2,1);
@@ -4101,7 +4106,7 @@ body.dw-modal-open { overflow: hidden !important; overscroll-behavior: none; }
 @keyframes daoReducedAura { to { filter:brightness(1.16); opacity:.82; } }
 
 /* 独立支付页 */
-.dw-payment-body { min-height: 100dvh; overflow-x: hidden; background: #070808 url('../assets/daowen-hero-bg.png') center / cover fixed no-repeat !important; }
+.dw-payment-body { min-height: 100dvh; overflow-x: hidden; background-color: #070808 !important; background-image: url('../assets/daowen-hero-bg.webp') !important; background-image: image-set(url('../assets/daowen-hero-bg.webp') type('image/webp'), url('../assets/daowen-hero-bg.png') type('image/png')) !important; background-position: center !important; background-size: cover !important; background-attachment: fixed !important; background-repeat: no-repeat !important; }
 .dw-payment-body::before { content:""; position:fixed; inset:0; background:rgba(3,4,4,.76); backdrop-filter:blur(5px); pointer-events:none; }
 .dw-payment-page { position:relative; z-index:1; min-height:100dvh; padding:16px clamp(12px,3vw,40px) 38px; }
 .dw-payment-nav { width:min(1180px,100%); min-height:62px; margin:0 auto 24px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:8px 13px; border:1px solid rgba(229,193,120,.24); border-radius:31px; background:rgba(11,12,12,.82); backdrop-filter:blur(16px); }

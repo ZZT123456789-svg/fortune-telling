@@ -48,3 +48,21 @@ test('Vercel Hobby 部署通过单一网关保留全部业务 API', () => {
     assert.match(source, new RegExp(`['\"]${route}['\"]\\s*:`), route + ' missing');
   }
 });
+
+test('首页使用轻量背景、并行脚本与静态资源缓存策略', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  const hero = path.join(ROOT, 'assets', 'daowen-hero-bg.webp');
+
+  assert.equal(fs.existsSync(hero), true);
+  assert.ok(fs.statSync(hero).size < 300_000, 'hero background should remain below 300 KB');
+  assert.match(html, /rel="preload"[^>]+daowen-hero-bg\.webp/);
+  assert.doesNotMatch(html, /<script\s+src=/, 'external scripts should not block HTML parsing');
+  assert.ok((html.match(/<script\s+defer\s+src=/g) || []).length >= 30);
+
+  for (const source of ['/assets/(.*)', '/css/(.*)', '/js/(.*)', '/data/(.*)']) {
+    const rule = config.headers.find((item) => item.source === source);
+    assert.ok(rule, source + ' cache rule missing');
+    assert.match(rule.headers.find((item) => item.key === 'Cache-Control').value, /stale-while-revalidate/);
+  }
+});

@@ -7,7 +7,7 @@ var TarotModule = {
   CACHE_KEY: 'daowen_tarot_ai_cache_v2',
   cards: [], deck: [], selectedCards: [],
   spreadId: 'three', singleMode: 'daily', locked: false, revealed: false,
-  reducedMotion: false, _scrollFrame: 0,
+  reducedMotion: false, shuffling: false, _scrollFrame: 0, _shuffleTimer: 0,
 
   spreads: {
     single: { name:'单牌阵', meta:'1 张 · 基础', desc:'今日指引或是非问题', positions:['核心指引'] },
@@ -146,9 +146,15 @@ var TarotModule = {
   },
   _renderCarousel: function() {
     var target=document.getElementById('cardDeck');
-    target.innerHTML=this.deck.map(function(_,index){return '<button type="button" class="tarot-deck-card" data-index="'+index+'" aria-label="选择第 '+(index+1)+' 张牌"><span class="tarot-card-back"></span></button>';}).join('');
+    clearTimeout(this._shuffleTimer); this.shuffling=!this.reducedMotion;
+    target.classList.remove('is-spread'); target.classList.toggle('is-shuffling',this.shuffling);
+    target.innerHTML=this.deck.map(function(_,index){return '<button type="button" class="tarot-deck-card" style="--tarot-i:'+index+'" data-index="'+index+'" aria-label="选择第 '+(index+1)+' 张牌"><span class="tarot-card-back"></span></button>';}).join('');
     target.onscroll=this._scheduleCenter.bind(this); target.onclick=function(event){var card=event.target.closest('.tarot-deck-card');if(card)TarotModule.selectCard(Number(card.dataset.index),card);};
-    requestAnimationFrame(function(){target.scrollLeft=Math.max(0,(target.scrollWidth-target.clientWidth)/2);TarotModule._updateCenteredCard();});
+    target.scrollLeft=0; this._updateCounter();
+    if(this.reducedMotion){target.classList.add('is-spread');this.shuffling=false;return;}
+    this._shuffleTimer=setTimeout(function(){
+      target.classList.remove('is-shuffling'); target.classList.add('is-spread'); TarotModule.shuffling=false; target.scrollLeft=0; TarotModule._updateCounter();
+    },1050);
   },
   _scheduleCenter: function(){if(this._scrollFrame)return;this._scrollFrame=requestAnimationFrame(function(){TarotModule._scrollFrame=0;TarotModule._updateCenteredCard();});},
   _updateCenteredCard: function(){
@@ -156,7 +162,7 @@ var TarotModule = {
     deck.querySelectorAll('.tarot-deck-card:not(.is-used)').forEach(function(card){var rect=card.getBoundingClientRect(),current=Math.abs(rect.left+rect.width/2-center);card.classList.remove('is-centered');if(current<distance){distance=current;best=card;}});if(best)best.classList.add('is-centered');
   },
   selectCard: function(deckIndex,sourceEl){
-    var spread=this._activeSpread();if(this.locked||this.selectedCards.length>=spread.positions.length||!this.deck[deckIndex]||sourceEl.classList.contains('is-used'))return;
+    var spread=this._activeSpread();if(this.shuffling||this.locked||this.selectedCards.length>=spread.positions.length||!this.deck[deckIndex]||sourceEl.classList.contains('is-used'))return;
     var selected={deckIndex:deckIndex,card:this.deck[deckIndex].card,reversed:this.deck[deckIndex].reversed},slotIndex=this.selectedCards.length;this.selectedCards.push(selected);sourceEl.classList.add('is-used');
     var slot=document.getElementById('tarotSlot'+slotIndex);slot.classList.add('is-selected');slot.querySelector('.tarot-card-front').innerHTML='<img src="'+selected.card.image+'" alt="'+this._escape(selected.card.name)+'">';if(selected.reversed)slot.querySelector('.tarot-card-front').classList.add('is-reversed');
     this._flyCard(sourceEl,slot);this._updateCounter();if(this.selectedCards.length===spread.positions.length){this.locked=true;setTimeout(function(){TarotModule._revealAll();},this.reducedMotion?120:800);}
@@ -168,7 +174,7 @@ var TarotModule = {
   undoCard: function(index){
     if(this.locked||index!==this.selectedCards.length-1)return;var removed=this.selectedCards.pop(),source=document.querySelector('.tarot-deck-card[data-index="'+removed.deckIndex+'"]');if(source)source.classList.remove('is-used');this._renderSlots();this._updateCenteredCard();
   },
-  _updateCounter: function(){var spread=this._activeSpread(),counter=document.getElementById('cardSelectHint'),title=document.getElementById('tarotDrawTitle');if(counter)counter.textContent='已选 '+this.selectedCards.length+' / '+spread.positions.length;if(title)title.textContent=spread.name+' · 凭直觉选牌';},
+  _updateCounter: function(){var spread=this._activeSpread(),counter=document.getElementById('cardSelectHint'),title=document.getElementById('tarotDrawTitle');if(counter)counter.textContent=this.shuffling?'正在洗牌…':'已选 '+this.selectedCards.length+' / '+spread.positions.length;if(title)title.textContent=this.shuffling?'请静心，等待牌阵铺开':spread.name+' · 从左向右滑动选牌';},
   _revealAll: function(){this.revealed=true;this.selectedCards.forEach(function(_,index){setTimeout(function(){var slot=document.getElementById('tarotSlot'+index);if(slot)slot.classList.add('is-revealed');},TarotModule.reducedMotion?0:index*150);});setTimeout(function(){TarotModule.showReading();},this.reducedMotion?150:this.selectedCards.length*150+780);},
   _yesNoLabel: function(selected){var answer=selected.reversed?selected.card.yesReversed:selected.card.yes;return answer==='yes'?'倾向：是':answer==='no'?'倾向：否':'倾向：暂不明确';},
 
@@ -192,7 +198,7 @@ var TarotModule = {
   },
   _captureArchive: function(){setTimeout(function(){if(window.DaoWenArchive&&typeof DaoWenArchive.capture==='function')DaoWenArchive.capture('tarotOverlay');},60);},
   returnToSetup: function(){if(this.locked)return;document.getElementById('tarotStep2').style.display='none';document.getElementById('tarotStep1').style.display='block';},
-  reset: function(){this.selectedCards=[];this.deck=[];this.locked=false;this.revealed=false;document.getElementById('tarotStep2').style.display='none';document.getElementById('tarotStep3').style.display='none';document.getElementById('tarotStep1').style.display='block';document.getElementById('tarotReading').innerHTML='';},
+  reset: function(){clearTimeout(this._shuffleTimer);this.selectedCards=[];this.deck=[];this.locked=false;this.revealed=false;this.shuffling=false;document.getElementById('tarotStep2').style.display='none';document.getElementById('tarotStep3').style.display='none';document.getElementById('tarotStep1').style.display='block';document.getElementById('tarotReading').innerHTML='';},
   _escape: function(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
 };
 

@@ -39,12 +39,18 @@ test('tarot AI cost is enforced by the server from spread type', () => {
   assert.match(api, /AI 服务暂不可用，本次未扣费/);
 });
 
-test('tarot UI provides swipe deck, vertical results and reduced motion', () => {
+test('tarot UI provides shuffle-first three-row horizontal spread, vertical results and reduced motion', () => {
   const html = read('index.html');
   const css = read('css/tarot.css');
+  const js = read('js/tarot.js');
   assert.match(html, /id="tarotReversalToggle" checked/);
   assert.match(html, /id="tarotQuestion"/);
-  assert.match(css, /scroll-snap-type:\s*x mandatory/);
+  assert.match(css, /scroll-snap-type:\s*x proximity/);
+  assert.match(css, /grid-template-rows:\s*repeat\(3,/);
+  assert.match(css, /grid-auto-flow:\s*column/);
+  assert.match(css, /\.tarot-carousel\.is-shuffling/);
+  assert.match(css, /@keyframes tarotSpreadRight/);
+  assert.match(js, /this\.shuffling\|\|this\.locked/);
   assert.match(css, /\.tarot-reading-list\s*\{\s*display:\s*grid/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });
